@@ -1,0 +1,10 @@
+homepage_title: Managed CockroachDB Docs
+
+baseurl: "/docs/managed"
+destination: _site/managed
+
+versions:
+  stable: v2.1
+  dev: v2.1
+
+managed: true

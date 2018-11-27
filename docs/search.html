@@ -1,0 +1,74 @@
+---
+title: Search results
+toc: false
+contribute: false
+build_for: [standard, managed]
+---
+<script>
+// http://stackoverflow.com/a/979995/864236
+var QueryString = function () {
+	// This function is anonymous, is executed immediately and
+	// the return value is assigned to QueryString!
+	var query_string = {};
+	var query = window.location.search.substring(1);
+	var vars = query.split("&");
+	for (var i=0;i<vars.length;i++) {
+		var pair = vars[i].split("=");
+				// If first entry with this name
+		if (typeof query_string[pair[0]] === "undefined") {
+			query_string[pair[0]] = decodeURIComponent(pair[1]);
+				// If second entry with this name
+		} else if (typeof query_string[pair[0]] === "string") {
+			var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+			query_string[pair[0]] = arr;
+				// If third or later entry with this name
+		} else {
+			query_string[pair[0]].push(decodeURIComponent(pair[1]));
+		}
+	}
+
+	query_string.q = query_string.q.replace(/\+/g, ' ');
+	return query_string;
+}();
+
+document.title = 'Search - ' + QueryString.q;
+$('#search-input').val(QueryString.q.replace('+', ' ')); 
+
+var client = algoliasearch('BH4D9OD16A', '5a93998460e4910a8769500d325250cb');
+var index = client.initIndex('cockroachlabs');
+
+// search against numeric version instead of version tag to ensure accurate results
+var siteVersions = {{ site.versions | jsonify }};
+var currentVersionCookie = getCookie('currentVersion') || 'stable';
+var currentVersionNumeric = currentVersionCookie in siteVersions ? siteVersions[currentVersionCookie] : currentVersionCookie;
+
+var searchConfig = {
+	query: QueryString.q,
+	hitsPerPage: 10,
+	facetFilters: ['version:' + currentVersionNumeric]
+};
+
+index.search(searchConfig, function searchDone(err, data) {
+	var div = $('<div/>');
+
+	if (data.hits.length) {
+		data.hits.forEach(function(hit) {
+			if (hit._highlightResult.content.value.length > 450) {
+				hit._highlightResult.content.value = hit._highlightResult.content.value.slice(0, 450) + '...'
+			}
+
+			var h = $('<div/>', {class: 'search-title'});
+			h.append($('<a/>', {href: hit.url}).html(hit.hierarchy.lvl0));
+			var r = $('<div/>', {class: 'search-item'});
+			r.append(h);
+			r.append($('<div/>', {class: 'search-link'}).html(hit.url));
+			r.append($('<div/>', {class: 'search-snippet'}).html(hit._highlightResult.content.value));
+			div.append(r);
+		});
+	} else {
+		div.append($('<p>No results.</p>'));
+	}
+	$('.post-content').html(div);
+	$('.post-content').append('<img class="search-by-algolia" src="{{ 'images/algolia.svg' | relative_url }}" />');
+});
+</script>

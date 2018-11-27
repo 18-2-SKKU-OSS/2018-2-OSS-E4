@@ -1,0 +1,172 @@
+// Since we use header tags for seo, we don't always want a type style to
+// be dictated by the tag being used. For example, we may want an element
+// to be an h2 tag for seo, but in the designs the type style is an h4.
+// To circumvent this issue, we'll attach these global styles to header tags.
+// Global header stylings are still declared in _general.scss as a fallback.
+
+@mixin headline-1 { // global h1
+  @include graphik_sb(36px);
+  line-height: 45px;
+}
+
+@mixin headline-2 { // global h2
+  @include graphik_sb(30px);
+  line-height: 40px;
+}
+
+@mixin headline-3 { // global h3
+  @include graphik_sb(24px);
+  line-height: 35px;
+}
+
+@mixin headline-4 { // global h4
+  @include graphik_sb(17px);
+  line-height: 30px;
+}
+
+@mixin headline-4--avenir {
+  @include avenir_r(17px);
+  line-height: 30px;
+}
+
+@mixin headline-24-30 {
+  @include graphik_sb(24px);
+  line-height: 35px;
+
+  @include at-query($min, $screen-md) {
+    font-size: 30px;
+    line-height: 40px;
+  }
+}
+
+//
+// subheadings
+//
+@mixin subhead-adelle-lg {
+  @include graphik_sb(24px);
+  line-height: 35px;
+}
+
+@mixin subhead-adelle-sm {
+  @include graphik_sb(17px);
+  line-height: 30px;
+}
+
+@mixin subhead-avenir-lg {
+  @include graphik_sb(24px);
+  line-height: 35px;
+}
+
+@mixin subhead-avenir-sm {
+  @include graphik_sb(17px);
+  line-height: 30px;
+}
+
+//
+// body
+//
+@mixin type-body {
+  @include graphik_r(17px);
+  line-height: 30px;
+}
+
+@mixin type-body-medium {
+  @include graphik_r(17px);
+  line-height: 30px;
+}
+
+//
+// button
+//
+
+
+//
+// miscellaneous
+//
+@mixin type-button {
+  @include graphik_sb(13px);
+  line-height: 20px;
+  letter-spacing: 1.5px;
+}
+
+@mixin type-button--uppercase {
+  @include type-button;
+  text-transform: uppercase;
+}
+
+@mixin button-text {
+  @include avenir_bl(12px);
+  line-height: 15px;
+  letter-spacing: 1.5px;
+}
+
+@mixin button-text--heavy {
+  @include avenir_h(12px);
+  line-height: 15px;
+  letter-spacing: 1.5px;
+}
+
+@mixin button-text--heavy--small {
+  @include graphik_sb(11px);
+  line-height: 15px;
+  letter-spacing: 1.5px;
+}
+
+@mixin button-text--heavy--medium {
+  @include graphik_sb(13px);
+  line-height: 15px;
+  letter-spacing: 1.5px;
+}
+
+@mixin button-text--heavy--large {
+  @include graphik_sb(15px);
+  line-height: 25px;
+  letter-spacing: 1.5px;
+}
+
+@mixin caption {
+  @include graphik_r(15px);
+  line-height: 25px;
+}
+
+@mixin caption--small {
+  @include graphik_r(12px);
+  line-height: 15px;
+}
+
+// this matches the name on the hugo site
+// eventually we should consolidate type styles here too
+@mixin type-caption {
+  @include graphik_r(15px);
+  line-height: 25px;
+}
+
+@mixin paragraph-type {
+  @include graphik_r(16px);
+  line-height: 25px;
+
+  @include at-query($min, $screen-md) {
+    font-size: 17px;
+    line-height: 30px;
+  }
+}
+
+@mixin paragraph-type--medium {
+  @include graphik_r(17px);
+  line-height: 30px;
+}
+
+@mixin paragraph-type--heavy {
+  @include graphik_sb(16px);
+  line-height: 25px;
+
+  @include at-query($min, $screen-md) {
+    font-size: 17px;
+    line-height: 30px;
+  }
+}
+
+@mixin code-type {
+  @include source_code_r(14px);
+  line-height: 25px;
+}
