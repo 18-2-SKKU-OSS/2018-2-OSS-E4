@@ -4,13 +4,12 @@ summary: Use a local cluster to explore how CockroachDB replicates and distribut
 toc: true
 ---
 
-This page walks you through a simple demonstration of how CockroachDB replicates and distributes data. Starting with a 1-node local cluster, you'll write some data, add 2 nodes, and watch how the data is replicated automatically. You'll then update the cluster to replicate 5 ways, add 2 more nodes, and again watch how all existing replicas are re-replicated to the new nodes.
+이 페이지에서는 CockroachDB가 데이터를 복제하고 배포하는 방법에 대해 간단히 설명합니다. 먼저 단일노드 로컬 클러스터를 시작하고, 데이터를 작성하고, 2개의 노드를 추가하고, 데이터를 자동으로 복제할 수 있습니다. 그 후 데이터를 5개로 복제하도록 클러스터를 업데이트하고, 노드를 2개 더 추가한 다음, 기존의 모든 복제본을 신규 노드에 다시 복제합니다.
+## 시작하기 전에
 
-## Before you begin
+[CockroachDB]를 이미 설치했는지 확인하십시오.(install-cockroachdb.html).
 
-Make sure you have already [installed CockroachDB](install-cockroachdb.html).
-
-## Step 1. Start a 1-node cluster
+## Step 1. 단일노드 클러스터 시작하기
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -21,16 +20,16 @@ $ cockroach start \
 --http-addr=localhost:8080
 ~~~
 
-## Step 2. Write data
+## Step 2. 데이터 작성하기
 
-In a new terminal, use the [`cockroach gen`](generate-cockroachdb-resources.html) command to generate an example `intro` database:
+새 터미널에서 [`cockroach gen`](generate-cockroachdb-resources.html) 명령어를 사용하여 `intro` 데이터베이스를 생성합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach gen example-data intro | cockroach sql --insecure --host=localhost:26257
 ~~~
 
-In the same terminal, open the [built-in SQL shell](use-the-built-in-sql-client.html) and verify that the new `intro` database was added with one table, `mytable`:
+같은 터미널에서 [built-in SQL shell](use-the-built-in-sql-client.html) 를 열고 `intro` 데이터베이스가 `mytable` 로 추가되었는지 확인합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -96,14 +95,14 @@ $ cockroach sql --insecure --host=localhost:26257
 (21 rows)
 ~~~
 
-Exit the SQL shell:
+SQL 셸을 종료합니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > \q
 ~~~
 
-## Step 3. Add two nodes
+## Step 3. 노드 2개 추가하기
 
 In a new terminal, add node 2:
 
@@ -129,13 +128,13 @@ $ cockroach start \
 --join=localhost:26257
 ~~~
 
-## Step 4. Watch data replicate to the new nodes
+## Step 4. 신규 노드로 데이터 복제하기
 
 Open the Admin UI at <a href="http://localhost:8080" data-proofer-ignore>http://localhost:8080</a> to see that all three nodes are listed. At first, the replica count will be lower for nodes 2 and 3. Very soon, the replica count will be identical across all three nodes, indicating that all data in the cluster has been replicated 3 times; there's a copy of every piece of data on each node.
 
 <img src="{{ 'images/v2.1/replication1.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 5. Increase the replication factor
+## Step 5. 복제 인자 증가시키기
 
 As you just saw, CockroachDB replicates data 3 times by default. Now, in the terminal you used for the built-in SQL shell or in a new terminal, use the [`ALTER RANGE ... CONFIGURE ZONE`](configure-zone.html) statement to change the cluster's `.default` replication factor to 7:
 
@@ -216,7 +215,7 @@ $ cockroach sql --execute="ALTER RANGE meta CONFIGURE ZONE USING num_replicas=7;
 $ cockroach sql --execute="ALTER RANGE system CONFIGURE ZONE USING num_replicas=7;" --insecure
 ~~~
 
-## Step 6. Add two more nodes
+## Step 6. 노드 2개 추가하기
 
 In a new terminal, add node 4:
 
@@ -242,13 +241,13 @@ $ cockroach start \
 --join=localhost:26257
 ~~~
 
-## Step 7. Watch data replicate to the new nodes
+## Step 7. 신규 노드로 데이터 복제하기
 
 Back in the Admin UI, you'll see that there are now 5 nodes listed. Again, at first, the replica count will be lower for nodes 4 and 5. But because you changed the default replication factor to 5, very soon, the replica count will be identical across all 5 nodes, indicating that all data in the cluster has been replicated 5 times.
 
 <img src="{{ 'images/v2.1/replication2.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 8.  Stop the cluster
+## Step 8. 클러스터 정지시키기
 
 Once you're done with your test cluster, stop each node by switching to its terminal and pressing **CTRL-C**.
 
@@ -263,8 +262,8 @@ If you do not plan to restart the cluster, you may want to remove the nodes' dat
 $ rm -rf repdemo-node1 repdemo-node2 repdemo-node3 repdemo-node4 repdemo-node5
 ~~~
 
-## What's next?
+## 더 알아보기
 
-Explore other core CockroachDB benefits and features:
+CockroachDB의 기타 주요 이점 및 기능을 살펴보세요.
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
