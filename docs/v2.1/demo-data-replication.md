@@ -7,7 +7,7 @@ toc: true
 이 페이지에서는 CockroachDB가 데이터를 복제하고 배포하는 방법에 대해 간단히 설명합니다. 먼저 단일노드 로컬 클러스터를 시작하고, 데이터를 작성하고, 2개의 노드를 추가하고, 데이터를 자동으로 복제할 수 있습니다. 그 후 데이터를 5개로 복제하도록 클러스터를 업데이트하고, 노드를 2개 더 추가한 다음, 기존의 모든 복제본을 신규 노드에 다시 복제합니다.
 ## 시작하기 전에
 
-CockroachDB를 이미 설치했는지 확인하십시오 [installed CockroachDB](install-cockroachdb.html).
+CockroachDB를 이미 설치했는지 확인하십시오. [installed CockroachDB](install-cockroachdb.html)
 
 ## Step 1. 단일노드 클러스터 시작하기
 
