@@ -1,45 +1,45 @@
 ---
-title: Cockroach Commands
-summary: Learn the commands for configuring, starting, and managing a CockroachDB cluster.
+title: Cockroach 명령어들
+summary: CockroachDB 클러스터 구성, 시작 및 관리 명령어들을 학습하십시오.
 toc: true
 ---
 
-This page introduces the `cockroach` commands for configuring, starting, and managing a CockroachDB cluster, as well as environment variables that can be used in place of certain flags.
+이 페이지는 특정 플래그 대신 사용할 수 있는 환경 변수들 뿐만 아니라 CockroachDB 클러스터 설정, 시작, 관리를 위한 `cockroach` 명령어들을 소개합니다. 
 
-You can run `cockroach help` in your shell to get similar guidance.
+쉘에서 `cockroach help`을 실행하면 비슷한 지침을 얻을 수 있습니다.
 
 
 ## Commands
 
 Command | Usage
 --------|----
-[`cockroach start`](start-a-node.html) | Start a node.
-[`cockroach init`](initialize-a-cluster.html) | Initialize a cluster.
-[`cockroach cert`](create-security-certificates.html) | Create CA, node, and client certificates.
-[`cockroach quit`](stop-a-node.html) | Temporarily stop a node or permanently remove a node.
-[`cockroach sql`](use-the-built-in-sql-client.html) | Use the built-in SQL client.
-[`cockroach user`](create-and-manage-users.html) | Get, set, list, and remove users.
-[`cockroach zone`](configure-replication-zones.html) | **Deprecated** To configure the number and location of replicas for specific sets of data, use [`ALTER ... CONFIGURE ZONE`](configure-zone.html) and [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html).
-[`cockroach node`](view-node-details.html) | List node IDs, show their status, decommission nodes for removal, or recommission nodes.
-[`cockroach dump`](sql-dump.html) | Back up a table by outputting the SQL statements required to recreate the table and all its rows.
-[`cockroach demo`](cockroach-demo.html) | Start a temporary, in-memory, single-node CockroachDB cluster, and open an interactive SQL shell to it.
-[`cockroach gen`](generate-cockroachdb-resources.html) | Generate manpages, a bash completion file, example SQL data, or an HAProxy configuration file for a running cluster.
-[`cockroach version`](view-version-details.html) | Output CockroachDB version details.
-[`cockroach debug zip`](debug-zip.html) | Generate a `.zip` file that can help Cockroach Labs troubleshoot issues with your cluster.
+[`cockroach start`](start-a-node.html) | 노드를 시작한다.
+[`cockroach init`](initialize-a-cluster.html) | 클러스터를 초기화한다.
+[`cockroach cert`](create-security-certificates.html) | CA, 노드 및 클라이언트 인증서를 만든다. 
+[`cockroach quit`](stop-a-node.html) | 일시적으로 노드를 중지하거나 노드를 영구적으로 제거한다.
+[`cockroach sql`](use-the-built-in-sql-client.html) | 내장된 SQL 클라이언트를 사용한다.
+[`cockroach user`](create-and-manage-users.html) | 사용자를 얻고, 설정하고, 나열하고, 제거한다.
+[`cockroach zone`](configure-replication-zones.html) | **사용되지 않음** 특정 데이터 세트에 대한 복제본의 수와 위치를 구성하려면 [`ALTER ... CONFIGURE ZONE`](configure-zone.html)와 [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html)를 사용한다.
+[`cockroach node`](view-node-details.html) | 노드 ID를 나열하고, 상태를 표시하고, 제거할 노드를 제거하거나, 노드를 다시 제안한다.
+[`cockroach dump`](sql-dump.html) | 테이블과 모든 행을 다시 생성하는 데 필요한 SQL 문을 출력하여 테이블을 백업한다.
+[`cockroach demo`](cockroach-demo.html) | 임시 메모리 내 단일 노드 CockroachDB 클러스터를 시작하고 여기에 대화식 SQL 쉘을 연다.
+[`cockroach gen`](generate-cockroachdb-resources.html) | 실행중인 클러스터에 대한 manpages, bash 완료 파일, 예제 SQL 데이터 또는 HAProxy 구성 파일을 생성한다.
+[`cockroach version`](view-version-details.html) | CockroachDB 버전 정보를 출력한다.
+[`cockroach debug zip`](debug-zip.html) | Cockroach Labs가 클러스터 문제를 해결하는 데 도움이되는 `.zip` 파일을 생성한다.
 
-## Environment variables
+## 환경 변수들
 
-For many common `cockroach` flags, such as `--port` and `--user`, you can set environment variables once instead of manually passing the flags each time you execute commands.
+`--port`와`--user`와 같은 많은 일반적인 `cockroach` 플래그들에 대해 명령을 실행할 때마다 수동으로 플래그를 전달하는 대신 한 번 환경 변수를 설정할 수 있습니다.
 
-- To find out which flags support environment variables, see the documentation for each [command](#commands).
-- To output the current configuration of CockroachDB and other environment variables, run `env`.
-- When a node uses environment variables on [startup](start-a-node.html), the variable names are printed to the node's logs; however, the variable values are not.
+- 환경 변수를 지원하는 플래그를 찾으려면 각 [command](#commands)에 대한 문서를 참조하십시오.
+- CockroachDB와 환경 변수들의 현재 구성을 출력하려면 `env`를 실행하십시오.
+- 노드가 [startup](start-a-node.html)에서 환경 변수를 사용하면 변수 이름이 노드의 로그에 인쇄됩니다. 그러나 변수 값은 그렇지 않습니다.
 
-CockroachDB prioritizes command flags, environment variables, and defaults as follows:
+CockroachDB는 명령 플래그, 환경 변수 및 기본값을 다음과 같이 우선 순위를 지정합니다.
 
-1. If a flag is set for a command, CockroachDB uses it.
-2. If a flag is not set for a command, CockroachDB uses the corresponding environment variable.
-3. If neither the flag nor environment variable is set, CockroachDB uses the default for the flag.
-4. If there's no flag default, CockroachDB gives an error.
+1. 명령에 플래그가 설정되어 있으면 CockroachDB가 그것을 사용합니다.
+2. 명령에 플래그가 설정되어 있지 않으면 CockroachDB는 해당하는 환경 변수를 사용합니다.
+3. 플래그와 환경 변수가 모두 설정되지 않은 경우 CockroachDB는 플래그에 대해 기본값을 사용합니다.
+5. 플래그 기본값이 없는 경우 CockroachDB는 오류를 발생시킵니다.
 
-For more details, see [Client Connection Parameters](connection-parameters.html).
+자세한 내용은 [Client Connection Parameters](connection-parameters.html)를 참조하십시오.
