@@ -1,6 +1,6 @@
 ---
-title: Cockroach 명령어들
-summary: CockroachDB 클러스터 구성, 시작 및 관리 명령어들을 학습하십시오.
+title: Cockroach Commands
+summary: Learn the commands for configuring, starting, and managing a CockroachDB cluster.
 toc: true
 ---
 
