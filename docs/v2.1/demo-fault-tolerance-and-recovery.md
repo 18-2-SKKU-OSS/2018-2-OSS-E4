@@ -4,16 +4,16 @@ summary: Use a local cluster to explore how CockroachDB remains available during
 toc: true
 ---
 
-This page walks you through a simple demonstration of how CockroachDB remains available during, and recovers after, failure. Starting with a 3-node local cluster, you'll remove a node and see how the cluster continues uninterrupted. You'll then write some data while the node is offline, rejoin the node, and see how it catches up with the rest of the cluster. Finally, you'll add a fourth node, remove a node again, and see how missing replicas eventually re-replicate to the new node.
+이 페이지에서는 장애가 발생했을 때 CockroachDB가 어떻게 활성 상태를 유지하면서 복구되는지 간단히 설명합니다. 우선 3-노드 로컬 클러스터를 생성하고, 클러스터로부터 노드를 제거합니다. 이때 사용자는 클러스터가 중단없이 계속됨을 확인할 수 있습니다. 그런 다음 노드가 오프라인 상태일 때 데이터를 작성하고, 노드를 다시 결합시키면 이후 나머지 클러스터와 일치하게 됩니다. 마지막으로, 네 번째 노드를 추가하고 노드를 다시 제거하면 누락된 복제본이 새 노드에 어떻게 다시 복제되는지 확인할 수 있습니다.
 
 
-## Before you begin
+## 시작하기 전에
 
 Make sure you have already [installed CockroachDB](install-cockroachdb.html).
 
-## Step 1. Start a 3-node cluster
+## Step 1. 3-노드 클러스터 시작하기
 
-Use the [`cockroach start`](start-a-node.html) command to start 3 nodes:
+[`cockroach start`](start-a-node.html) 명령어를 사용하여 세 개의 노드를 시작하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -48,7 +48,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-## Step 2. Initialize the cluster
+## Step 2. 클러스터 초기화하기
 
 In a new terminal, use the [`cockroach init`](initialize-a-cluster.html) command to perform a one-time initialization of the cluster:
 
@@ -59,7 +59,7 @@ $ cockroach init \
 --host=localhost:26257
 ~~~
 
-## Step 3. Verify that the cluster is live
+## Step 3. 클러스터가 활성 상태인지 확인하기
 
 In a new terminal, use the [`cockroach sql`](use-the-built-in-sql-client.html) command to connect the built-in SQL shell to any node:
 
@@ -91,7 +91,7 @@ Exit the SQL shell:
 > \q
 ~~~
 
-## Step 4. Remove a node temporarily
+## Step 4. 일시적으로 노드 제거하기
 
 In the terminal running node 2, press **CTRL-C** to stop the node.
 
@@ -107,7 +107,7 @@ initiating graceful shutdown of server
 ok
 ~~~
 
-## Step 5. Verify that the cluster remains available
+## Step 5. 클러스터가 활성상태를 유지하는지 확인하기
 
 Switch to the terminal for the built-in SQL shell and reconnect the shell to node 1 (port `26257`) or node 3 (port `26259`):
 
@@ -141,7 +141,7 @@ Exit the SQL shell:
 > \q
 ~~~
 
-## Step 6. Write data while the node is offline
+## Step 6. 오프라인 상태인 노드에 데이터 작성하기
 
 In the same terminal, use the [`cockroach gen`](generate-cockroachdb-resources.html) command to generate an example `startrek` database:
 
@@ -230,7 +230,7 @@ Exit the SQL shell:
 > \q
 ~~~
 
-## Step 7. Rejoin the node to the cluster
+## Step 7. 노드를 클러스터에 다시 결합하기
 
 Switch to the terminal for node 2, and rejoin the node to the cluster, using the same command that you used in step 1:
 
@@ -255,7 +255,7 @@ clusterID:  {5638ba53-fb77-4424-ada9-8a23fbce0ae9}
 nodeID:     2
 ~~~
 
-## Step 8. Verify that the rejoined node has caught up
+## Step 8. 다시 결합된 노드 확인하기
 
 Switch to the terminal for the built-in SQL shell, connect the shell to the rejoined node 2 (port `26258`), and check for the `startrek` data that was added while the node was offline:
 
@@ -295,7 +295,7 @@ Soon enough, node 2 catches up entirely. To verify, open the Admin UI at `http:/
 
 <img src="{{ 'images/v2.1/recovery1.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 9. Add another node
+## Step 9. 다른 노드 추가하기
 
 Now, to prepare the cluster for a permanent node failure, open a new terminal and add a fourth node:
 
@@ -321,7 +321,7 @@ clusterID:  {5638ba53-fb77-4424-ada9-8a23fbce0ae9}
 nodeID:     4
 ~~~
 
-## Step 10. Remove a node permanently
+## Step 10. 노드를 영구적으로 제거하기
 
 Again, switch to the terminal running node 2 and press **CTRL-C** to stop it.
 
@@ -338,7 +338,7 @@ ok
 server drained and shutdown completed
 ~~~
 
-## Step 11. Verify that the cluster re-replicates missing replicas
+## Step 11. 클러스터가 누락된 복제본을 다시 복제하는지 확인하기
 
 Back in the Admin UI, you'll see 4 nodes listed. After about 1 minute, the dot next to node 2 will turn yellow, indicating that the node is not responding.
 
@@ -348,7 +348,7 @@ After about 10 minutes, node 2 will move into a **Dead Nodes** section, indicati
 
 <img src="{{ 'images/v2.1/recovery3.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 12.  Stop the cluster
+## Step 12.  클러스터 정지시키기
 
 Once you're done with your test cluster, stop each node by switching to its terminal and pressing **CTRL-C**.
 
@@ -361,8 +361,8 @@ If you do not plan to restart the cluster, you may want to remove the nodes' dat
 $ rm -rf fault-node1 fault-node2 fault-node3 fault-node4 fault-node5
 ~~~
 
-## What's next?
+## 더 알아보기
 
-Explore other core CockroachDB benefits and features:
+CockroachDB의 기타 주요 이점 및 기능을 살펴보세요.
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
