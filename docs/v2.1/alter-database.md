@@ -1,6 +1,6 @@
 ---
-title: 데이터베이스 교체
-summary: 기존 데이터베이스를 변경하려면 ALTER DATABASE 문을 사용하십시오.
+title: ALTER DATABASE
+summary: Use the ALTER DATABASE statement to change an existing database.
 toc: false
 ---
 
@@ -15,4 +15,4 @@ toc: false
 부속명령 | 설명
 -----------|------------
 [`CONFIGURE ZONE`](configure-zone.html) | <span class="version-tag">v2.1에서 :</span> 데이터 베이스를 위한 [복제 영역 구성](configure-replication-zones.html) 
-[`RENAME`](rename-database.html) | 데이터베이스의 이름을 바꿈.
+[`RENAME`](rename-database.html) | 데이터베이스의 이름 
