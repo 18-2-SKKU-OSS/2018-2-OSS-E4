@@ -350,11 +350,11 @@ After about 10 minutes, node 2 will move into a **Dead Nodes** section, indicati
 
 ## Step 12.  클러스터 정지시키기
 
-Once you're done with your test cluster, stop each node by switching to its terminal and pressing **CTRL-C**.
+테스트 클러스터를 완료한 후 클러스터를 정지시켜야 합니다. 각 노드에 대하여 해당 터미널로 전환하고 CTRL-C를 눌러 노드를 중지합니다.
 
-{{site.data.alerts.callout_success}}For the last node, the shutdown process will take longer (about a minute) and will eventually force kill the node. This is because, with only 1 node still online, a majority of replicas are no longer available (2 of 3), and so the cluster is not operational. To speed up the process, press <strong>CTRL-C</strong> a second time.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}마지막 노드의 경우, 종료 프로세스가 더 오래 걸리고(약 1분) 결국 노드를 강제로 삭제할 것입니다. 이는 1개의 노드만 온라인 상태일 때 대부분의 복제본은 더 이상 사용할 수 없는 상태이므로(3개 중 2개) 클러스터가 작동하지 않기 때문입니다. 종료 프로세스의 속도를 높이려면 <strong>CTRL-C</strong>를 한 번 더 누르십시오.{{site.data.alerts.end}}
 
-If you do not plan to restart the cluster, you may want to remove the nodes' data stores:
+클러스터를 다시 시작할 계획이 없다면 노드의 데이터 저장소를 제거해도 됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
