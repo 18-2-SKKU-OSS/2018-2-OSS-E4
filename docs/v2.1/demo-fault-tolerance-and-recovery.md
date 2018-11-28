@@ -9,7 +9,7 @@ toc: true
 
 ## 시작하기 전에
 
-CockroachDB를 이미 설치했는지 확인하십시오 [installed CockroachDB](install-cockroachdb.html).
+CockroachDB를 이미 설치했는지 확인하십시오. [installed CockroachDB](install-cockroachdb.html)
 
 ## Step 1. 3-노드 클러스터 시작하기
 
