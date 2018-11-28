@@ -19,7 +19,9 @@
 
 ## OSS Project
 
-- CockroachDB document Korean Translation
+- CockroachDB user documentation Translation (EN->KN) 
+
+>> https://www.cockroachlabs.com/docs/stable/
 
 
 ## CockroachDB
