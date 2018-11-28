@@ -7,7 +7,7 @@ redirect_from: cloud-deployment.html
 
 다음 가이드를 사용하여 CockroachDB를 사내 또는 인기 있는 클라우드 플랫폼에 수동으로 배포하십시오.
 
-- [사내](deploy-cockroachdb-on-premises.html)
+- [on-premises](deploy-cockroachdb-on-premises.html)
 - [Amazon Web Services (AWS)](deploy-cockroachdb-on-aws.html)
 - [Digital Ocean](deploy-cockroachdb-on-digital-ocean.html)
 - [Google Cloud Platform (GCE)](deploy-cockroachdb-on-google-cloud-platform.html)
