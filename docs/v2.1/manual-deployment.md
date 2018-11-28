@@ -1,6 +1,6 @@
 ---
-title: 수동 배포
-summary: CockroachDB를 사내 또는 인기 있는 클라우드 플랫폼에 수동으로 배포하는 방법에 대해 배운다.
+title: Manual Deployment
+summary: Learn how to deploy CockroachDB manually on-premises or on popular cloud platforms
 toc: false
 redirect_from: cloud-deployment.html
 ---
