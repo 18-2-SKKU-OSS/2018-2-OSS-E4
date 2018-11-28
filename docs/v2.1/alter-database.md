@@ -15,4 +15,4 @@ toc: false
 부속명령 | 설명
 -----------|------------
 [`CONFIGURE ZONE`](configure-zone.html) | <span class="version-tag">v2.1에서 :</span> 데이터 베이스를 위한 [복제 영역 구성](configure-replication-zones.html) 
-[`RENAME`](rename-database.html) | 데이터베이스의 이름 
+[`RENAME`](rename-database.html) | 데이터베이스 이름 변경 
