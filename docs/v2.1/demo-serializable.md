@@ -4,64 +4,70 @@ summary:
 toc: true
 ---
 
-In contrast to most databases, CockroachDB v2.1 always uses `SERIALIZABLE` isolation, which is the strongest of the four [transaction isolation levels](https://en.wikipedia.org/wiki/Isolation_(database_systems)) defined by the SQL standard and is stronger than the `SNAPSHOT` isolation level developed later. `SERIALIZABLE` isolation guarantees that even though transactions may execute in parallel, the end result is the same as if they had executed one at a time, without any concurrency. This ensures data correctness by preventing all "anomalies" allowed by weaker isolation levels.
+대부분의 데이터베이스와는 다르게, CockroachDB v2.1은 항상 `SERIALIZABLE` 격리를 사용합니다. 이는 SQL 표준에 이해 정의된 네 개의 [트랜잭션 격리 수준] (https://en.wikipedia.org/wiki/Isolation_(database_systems)) 중에서 가장 강력한 격리이고, 나중에 개발된 `SNAPSHOT` 격리 수준보다 강력합니다.
+`SERIALIZABLE` 격리는 트랜잭션이 병렬로 실행될 수 있다고 하더라도 동시성없이 한 번에 하나씩 실행했을 때와 같은 최종 결과를 보장합니다. "예외"을 방지함으로써 데이터 정확성을 보장합니다.
 
-In this tutorial, you'll work through a hypothetical scenario that demonstrates the importance of `SERIALIZABLE` isolation for data correctness.
+ 이 튜토리얼에서는 데이터 정확성을 위한 `SERIALIZABLE` 격리의 중요성을 보여주는 가상의 시나리오를 살펴보겠습니다.
 
-1. You'll start by reviewing the scenario and its schema.
-2. You'll then execute the scenario at one of the weaker isolation levels, `READ COMMITTED`, observing the write skew anomaly and its implications. Because CockroachDB always uses `SERIALIZABLE` isolation, you'll run this portion of the tutorial on Postgres, which defaults to `READ COMMITTED`.
-3. You'll finish by executing the scenario at `SERIALIZABLE` isolation, observing how it guarantees correctness. You'll use CockroachDB for this portion.
+1. 시나리오와 스키마를 검토하며 시작합니다.
+2. 그런 다음 스큐 쓰기 예외와 그 영향을 관찰하면서 약한 격리 수준인 `READ COMMITTED` 중 하나에서 시나리오를 실행합니다. CockroachDB는 항상 `SERIALIZABLE` 격리를 사용하기 때문에 기본값이 `READ COMMITTED`인 포스트그레스에서 이 부분을 실행하게 됩니다. 
+
+3. `SERIALIZABLE` 격리 시나리오를 실행하여 그것이 정확성을 보장하는 방법을 관찰하면서 끝낼 것입니다. 이 부분에는 CockroachDB를 사용합니다.
+
 
 {{site.data.alerts.callout_info}}
-For a deeper discussion of transaction isolation and the write skew anomaly, see the [Real Transactions are Serializable](https://www.cockroachlabs.com/blog/acid-rain/) and [What Write Skew Looks Like](https://www.cockroachlabs.com/blog/what-write-skew-looks-like/) blog posts.
+트랜잭션 격리 및 스큐 쓰기 예외에 대한 자세한 내용은 [실제 트랜잭션 직렬화](https://www.cockroachlabs.com/blog/acid-rain/) 및 [스큐 쓰기 모양](https://www.cockroachlabs.com/blog/what-write-skew-looks-like/) 블로그 게시물을 보십시오.
 {{site.data.alerts.end}}
 
-## Overview
+## 개요
 
-### Scenario
+### 시나리오
 
-- A hospital has an application for doctors to manage their on-call shifts.
-- The hospital has a rule that at least one doctor must be on call at any one time.
-- Two doctors are on-call for a particular shift, and both of them try to request leave for the shift at approximately the same time.
-- In Postgres, with the default `READ COMMITTED` isolation level, the [write skew](#write-skew) anomaly results in both doctors successfully booking leave and the hospital having no doctors on call for that particular shift.
-- In CockroachDB, with the default `SERIALIZABLE` isolation level, write skew is prevented, one doctor is allowed to book leave and the other is left on-call, and lives are saved.
+- 병원에는 의사들의 대기 교대를 관리하는 어플리케이션이 있다.
+- 병원은 적어도 한 명의 의사가 언제든지 대기중이어야 한다는 규칙을 가지고 있습니다.
+- 두 명의 의사가 특정 교대를 요구하고 있으며, 둘은 거의 같은 시간에 교대 휴가를 요청합니다.
+- 포스트그레스에서 디폴트 `READ COMMITTED` 격리 수준을 사용하면 스큐 쓰기 예외는 두 의사가 휴가를 성공적으로 예약하고 병원은 특정 교대시간에 의사를 보유하지 못하게 합니다.
+- CockroachDB에서 기본 `SERIALIZABLE` 격리 수준을 사용하면, 스큐 쓰기가 방지되고, 의사 한 명은 휴가가 허용되고 다른 한 명은 대기중이어서, 생명을 구할 수 있습니다.
 
-#### Write skew
 
-When write skew happens, a transaction reads something, makes a decision based on the value it saw, and writes the decision to the database. However, by the time the write is made, the premise of the decision is no longer true. Only `SERIALIZABLE` and some implementations of `REPEATABLE READ` isolation prevent this anomaly.  
+#### 스큐 쓰기
 
-### Schema
+스큐 쓰기가 발생하면 트랜잭션은 무언가를 읽고, 읽은 값을 기반으로 결정을 내리고, 결정을 데이터베이스에 기록합니다.
+그러나 기록이 작성 될 때까지, 결정의 전제는 더 이상 사실이 아닙니다. `SERIALIZABLE` 및`REPEATABLE READ` 격리의 일부 구현만이 예외를 방지합니다.
 
-<img src="{{ 'images/v2.1/serializable_schema.png' | relative_url }}" alt="Schema for serializable transaction tutorial" style="max-width:100%" />
+### 스키마
 
-## Scenario on Postgres
+<img src="{{ 'images/v2.1/serializable_schema.png' | relative_url }}" alt="직렬화 가능 트랜잭션 튜토리얼을 위한 스키마" style="max-width:100%" />
 
-### Step 1. Start Postgres
+## 포스트그레스 시나리오
 
-1. If you haven't already, install Postgres locally. On Mac, you can use [Homebrew](https://brew.sh/):
+### 1단계. 포스트그레스 시작하기
+
+1. 아직 설치하지 않았다면 포스트그레스를 로컬에 설치하십시오. Mac에서는 [Homebrew](https://brew.sh/)를 사용할 수 있습니다.
+
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ brew install postgres
     ~~~
 
-2. [Start Postgres](https://www.postgresql.org/docs/10/static/server-start.html):
+2. [포스트그레스 시작하기](https://www.postgresql.org/docs/10/static/server-start.html):
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ postgres -D /usr/local/var/postgres &
     ~~~
 
-### Step 2. Create the schema
+### 2단계. 스키마 생성하기
 
-1. Open a SQL connection to Postgres:
+1. 포스트그레스에 대한 SQL 연결을 엽니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ psql
     ~~~
 
-2. Create the `doctors` table:
+2. `doctors` 테이블을 생성합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -71,7 +77,7 @@ When write skew happens, a transaction reads something, makes a decision based o
     );
     ~~~
 
-3. Create the `schedules` table:
+3. `schedules` 테이블을 생성합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -83,9 +89,9 @@ When write skew happens, a transaction reads something, makes a decision based o
     );
     ~~~
 
-### Step 3. Insert data
+### 3단계. 데이터 삽입하기
 
-1. Add two doctors to the `doctors` table:
+1. `doctors` 테이블에 의사 두명을 추가합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -94,7 +100,8 @@ When write skew happens, a transaction reads something, makes a decision based o
         (2, 'Betty');
     ~~~
 
-2. Insert one week's worth of data into the `schedules` table:
+2. `schedules`테이블에 일주일 분량의 데이터를 삽입합니다:
+
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -115,7 +122,7 @@ When write skew happens, a transaction reads something, makes a decision based o
         ('2018-10-07', 2, true);
     ~~~
 
-3. Confirm that at least one doctor is on call each day of the week:
+3. 일주일에 적어도 한 명의 의사가 대기중인지 확인합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -138,18 +145,18 @@ When write skew happens, a transaction reads something, makes a decision based o
     (7 rows)
     ~~~
 
-### Step 4. Doctor 1 requests leave
+### 4단계. 의사 1이 휴가를 요청
 
-Doctor 1, Abe, starts to request leave for 10/5/18 using the hospital's schedule management application.
+의사 1 Abe가 병원의 일정 관리 어플리케이션을 사용하여 10/5/18 휴가를 요청하기 시작합니다.
 
-1. The application starts a transaction:
+1. 응용 프로그램이 트랜잭션을 시작합니다: 
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > BEGIN;
     ~~~
 
-2. The application checks to make sure at least one other doctor is on call for the requested date:
+2. 어플리케이션은 요청한 날짜에 적어도 한 명의 다른 의사가 대기중인지 확인합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -166,25 +173,25 @@ Doctor 1, Abe, starts to request leave for 10/5/18 using the hospital's schedule
     (1 row)
     ~~~
 
-### Step 5. Doctor 2 requests leave
+### 5단계. 의사 2가 휴가를 요청
 
-Around the same time, doctor 2, Betty, starts to request leave for the same day using the hospital's schedule management application.
+같은 시간에 의사 2, Betty는 병원의 일정 관리 어플리케이션을 사용하여 같은 날 휴가를 요청하기 시작합니다:
 
-1. In a new terminal, start a second SQL session:
+1. 새 터미널에서 두 번째 SQL 세션을 시작합니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ psql
     ~~~
 
-2. The application starts a transaction:
+2. 응용 프로그램이 트랜잭션을 시작합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > BEGIN;
     ~~~
 
-3. The application checks to make sure at least one other doctor is on call for the requested date:
+3. 어플리케이션은 요청한 날짜에 적어도 한 명의 다른 의사가 대기중인지 확인합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -201,9 +208,9 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
     (1 row)
     ~~~
 
-### Step 6. Leave is incorrectly booked for both doctors
+### 6단계. 두 의사에게 휴가를 잘못 예약
 
-1. In the terminal for doctor 1, since the previous check confirmed that another doctor is on call for 10/5/18, the application tries to update doctor 1's schedule:
+1. 의사 1의 터미널에서, 이전에 다른 의사가 10/5/18에 대기중인 것이 확인되었으므로, 어플리케이션은 의사 1의 일정을 업데이트하려고 시도합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -212,7 +219,7 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
       AND doctor_id = 1;
     ~~~
 
-2. In the terminal for doctor 2, since the previous check confirmed the same thing, the application tries to update doctor 2's schedule:
+2. 의사 2의 터미널에서, 이전에 같은 것이 확인되었으므로, 어플리케이션은 의사 2의 일정을 업데이트하려고 시도합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -221,25 +228,25 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
       AND doctor_id = 2;
     ~~~
 
-3. In the terminal for doctor 1, the application commits the transaction, despite the fact that the previous check (the `SELECT` query) is no longer true:
+3. 의사 1의 터미널에서 이전의 검사 (SELECT 쿼리)가 더 이상 사실이 아니더라도 어플리케이션이 트랜잭션을 커밋합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > COMMIT;
     ~~~
 
-4. In the terminal for doctor 2, the application commits the transaction, despite the fact that the previous check (the `SELECT` query) is no longer true:
+4. 의사 2의 터미널에서 이전의 검사 (SELECT 쿼리)가 더 이상 사실이 아니더라도 어플리케이션이 트랜잭션을 커밋합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > COMMIT;
     ~~~
 
-### Step 7. Check data correctness
+### 7단계. 데이터 정확성 검사
 
-So what just happened? Each transaction started by reading a value that, before the end of the transaction, became incorrect. Despite that fact, each transaction was allowed to commit. This is known as write skew, and the result is that 0 doctors are scheduled to be on call on 10/5/18.  
+무슨 일이 일어났을까요? 각 트랜잭션은 트랜잭션이 끝나기 전에 올바르지 않은 값을 읽음으로써 시작되었습니다. 그 사실에도 불구하고, 각각의 트랜잭션은 커밋될 수 있었습니다. 이는 스큐 쓰기로 알려져 있으며 결과적으로 0명의 의사가 10/5/18에 대기 예정입니다.
 
-To check this, in either terminal, run:
+이를 확인하려면 터미널에서 다음을 실행하십시오: 
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -254,7 +261,7 @@ To check this, in either terminal, run:
 (2 rows)
 ~~~
 
-Again, this anomaly is the result of Postgres' default isolation level of `READ COMMITTED`, but note that this would happen with any isolation level except `SERIALIZABLE` and some implementations of `REPEATABLE READ`:
+다시 한번 말하면, 이 예외는 Postgres의 기본 격리 수준인 `READ COMMITTED` 의 결과이지만, `SERIALIZABLE`과 `REPEATABLE READ`의 일부 구현을 제외하고는 격리 수준에서 발생합니다: 
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -268,24 +275,27 @@ Again, this anomaly is the result of Postgres' default isolation level of `READ 
 (1 row)
 ~~~
 
-### Step 8. Stop Posgres
+### 8단계. 포스그레스 중지하기
 
-Exit each SQL shell with `\q` and then stop the Posgres server:
+`\q`를 사용하여 각 SQL 쉘을 종료 한 다음 포스그레스 서버를 중지하십시오:
+
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ pkill -9 postgres
 ~~~
 
-## Scenario on CockroachDB
+## CockroachDB의 시나리오
 
-When you repeat the scenario on CockroachDB, you'll see that the anomaly is prevented by CockroachDB's `SERIALIZABLE` transaction isolation.
+CockroachDB에서 시나리오를 반복하면 CockroachDB의 `SERIALIZABLE` 트랜잭션 격리로 인해 예외가 방지된다는 것을 알 수 있습니다.
 
-### Step 1. Start CockroachDB
 
-1. If you haven't already, [install CockroachDB](install-cockroachdb.html) locally.
+### 1단계. CockroachDB 시작하기
 
-2. Start a one-node CockroachDB cluster in insecure mode:
+1. 아직 설치하지 않았다면 [CockroachDB 설치](install-cockroachdb.html)를 로컬에 설치하십시오.
+
+
+2. 비보안 모드에서 단일 노드 CockroachDB 클러스터를 시작하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -296,16 +306,16 @@ When you repeat the scenario on CockroachDB, you'll see that the anomaly is prev
     --background
     ~~~
 
-### Step 2. Create the schema
+### 2단계. 스키마 생성하기
 
-1. As the `root` user, open the [built-in SQL client](use-the-built-in-sql-client.html):
+1. `root` 사용자로서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 엽니다 :
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure --host=localhost
     ~~~
 
-2. Create the `doctors` table:
+2. `doctors` 테이블을 생성합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -315,7 +325,7 @@ When you repeat the scenario on CockroachDB, you'll see that the anomaly is prev
     );
     ~~~
 
-3. Create the `schedules` table:
+3. `schedules` 테이블을 생성합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -327,9 +337,9 @@ When you repeat the scenario on CockroachDB, you'll see that the anomaly is prev
     );
     ~~~
 
-### Step 3. Insert data
+### 3단계. 데이터 삽입하기
 
-1. Add two doctors to the `doctors` table:
+1. 의사 두 명을 `doctors`표에 추가하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -338,7 +348,7 @@ When you repeat the scenario on CockroachDB, you'll see that the anomaly is prev
         (2, 'Betty');
     ~~~
 
-2. Insert one week's worth of data into the `schedules` table:
+2. `schedules`테이블에 일주일 분량의 데이터를 삽입합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -359,7 +369,7 @@ When you repeat the scenario on CockroachDB, you'll see that the anomaly is prev
         ('2018-10-07', 2, true);
     ~~~
 
-3. Confirm that at least one doctor is on call each day of the week:
+3. `schedules`테이블에 일주일 분량의 데이터를 삽입합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -382,18 +392,18 @@ When you repeat the scenario on CockroachDB, you'll see that the anomaly is prev
     (7 rows)
     ~~~
 
-### Step 4. Doctor 1 requests leave
+### 4단계. 의사 1이 휴가를 요청
 
-Doctor 1, Abe, starts to request leave for 10/5/18 using the hospital's schedule management application.
+의사 1 Abe가 병원의 일정 관리 어플리케이션을 사용하여 10/5/18 휴가를 요청하기 시작합니다.
 
-1. The application starts a transaction:
+1. 응용 프로그램이 트랜잭션을 시작합니다: 
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > BEGIN;
     ~~~
 
-2. The application checks to make sure at least one other doctor is on call for the requested date:
+2. 어플리케이션은 요청한 날짜에 적어도 한 명의 다른 의사가 대기중인지 확인합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -403,7 +413,7 @@ Doctor 1, Abe, starts to request leave for 10/5/18 using the hospital's schedule
       AND doctor_id != 1;
     ~~~
 
-    Press enter a second time to have the server return the result:
+    Enter 키를 두 번 눌러 서버가 결과를 반환하도록 합니다:
 
     ~~~
       count
@@ -412,25 +422,25 @@ Doctor 1, Abe, starts to request leave for 10/5/18 using the hospital's schedule
     (1 row)    
     ~~~
 
-### Step 5. Doctor 2 requests leave
+### 5단계. 의사 2가 휴가를 요청
 
-Around the same time, doctor 2, Betty, starts to request leave for the same day using the hospital's schedule management application.
+같은 시간에 의사 2, Betty는 병원의 일정 관리 어플리케이션을 사용하여 같은 날 휴가를 요청하기 시작합니다:
 
-1. In a new terminal, start a second SQL session:
+1. 새 터미널에서 두 번째 SQL 세션을 시작합니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure --host=localhost
     ~~~
 
-2. The application starts a transaction:
+2. 응용 프로그램이 트랜잭션을 시작합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > BEGIN;
     ~~~
 
-3. The application checks to make sure at least one other doctor is on call for the requested date:
+3. 어플리케이션은 요청한 날짜에 적어도 한 명의 다른 의사가 대기중인지 확인합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -440,7 +450,7 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
       AND doctor_id != 2;
     ~~~
 
-    Press enter a second time to have the server return the result:
+    Enter 키를 두 번 눌러 서버가 결과를 반환하도록 합니다:
 
     ~~~
       count
@@ -449,9 +459,9 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
     (1 row)    
     ~~~
 
-### Step 6. Leave is booked for only 1 doctor
+### 6단계. 한 의사에게만 휴가를 예약
 
-1. In the terminal for doctor 1, since the previous check confirmed that another doctor is on call for 10/5/18, the application tries to update doctor 1's schedule:
+1. 의사 1의 터미널에서, 이전에 다른 의사가 10/5/18에 대기중인 것이 확인되었으므로, 어플리케이션은 의사 1의 일정을 업데이트하려고 시도합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -460,7 +470,7 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
       AND doctor_id = 1;
     ~~~
 
-2. In the terminal for doctor 2, since the previous check confirmed the same thing, the application tries to update doctor 2's schedule:
+2. 의사 2의 터미널에서, 이전에 같은 것이 확인되었으므로, 어플리케이션은 의사 2의 일정을 업데이트하려고 시도합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -469,14 +479,18 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
       AND doctor_id = 2;
     ~~~
 
-3. In the terminal for doctor 1, the application tries to commit the transaction:
+3. 의사 1의 터미널에서 어플리케이션이 트랜잭션을 커밋하려고 시도합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > COMMIT;
     ~~~
 
-    Since CockroachDB uses `SERIALIZABLE` isolation, the database detects that the previous check (the `SELECT` query) is no longer true due to a concurrent transaction. It therefore prevents the transaction from committing, returning a "retryable error" that indicates that the transaction must be attempted again:
+    CockroachDB는`SERIALIZABLE` 격리를 사용하기 때문에, 데이터베이스는 병행 트랜잭션 때문에 이전 검사 (`SELECT` 쿼리)가 더 이상 참이 아님을 감지합니다.
+
+
+따라서 트랜잭션이 커밋되지 않도록 하여 트랜잭션을 다시 시도해야 함을 나타내는 "다시 시도 가능한 오류"를 반환합니다.
+
 
     ~~~
     pq: restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=57dd0454 key=/Table/53/1/17809/1/0 rw=true pri=0.00710012 iso=SERIALIZABLE stat=PENDING epo=0 ts=1539116499.676097000,2 orig=1539115078.961557000,0 max=1539115078.961557000,0 wto=false rop=false seq=4
@@ -486,18 +500,20 @@ Around the same time, doctor 2, Betty, starts to request leave for the same day 
     For this kind of error, CockroachDB recommends a [client-side transaction retry loop](transactions.html#client-side-transaction-retries) that would transparently observe that the one doctor can't take time off because the other doctor already succeeded in asking for it. You can find generic transaction retry functions for various languages in our [Build an App](build-an-app-with-cockroachdb.html) tutorials.
     {{site.data.alerts.end}}
 
-4. In the terminal for doctor 2, the application tries to commit the transaction:
+4. 의사 2의 터미널에서 어플리케이션이이 트랜잭션을 커밋하려고 시도합니다:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > COMMIT;
     ~~~
 
-    Since the transaction for doctor 1 failed, the transaction for doctor 2 can commit without causing any data correctness problems.
+    의사 1의 트랜잭션이 실패했기 때문에 의사 2의 트랜잭션은 데이터의 정확성 문제를 일으키지 않고 커밋할 수 있습니다.
 
-### Step 7. Check data correctness
 
-In either terminal, confirm that one doctor is still on call for 10/5/18:
+### 7단계. 데이터 정확성 검사
+
+어느 터미널에서든 10/5/18 동안 한 명의 의사가 여전히 대기중인지 확인하십시오:
+
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -512,7 +528,8 @@ In either terminal, confirm that one doctor is still on call for 10/5/18:
 (2 rows)
 ~~~
 
-Again, the write skew anomaly was prevented by CockroachDB using the `SERIALIZABLE` isolation level:
+다시 한 번, 스큐 쓰기 예외는 `SERIALIZABLE` 격리 수준을 사용하는 CockroachDB에 의해 방지되었습니다.
+
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -526,30 +543,32 @@ Again, the write skew anomaly was prevented by CockroachDB using the `SERIALIZAB
 (1 row)
 ~~~
 
-### Step 8. Stop CockroachDB
+### Step 8. CockroachDB 중지하기
 
-Once you're done with your test cluster, exit each SQL shell with `\q` and then stop the node:
+테스트 클러스터가 끝나면 `\q`를 사용하여 각 SQL 쉘을 종료 한 다음 노드를 중지하십시오.
+
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach quit --insecure --host=localhost
 ~~~
 
-If you do not plan to restart the cluster, you may want to remove the node's data store:
+클러스터를 다시 시작하지 않으려는 경우, 노드의 데이터 저장소를 제거하고 싶을 것입니다.
+
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ rm -rf serializable-demo
 ~~~
 
-## What's next?
+## 더 알아보기
 
-Explore other core CockroachDB benefits and features:
+CockroachDB의 다른 주요 이점 및 특징에 대해 알아보십시오: 
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
 
-You might also want to learn more about how transactions work in CockroachDB and in general:
+또한 일반적으로 CockroachDB에서 트랜잭션이 어떻게 작동하는지에 대해 더 자세히 알고 싶을 수도 있습니다:
 
-- [Transactions Overview](transactions.html)
-- [Real Transactions are Serializable](https://www.cockroachlabs.com/blog/acid-rain/)
-- [What Write Skew Looks Like](https://www.cockroachlabs.com/blog/what-write-skew-looks-like/)
+- [트랜잭션 개요](transactions.html)
+- [실제 트랜잭션은 직렬화 가능](https://www.cockroachlabs.com/blog/acid-rain/)
+- [Write Skew의 모양](https://www.cockroachlabs.com/blog/what-write-skew-looks-like/)
