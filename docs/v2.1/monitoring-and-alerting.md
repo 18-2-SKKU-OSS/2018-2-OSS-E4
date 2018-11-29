@@ -17,15 +17,15 @@ CockroachDB의 다양한 [built-in safeguards against failure](high-availability
 
 #### Accessing the Admin UI for a secure cluster
 
-For each user who should have access to the Admin UI for a secure cluster, [create a user with a password](create-user.html#create-a-user-with-a-password). On accessing the Admin UI, the users will see a Login screen, where they will need to enter their usernames and passwords. 
+보안클러스터의 관리 UI에 액세스 할 수 있는 각 사용자에 대해 [create a user with a password](create-user.html#create-a-user-with-a-password) 를 사용하여 사용자 생성, 관리 UI에 액세스하면 로그인 화면이 나타나고 사용자 이름과 암호를 임력해야 합니다.
 
-{{site.data.alerts.callout_danger}}Because the Admin UI is built into CockroachDB, if a cluster becomes unavailable, most of the Admin UI becomes unavailable as well. Therefore, it's essential to plan additional methods of monitoring cluster health as described below.{{site.data.alerts.end}}
+{{site.data.alerts.callout_danger}}관리 UI가 CockroachDB에 내장되어 있기 때문에 틀러스터를 사용할 수 없는 경우 대부분의 관리 UI도 사용할 수 없게 됩니다. 따라서 아래에 설명된 대로 클러스터 상태를 모니터링하는 추가 방법을 계획하는 것이 중요합니다.{{site.data.alerts.end}}
 
 ### Prometheus endpoint
 
-Every node of a CockroachDB cluster exports granular timeseries metrics at `http://<host>:<http-port>/_status/vars`. The metrics are formatted for easy integration with [Prometheus](https://prometheus.io/), an open source tool for storing, aggregating, and querying timeseries data, but the format is **easy-to-parse** and can be massaged to work with other third-party monitoring systems (e.g., [Sysdig](https://sysdig.atlassian.net/wiki/plugins/servlet/mobile?contentId=64946336#content/view/64946336) and [Stackdriver](https://github.com/GoogleCloudPlatform/k8s-stackdriver/tree/master/prometheus-to-sd)).
+CockroachDB 클러스터의 모든 노드는 `http://<host>:<http-port>/_status/vars`에서 세분화된 시간 측정 지표를 내보냅니다. 메트릭은 [Prometheus](https://prometheus.io/)과 쉽게 통합될 수 있도록 포맷되어 있습니다. 타임리어 데이터를 저장, 집계 및 쿼리하기 위한 오픈 소스 도구이지만, 형식은 is **easy-to-parse** 이며 다른 타사 모니터링 시스템과 함께 작동하도록 될 수 있습니다. (e.g., [Sysdig](https://sysdig.atlassian.net/wiki/plugins/servlet/mobile?contentId=64946336#content/view/64946336) and [Stackdriver](https://github.com/GoogleCloudPlatform/k8s-stackdriver/tree/master/prometheus-to-sd)).
 
-For a tutorial on using Prometheus, see [Monitor CockroachDB with Prometheus](monitor-cockroachdb-with-prometheus.html).
+Prometheus 사용에 대한 교육서는 [Monitor CockroachDB with Prometheus](monitor-cockroachdb-with-prometheus.html)를 참고하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
