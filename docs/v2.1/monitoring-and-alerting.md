@@ -4,16 +4,16 @@ summary: Monitor the health and performance of a cluster and alert on critical e
 toc: true
 ---
 
-Despite CockroachDB's various [built-in safeguards against failure](high-availability.html), it is critical to actively monitor the overall health and performance of a cluster running in production and to create alerting rules that promptly send notifications when there are events that require investigation or intervention.
+CockroachDB의 다양한 [built-in safeguards against failure](high-availability.html)에도 불구하고, 프로덕션에서 실행 중인 클러스터의 전반적인 상태 및 성능을 능동적으로 모니터링하고 즉시 알림을 보내는 경고 규칙을 만드는 것이 중요합니다.
 
-This page explains available monitoring tools and critical events and metrics to alert on.
+이 페이지에서는 사용 가능한 모니터링 툴과 경고할 중요 이벤트 및 메트릭을 설명합니다.
 
 
 ## Monitoring tools
 
 ### Admin UI
 
-The [built-in Admin UI](admin-ui-access-and-navigate.html) gives you essential metrics about a cluster's health, such as the number of live, dead, and suspect nodes, the number of unavailable ranges, and the queries per second and service latency across the cluster. The Admin UI is accessible from every node at `http://<host>:<http-port>`, or `http://<host>:8080` by default.
+[built-in Admin UI](admin-ui-access-and-navigate.html) 는 실시간, 비활성 및 의심스러운 노드 수 등 클러스터 상태에 대한 필수 메트릭을 제공합니다. 기본적으로 UI 또는 `http://<host>:<http-port>`, `http://<host>:8080` 의 모든 노드에서 관리 UI에 엑세스할 수 있습니다.
 
 #### Accessing the Admin UI for a secure cluster
 
