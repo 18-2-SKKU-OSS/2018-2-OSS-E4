@@ -1,6 +1,6 @@
 ---
-title: RESET (세션 변수)
-summary: SET 문은 세션 변수를 기본값으로 재설정합니다.
+title: RESET (session variable)
+summary: The SET statement resets a session variable to its default value.
 toc: true
 ---
 
