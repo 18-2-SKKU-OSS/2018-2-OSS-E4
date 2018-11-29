@@ -29,7 +29,7 @@ $ cockroach start \
 $ cockroach gen example-data intro | cockroach sql --insecure --host=localhost:26257
 ~~~
 
-같은 터미널에서 [built-in SQL shell](use-the-built-in-sql-client.html) 를 열고 `intro` 데이터베이스가 `mytable` 로 추가되었는지 확인합니다.
+같은 터미널에서 [built-in SQL shell](use-the-built-in-sql-client.html) 를 열고 `intro` 데이터베이스가  `mytable` 과 함께 추가되었는지 확인합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
