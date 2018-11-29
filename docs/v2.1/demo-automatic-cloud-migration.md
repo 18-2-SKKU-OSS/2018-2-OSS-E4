@@ -7,11 +7,11 @@ toc: true
 CockroachDB's flexible [replication controls](configure-replication-zones.html) make it trivially easy to run a single CockroachDB cluster across cloud platforms and to migrate data from one cloud to another without any service interruption. This page walks you through a local simulation of the process.
 
 
-## Watch the demo
+## demo 영상 보기
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/cCJkgZy6s2Q" frameborder="0" allowfullscreen></iframe>
 
-## Step 1. Install prerequisites
+## Step 1. 필수 구성 요소 설치하기
 
 In this tutorial, you'll use CockroachDB, the HAProxy load balancer, and CockroachDB's version of the YCSB load generator, which requires Go. Before you begin, make sure these applications are installed:
 
@@ -22,7 +22,7 @@ In this tutorial, you'll use CockroachDB, the HAProxy load balancer, and Cockroa
 
 Also, to keep track of the data files and logs for your cluster, you may want to create a new directory (e.g., `mkdir cloud-migration`) and start all your nodes in that directory.
 
-## Step 2. Start a 3-node cluster on "cloud 1"
+## Step 2. "cloud 1" 에서 3-노드 클러스터 시작하기
 
 If you've already [started a local cluster](start-a-local-cluster.html), the commands for starting nodes should be familiar to you. The new flag to note is [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes), which accepts key-value pairs that describe the topography of a node. In this case, you're using the flag to specify that the first 3 nodes are running on cloud 1.
 
@@ -68,7 +68,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-## Step 3. Initialize the cluster
+## Step 3. 클러스터 초기화하기
 
 In a new terminal, use the [`cockroach init`](initialize-a-cluster.html) command to perform a one-time initialization of the cluster:
 
@@ -79,7 +79,7 @@ $ cockroach init \
 --host=localhost:26257
 ~~~
 
-## Step 4. Set up HAProxy load balancing
+## Step 4. HAProxy 로드 밸런싱 설정하기
 
 You're now running 3 nodes in a simulated cloud. Each of these nodes is an equally suitable SQL gateway to your cluster, but to ensure an even balancing of client requests across these nodes, you can use a TCP load balancer. Let's use the open-source [HAProxy](http://www.haproxy.org/) load balancer that you installed earlier.
 
@@ -125,7 +125,7 @@ Start HAProxy, with the `-f` flag pointing to the `haproxy.cfg` file:
 $ haproxy -f haproxy.cfg
 ~~~
 
-## Step 5. Start a load generator
+## Step 5. load generator 시작하기
 
 Now that you have a load balancer running in front of your cluster, let's use the YCSB load generator that you installed earlier to simulate multiple client connections, each performing mixed read/write workloads.
 
@@ -138,7 +138,7 @@ $ $HOME/go/bin/ycsb -duration 20m -tolerate-errors -concurrency 10 -max-rate 100
 
 This command initiates 10 concurrent client workloads for 20 minutes, but limits the total load to 1000 operations per second (since you're running everything on a single machine).
 
-## Step 6. Watch data balance across all 3 nodes
+## Step 6. 3개 노드에서 전체 데이터 밸런스 보기
 
 Now open the Admin UI at `http://localhost:8080` and click **Metrics** in the left-hand navigation bar. The **Overview** dashboard is displayed. Hover over the **SQL Queries** graph at the top. After a minute or so, you'll see that the load generator is executing approximately 95% reads and 5% writes across all nodes:
 
@@ -148,7 +148,7 @@ Scroll down a bit and hover over the **Replicas per Node** graph. Because Cockro
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_migration.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 7. Add 3 nodes on "cloud 2"
+## Step 7. "cloud 2"에 노드 3개 추가하기
 
 At this point, you're running three nodes on cloud 1. But what if you'd like to start experimenting with resources provided by another cloud vendor? Let's try that by adding three more nodes to a new cloud platform. Again, the flag to note is [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes), which you're using to specify that these next 3 nodes are running on cloud 2.
 
@@ -194,7 +194,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-## Step 8. Watch data balance across all 6 nodes
+## Step 8. 6개 노드에서 전체 데이터 밸런스 보기
 
 Back on the **Overview** dashboard in Admin UI, hover over the **Replicas per Node** graph again. Because you used [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) to specify that nodes are running on 2 clouds, you'll see an approximately even number of replicas on each node, indicating that CockroachDB has automatically rebalanced replicas across both simulated clouds:
 
@@ -202,7 +202,7 @@ Back on the **Overview** dashboard in Admin UI, hover over the **Replicas per No
 
 Note that it takes a few minutes for the Admin UI to show accurate per-node replica counts on hover. This is why the new nodes in the screenshot above show 0 replicas. However, the graph lines are accurate, and you can click **View node list** in the **Summary** area for accurate per-node replica counts as well.
 
-## Step 9. Migrate all data to "cloud 2"
+## Step 9. 모든 데이터를 "cloud 2"로 이송하기
 
 So your cluster is replicating across two simulated clouds. But let's say that after experimentation, you're happy with cloud vendor 2, and you decide that you'd like to move everything there. Can you do that without interruption to your live client traffic? Yes, and it's as simple as running a single command to add a [hard constraint](configure-replication-zones.html#replication-constraints) that all replicas must be on nodes with `--locality=cloud=2`.
 
@@ -213,7 +213,7 @@ In a new terminal, [edit the default replication zone](configure-zone.html):
 $ cockroach sql --execute="ALTER RANGE default CONFIGURE ZONE USING constraints='[+cloud=2]';" --insecure --host=localhost:26257
 ~~~
 
-## Step 10. Verify the data migration
+## Step 10. 데이터 이송 확인하기
 
 Back on the **Overview** dashboard in the Admin UI, hover over the **Replicas per Node** graph again. Very soon, you'll see the replica count double on nodes 4, 5, and 6 and drop to 0 on nodes 1, 2, and 3:
 
@@ -221,7 +221,7 @@ Back on the **Overview** dashboard in the Admin UI, hover over the **Replicas pe
 
 This indicates that all data has been migrated from cloud 1 to cloud 2. In a real cloud migration scenario, at this point you would update the load balancer to point to the nodes on cloud 2 and then stop the nodes on cloud 1. But for the purpose of this local simulation, there's no need to do that.
 
-## Step 11. Stop the cluster
+## Step 11. 클러스터 정지시키기
 
 Once you're done with your cluster, stop YCSB by switching into its terminal and pressing **CTRL-C**. Then do the same for HAProxy and each CockroachDB node.
 
@@ -234,9 +234,9 @@ If you do not plan to restart the cluster, you may want to remove the nodes' dat
 $ rm -rf cloud1node1 cloud1node2 cloud1node3 cloud2node4 cloud2node5 cloud2node6 haproxy.cfg
 ~~~
 
-## What's next?
+## 더 알아보기
 
-Explore other core CockroachDB benefits and features:
+CockroachDB의 기타 주요 이점 및 기능을 살펴보세요.
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
 
