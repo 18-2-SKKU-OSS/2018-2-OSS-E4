@@ -81,9 +81,9 @@ $ cockroach init \
 
 ## Step 4. HAProxy 로드 밸런싱 설정하기
 
-You're now running 3 nodes in a simulated cloud. Each of these nodes is an equally suitable SQL gateway to your cluster, but to ensure an even balancing of client requests across these nodes, you can use a TCP load balancer. 이제 시뮬레이션 클라우드에서 3개의 노드를 실행하고 있습니다. 이러한 각 노드는 클러스터에 동일하게 적합한 SQL 게이트웨이이지만 이러한 노드 간에 클라이언트 요청의 균형을 맞추기 위해 TCP 로드 밸런서를 사용할 수 있습니다. 앞서 설치한 [HAProxy](http://www.haproxy.org/) 로드 밸런서(load balancer) 오픈소스를 사용하십시오. 
+이제 시뮬레이션 클라우드에서 3개의 노드를 실행하고 있습니다. 이러한 각 노드는 클러스터에 동일하게 적합한 SQL 게이트웨이이지만 이러한 노드 간에 클라이언트 요청의 균형을 맞추기 위해 TCP 로드 밸런서를 사용할 수 있습니다. 앞서 설치한 [HAProxy](http://www.haproxy.org/) 로드 밸런서(load balancer) 오픈소스를 사용하십시오. 
 
-In a new terminal, run the [`cockroach gen haproxy`](generate-cockroachdb-resources.html) command, specifying the port of any node:
+새로운 터미널에서 임의의 노드에 포트를 지정하는 [`cockroach gen haproxy`](generate-cockroachdb-resources.html) 명령을 실행합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -92,8 +92,7 @@ $ cockroach gen haproxy \
 --host=localhost:26257
 ~~~
 
-이 명령은 실행 중인 클러스터의 3개 노드에서 작동하도록 자동으로 구성된 `haproxy.cfg` 파일을 생성합니다. 이 파일에서, `bind :26257` 를 `bind :26000` 으로 변경합니다. 이는 This changes the port on which HAProxy accepts requests to a port that is not already in use by a node and that will not be used by the nodes you'll add later.
-
+이 명령은 실행 중인 클러스터의 3개 노드에서 작동하도록 자동으로 구성된 `haproxy.cfg` 파일을 생성합니다. 이 파일에서, `bind :26257` 를 `bind :26000` 으로 변경합니다. 이는 HAProxy가 요청을 수락하는 포트를 노드에서 아직 사용되지 않은 포트 혹은 나중에 추가할 노드에서 사용되지 않을 포트로 변화시킵니다.
 ~~~
 global
   maxconn 4096
@@ -118,7 +117,7 @@ listen psql
     server cockroach3 localhost:26259 check port 8082
 ~~~
 
-Start HAProxy, with the `-f` flag pointing to the `haproxy.cfg` file:
+`haproxy.cfg` 파일을 가리키는 `-f` 플래그로 HAProxy를 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -127,16 +126,16 @@ $ haproxy -f haproxy.cfg
 
 ## Step 5. load generator 시작하기
 
-Now that you have a load balancer running in front of your cluster, let's use the YCSB load generator that you installed earlier to simulate multiple client connections, each performing mixed read/write workloads.
+이제 클러스터 앞에서 로드 밸런서(load balancer)가 실행되고 있습니다. 앞서 설치한 YCSB 로드 생성기(load generator)를 사용하여 혼합된 읽기/쓰기 워크로드를 각각 수행하는 여러 개의 클라이언트 연결을 시뮬레이션합니다.
 
-In a new terminal, start `ycsb`, pointing it at HAProxy's port:
+새로운 터미널에서, HAProxy의 포트를 가리키며 `ycsb` 를 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ $HOME/go/bin/ycsb -duration 20m -tolerate-errors -concurrency 10 -max-rate 1000 'postgresql://root@localhost:26000?sslmode=disable'
 ~~~
 
-This command initiates 10 concurrent client workloads for 20 minutes, but limits the total load to 1000 operations per second (since you're running everything on a single machine).
+이 명령은 동시 클라이언트 워크로드 10개를 20분 동안 개시하지만, 총합 로드를 초당 1000개의 작업으로 제한합니다.(한 개의 머신에서 모든 작업을 실행하기 때문에)
 
 ## Step 6. 3개 노드에서 전체 데이터 밸런스 보기
 
@@ -150,9 +149,9 @@ Scroll down a bit and hover over the **Replicas per Node** graph. Because Cockro
 
 ## Step 7. "cloud 2"에 노드 3개 추가하기
 
-At this point, you're running three nodes on cloud 1. But what if you'd like to start experimenting with resources provided by another cloud vendor? Let's try that by adding three more nodes to a new cloud platform. Again, the flag to note is [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes), which you're using to specify that these next 3 nodes are running on cloud 2.
+At this point, you're running three nodes on cloud 1. 현재 시점에서 클라우드 1은 3개의 노드를 실행하고 있습니다. 하지만 만약 다른 클라우드에서 리소스를 제공받는다면 어떨까요? 그럼 이제 새 클라우드 플랫폼에 노드를 3개 더 추가해 보겠습니다. 다시 한 번 강조하지만, [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 플래그를 사용하여 다음 3개 노드가 클라우드 2에서 실행 중임을 지정합니다.
 
-In a new terminal, start node 4 on cloud 2:
+새로운 터미널을 열어 클라우드 2에서 노드 4를 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -166,7 +165,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-In a new terminal, start node 5 on cloud 2:
+새로운 터미널을 열어 클라우드 2에서 노드 5를 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -180,7 +179,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-In a new terminal, start node 6 on cloud 2:
+새로운 터미널을 열어 클라우드 2에서 노드 6을 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -196,17 +195,17 @@ $ cockroach start \
 
 ## Step 8. 6개 노드에서 전체 데이터 밸런스 보기
 
-Back on the **Overview** dashboard in Admin UI, hover over the **Replicas per Node** graph again. Because you used [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) to specify that nodes are running on 2 clouds, you'll see an approximately even number of replicas on each node, indicating that CockroachDB has automatically rebalanced replicas across both simulated clouds:
+관리(Admin) UI의 **Overview** 대시보드로 돌아가, **Replicas per Node** (노드 당 복제본) 그래프로 다시 이동합니다. [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 를 사용하여 노드가 2개의 클라우드에서 실행되고 있음을 지정했기 때문에, CockroachDB가 두 개의 클라우드 간 복제본의 균형을 자동으로 재조정하여 각 노드에 거의 동일한 수의 복제본이 나타나는 것을 확인할 수 있다.
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_migration2.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-Note that it takes a few minutes for the Admin UI to show accurate per-node replica counts on hover. This is why the new nodes in the screenshot above show 0 replicas. However, the graph lines are accurate, and you can click **View node list** in the **Summary** area for accurate per-node replica counts as well.
+관리 UI가 호버에서 노드당 복제본 수를 정확하게 표시하는 데 몇 분 정도 걸립니다. 따라서 위의 스크린샷의 새 노드가 0개의 복제본을 표시하는 것입니다. 그러나 그래프의 선은 정확하며, **Summary** 영역의 **View node list** 를 클릭하여 정확한 노드당 복제본 수를 확인할 수 있습니다.
 
 ## Step 9. 모든 데이터를 "cloud 2"로 이송하기
 
-So your cluster is replicating across two simulated clouds. But let's say that after experimentation, you're happy with cloud vendor 2, and you decide that you'd like to move everything there. Can you do that without interruption to your live client traffic? Yes, and it's as simple as running a single command to add a [hard constraint](configure-replication-zones.html#replication-constraints) that all replicas must be on nodes with `--locality=cloud=2`.
+따라서 클러스터가 두 개의 클라우드 간에 복제되는 것입니다. 그런데 이후 사용자가 클라우드 2에 만족하여 모든 것을 해당 클라우드 공급업체로 전환하기로 결정했다고 가정해 보겠습니다. 실시간 클라이언트 트래픽을 중단하지 않고 그 작업을 수행할 수 있을까요? 답은 그렇다, 입니다. 단일 명령을 실행하여 모든 복제본이 `--locality=cloud=2` 를 만족하는 노드에 있어야 하는 [hard constraint](configure-replication-zones.html#replication-constraints) (제약 조건)을 추가하는 간단한 과정을 통해 모든 데이터를 클라우드 2로 이송할 수 있습니다.
 
-In a new terminal, [edit the default replication zone](configure-zone.html):
+새 터미널에서, 기본 복제 영역을 편집합니다. [edit the default replication zone](configure-zone.html):
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -215,19 +214,19 @@ $ cockroach sql --execute="ALTER RANGE default CONFIGURE ZONE USING constraints=
 
 ## Step 10. 데이터 이송 확인하기
 
-Back on the **Overview** dashboard in the Admin UI, hover over the **Replicas per Node** graph again. Very soon, you'll see the replica count double on nodes 4, 5, and 6 and drop to 0 on nodes 1, 2, and 3:
+관리(Admin) UI의 **Overview** 대시보드로 돌아가, **Replicas per Node** (노드 당 복제본) 그래프로 다시 이동합니다. 노드 4, 5, 6에서는 복제본 수가 2배로 늘어나고 노드 1, 2, 3에서는 0으로 떨어지는 것을 확인할 수 있습니다.
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_migration3.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-This indicates that all data has been migrated from cloud 1 to cloud 2. In a real cloud migration scenario, at this point you would update the load balancer to point to the nodes on cloud 2 and then stop the nodes on cloud 1. But for the purpose of this local simulation, there's no need to do that.
+이는 모든 데이터가 클라우드 1에서 클라우드 2로 이송되었음을 의미합니다. 실제 클라우드 간 이송 시나리오에서는 로드 밸런서를 업데이트하여 클라우드 2의 노드를 가리킨 다음 클라우드 1의 노드를 중지합니다. 하지만 이 로컬 시뮬레이션에서는 그런 작업이 필요하지 않습니다.
 
 ## Step 11. 클러스터 정지시키기
 
-Once you're done with your cluster, stop YCSB by switching into its terminal and pressing **CTRL-C**. Then do the same for HAProxy and each CockroachDB node.
+ 모든 작업을 완료했다면, YCSB 에 해당하는 터미널로 전환한 후 **CTRL-C** 를 눌러 YCSB를 중지합니다. HAProxy 및 각 CockroachDB 노드에 대해 동일한 작업을 수행합니다.
 
-{{site.data.alerts.callout_success}}For the last node, the shutdown process will take longer (about a minute) and will eventually force kill the node. This is because, with only 1 node still online, a majority of replicas are no longer available (2 of 3), and so the cluster is not operational. To speed up the process, press <strong>CTRL-C</strong> a second time.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}마지막 노드의 경우, 종료 프로세스가 더 오래 걸리고(약 1분) 결국 노드를 강제로 삭제할 것입니다. 이는 1개의 노드만 온라인 상태일 때 대부분의 복제본은 더 이상 사용할 수 없는 상태이므로(3개 중 2개) 클러스터가 작동하지 않기 때문입니다. 종료 프로세스의 속도를 높이려면 <strong>CTRL-C</strong>를 한 번 더 누르십시오.{{site.data.alerts.end}}
 
-If you do not plan to restart the cluster, you may want to remove the nodes' data stores and the HAProxy config file:
+클러스터를 다시 시작할 계획이 없다면 노드의 데이터 저장소와 HAProxy 구성 파일을 제거해도 됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -240,7 +239,7 @@ CockroachDB의 기타 주요 이점 및 기능을 살펴보세요.
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
 
-You may also want to learn other ways to control the location and number of replicas in a cluster:
+클러스터에서 복제본 위치 및 수를 제어하는 다른 방법을 배우고 싶다면 아래를 참고하십시오.
 
 - [Even Replication Across Datacenters](configure-replication-zones.html#even-replication-across-datacenters)
 - [Multiple Applications Writing to Different Databases](configure-replication-zones.html#multiple-applications-writing-to-different-databases)
