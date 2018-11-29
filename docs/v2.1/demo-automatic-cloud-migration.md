@@ -4,7 +4,7 @@ summary: Use a local cluster to simulate migrating from one cloud platform to an
 toc: true
 ---
 
-CockroachDB's flexible [replication controls](configure-replication-zones.html) make it trivially easy to run a single CockroachDB cluster across cloud platforms and to migrate data from one cloud to another without any service interruption. This page walks you through a local simulation of the process.
+CockroachDB의 유연한 [replication controls](configure-replication-zones.html) 를 통해 클라우드 플랫폼 간에 단일 CockroachDB 클러스터를 3배 이상 쉽게 실행하고 서로 다른 클라우드 간에 서비스 중단없이 데이터를 이송할 수 있습니다. 이 페이지에서는 그러한 프로세스의 로컬 시뮬레이션에 대해 안내합니다.
 
 
 ## demo 영상 보기
@@ -13,20 +13,20 @@ CockroachDB's flexible [replication controls](configure-replication-zones.html) 
 
 ## Step 1. 필수 구성 요소 설치하기
 
-In this tutorial, you'll use CockroachDB, the HAProxy load balancer, and CockroachDB's version of the YCSB load generator, which requires Go. Before you begin, make sure these applications are installed:
+이 튜토리얼에서는 CockroachDB, HAProxy 로드 밸런서(load balancer) 및 Go YCSB 로드 생성기(load generator)의 CockroachDB 버전을 사용합니다. 시작하기 전에, 다음과 같이 응용 프로그램을 설치하십시오.
 
 - Install the latest version of [CockroachDB](install-cockroachdb.html).
 - Install [HAProxy](http://www.haproxy.org/). If you're on a Mac and using Homebrew, use `brew install haproxy`.
 - Install [Go](https://golang.org/doc/install) version 1.9 or higher. If you're on a Mac and using Homebrew, use `brew install go`. You can check your local version by running `go version`.
 - Install the [CockroachDB version of YCSB](https://github.com/cockroachdb/loadgen/tree/master/ycsb): `go get github.com/cockroachdb/loadgen/ycsb`
 
-Also, to keep track of the data files and logs for your cluster, you may want to create a new directory (e.g., `mkdir cloud-migration`) and start all your nodes in that directory.
+또한 클러스터의 데이터 파일 및 로그를 추적하려면 새 디렉토리 (e.g., `mkdir cloud-migration`) 를 생성하고, 생성된 디렉토리에서 모든 노드를 시작할 수 있습니다.
 
 ## Step 2. "cloud 1" 에서 3-노드 클러스터 시작하기
 
-If you've already [started a local cluster](start-a-local-cluster.html), the commands for starting nodes should be familiar to you. The new flag to note is [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes), which accepts key-value pairs that describe the topography of a node. In this case, you're using the flag to specify that the first 3 nodes are running on cloud 1.
+이미 로컬 클러스터를 시작한 경우 [started a local cluster](start-a-local-cluster.html), 노드의 시작을 위한 명령어를 숙지해야 합니다. 새로운 플래그는  [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 로, 노드의 지형도를 묘사하는 키 값의 쌍을 받아들입니다. 이 경우, 첫 3개의 노드가 클라우드 1에서 실행 중임을 명시하는 플래그를 사용합니다.
 
-In a new terminal, start node 1 on cloud 1:
+새로운 터미널을 열고, 클라우드 1에서 노드 1을 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -40,7 +40,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~~
 
-In a new terminal, start node 2 on cloud 1:
+새로운 터미널을 열고, 클라우드 1에서 노드 2을 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -54,7 +54,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-In a new terminal, start node 3 on cloud 1:
+새로운 터미널을 열고, 클라우드 1에서 노드 3을 시작합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -70,7 +70,7 @@ $ cockroach start \
 
 ## Step 3. 클러스터 초기화하기
 
-In a new terminal, use the [`cockroach init`](initialize-a-cluster.html) command to perform a one-time initialization of the cluster:
+새로운 터미널에서, [`cockroach init`](initialize-a-cluster.html) 명령어를 사용하여 클러스터를 초기화합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -81,7 +81,7 @@ $ cockroach init \
 
 ## Step 4. HAProxy 로드 밸런싱 설정하기
 
-You're now running 3 nodes in a simulated cloud. Each of these nodes is an equally suitable SQL gateway to your cluster, but to ensure an even balancing of client requests across these nodes, you can use a TCP load balancer. Let's use the open-source [HAProxy](http://www.haproxy.org/) load balancer that you installed earlier.
+You're now running 3 nodes in a simulated cloud. Each of these nodes is an equally suitable SQL gateway to your cluster, but to ensure an even balancing of client requests across these nodes, you can use a TCP load balancer. 이제 시뮬레이션 클라우드에서 3개의 노드를 실행하고 있습니다. 이러한 각 노드는 클러스터에 동일하게 적합한 SQL 게이트웨이이지만 이러한 노드 간에 클라이언트 요청의 균형을 맞추기 위해 TCP 로드 밸런서를 사용할 수 있습니다. 앞서 설치한 [HAProxy](http://www.haproxy.org/) 로드 밸런서(load balancer) 오픈소스를 사용하십시오. 
 
 In a new terminal, run the [`cockroach gen haproxy`](generate-cockroachdb-resources.html) command, specifying the port of any node:
 
@@ -92,7 +92,7 @@ $ cockroach gen haproxy \
 --host=localhost:26257
 ~~~
 
-This command generates an `haproxy.cfg` file automatically configured to work with the 3 nodes of your running cluster. In the file, change `bind :26257` to `bind :26000`. This changes the port on which HAProxy accepts requests to a port that is not already in use by a node and that will not be used by the nodes you'll add later.
+이 명령은 실행 중인 클러스터의 3개 노드에서 작동하도록 자동으로 구성된 `haproxy.cfg` 파일을 생성합니다. 이 파일에서, `bind :26257` 를 `bind :26000` 으로 변경합니다. 이는 This changes the port on which HAProxy accepts requests to a port that is not already in use by a node and that will not be used by the nodes you'll add later.
 
 ~~~
 global
