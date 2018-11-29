@@ -86,7 +86,7 @@ $ cockroach sql --insecure --host=localhost:26257
 
 SQL 셸을 종료합니다.
 
-{% include copy-clipboard.html %}포
+{% include copy-clipboard.html %}
 ~~~ sql
 > \q
 ~~~
