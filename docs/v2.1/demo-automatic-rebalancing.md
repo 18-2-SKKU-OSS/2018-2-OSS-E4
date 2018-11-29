@@ -15,12 +15,12 @@ toc: true
 
 ## Step 1. 3-노드 클러스터 시작하기
 
-[cockroach start](start-a-node.html) 명령을 사용하여 3개의 노드를 시작합니다.
+[`cockroach start`](start-a-node.html) 명령을 사용하여 3개의 노드를 시작합니다.
 
-새 터미널에서 첫번째 노드를 추가하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
+# 새 터미널에서 첫번째 노드를 시작하십시오.
 $ cockroach start \
 --insecure \
 --store=scale-node1 \
@@ -29,10 +29,10 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-새 터미널에서 두번째 노드를 추가하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
+# 새 터미널에서 두번째 노드를 시작하십시오.
 $ cockroach start \
 --insecure \
 --store=scale-node2 \
@@ -41,10 +41,10 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-새 터미널에서 세번째 노드를 추가하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
+# 새 터미널에서 세번째 노드를 시작하십시오.
 $ cockroach start \
 --insecure \
 --store=scale-node3 \
@@ -100,7 +100,8 @@ SQL 쉘을 종료합니다
 
 CockroachDB에서는 [레플리케이션 영역](configure-replication-zones.html)을 사용하여 복제본의 수와 위치를 제어합니다. 처음에는 각 데이터 범위를 세 번 복사하도록 설정된 전체 클러스터에 대한 단일 기본 레플리케이션 영역이 있습니다. 이 데모에서는 이 기본 레플리케이션 요소가 적합합니다.
 
-그러나 기본 레플리케이션 영역에서는 단일 범위의 데이터가 두 범위로 분할되는 크기도 정의합니다. Since you want to create many ranges quickly and then see how CockroachDB automatically rebalances them, use [`ALTER RANGE ... CONFIGURE ZONE`](configure-zone.html) to reduce the max range size from the default 67108864 bytes (64MB) to cause ranges to split more quickly: 많은 범위를 신속하게 만들고 CockroachDB가 자동으로 균형을 조정하는 방법을 보고 싶다면 [ALTER RANGE ... CONFIGURE ZONE`] (configure-zone.html)을 사용하여 최대 범위 크기를 기본 67108864 바이트 (64MB) 범위가 더 빨리 분할되게하려면 다음을 수행하십시오.
+그러나 기본 레플리케이션 영역에서는 단일 범위의 데이터가 두 범위로 분할되는 크기도 정의합니다. 많은 범위를 신속하게 만들고 CockroachDB가 자동으로 균형을 조정하는 방법을 보고 싶다면, [`ALTER RANGE ... CONFIGURE ZONE`](configure-zone.html)을 사용하여 최대 범위 크기를 기본 67108864 바이트 (64MB)로 범위가 더 빨리 분할되게 하려면 다음을 수행하십시오.
+
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --execute="ALTER RANGE default CONFIGURE ZONE USING range_min_bytes=1, range_max_bytes=262144;" --insecure --host=localhost:26257
@@ -126,23 +127,23 @@ $ cockroach sql --execute="SHOW ZONE CONFIGURATION FOR RANGE default;" --insecur
 
 ## Step 5. `block_writer` 프로그램을 다운로드하고 실행하기
 
-CockroachDB provides a number of [example programs in Go](https://github.com/cockroachdb/examples-go) for simulating client workloads. The program you'll use for this demonstration is called [`block_writer`](https://github.com/cockroachdb/examples-go/tree/master/block_writer). It will simulate multiple clients inserting data into the cluster.
+CockroachDB는 클라이언트 작업 부하 시뮬레이션을 위한 많은 [예제 프로그램](https://github.com/cockroachdb/examples-go)을 제공합니다. 이 데모에 사용할 프로그램을 [`block_writer`](https://github.com/cockroachdb/examples-go/tree/master/block_writer)라고 합니다. 그것은 클러스터에 데이터를 삽입하는 여러 클라이언트를 시뮬레이션합니다.
 
-Download and install the program:
+프로그램을 다운로드하고 설치합니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ go get github.com/cockroachdb/examples-go/block_writer
 ~~~
 
-Then run the program for 1 minute, long enough to generate plenty of ranges:
+그런 다음 다양한 범위를 생성할 수 있을 만큼 길게 프로그램을 1분간 실행합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ block_writer -duration 1m
 ~~~
 
-Once it's running, `block_writer` will output the number of rows written per second:
+실행되면 `block_writer`는 초당 작성된 행 수를 출력합니다.
 
 ~~~
  1s:  776.7/sec   776.7/sec
@@ -159,17 +160,17 @@ Once it's running, `block_writer` will output the number of rows written per sec
 
 ## Step 6. 복제 수가 증가하는 것을 지켜보기
 
-Open the Admin UI at `http://localhost:8080` and you’ll see the bytes, replica count, and other metrics increase as the `block_writer` program inserts data.
+`http : // localhost : 8080`에서 Admin UI를 열면 `block_writer` 프로그램이 데이터를 삽입할 때마다 바이트, 복제 횟수 및 기타 통계가 증가하는 것을 볼 수 있습니다. 
 
 <img src="{{ 'images/v2.1/scalability1.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
 ## Step 7. 2개의 노드를 추가하기
 
-Adding capacity is as simple as starting more nodes and joining them to the running cluster:
+더 많은 노드를 시작하고 실행 중인 클러스터에 연결하는 것처럼 용량을 추가하는 것이 간단합니다: 
 
 {% include copy-clipboard.html %}
 ~~~ shell
-# In a new terminal, start node 4:
+# 새 터미널에서 네번째 노드를 시작하십시오.
 $ cockroach start \
 --insecure \
 --store=scale-node4 \
@@ -180,7 +181,7 @@ $ cockroach start \
 
 {% include copy-clipboard.html %}
 ~~~ shell
-# In a new terminal, start node 5:
+# 새 터미널에서 네번째 노드를 시작하십시오.
 $ cockroach start \
 --insecure \
 --store=scale-node5 \
@@ -191,17 +192,17 @@ $ cockroach start \
 
 ## Step 8. 5개 노드 모두에서 데이터 재조정보기
 
-Back in the Admin UI, you'll now see 5 nodes listed. At first, the bytes and replica count will be lower for nodes 4 and 5. Very soon, however, you'll see those metrics even out across all nodes, indicating that data has been automatically rebalanced to utilize the additional capacity of the new nodes.
+Admin UI로 돌아가면 5개의 노드가 나열된 것을 볼 수 있습니다. 처음에는 노드 4와 5의 바이트 및 복제본 수가 더 낮을 것입니다. 그러나 머지않아 모든 노드에 걸쳐 이러한 메트릭스가 표시되므로 새 노드의 추가 용량을 활용하기 위해 데이터가 자동으로 재조정됩니다.
 
 <img src="{{ 'images/v2.1/scalability2.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
 ## Step 9.  클러스터를 중지하기
 
-Once you're done with your test cluster, stop each node by switching to its terminal and pressing **CTRL-C**.
+테스트 클러스터를 완료한 후 해당 터미널로 전환하고 **CTRL-C**를 눌러 각 노드를 중지합니다.
 
-{{site.data.alerts.callout_success}}For the last node, the shutdown process will take longer (about a minute) and will eventually force kill the node. This is because, with only 1 node still online, a majority of replicas are no longer available (2 of 3), and so the cluster is not operational. To speed up the process, press <strong>CTRL-C</strong> a second time.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}} 마지막 노드의 경우 종료 프로세스가 더 오래 걸리고(약 1분) 노드를 강제로 삭제합니다. 이는 1개의 노드만 온라인 상태일 때 대부분의 복제본이 더 이상 사용할 수 없으므로(3분의 2) 클러스터가 작동하지 않기 때문입니다. 프로세스 속도를 높이려면 <strong>CTRL-C </strong>을 한 번 더 누르십시오. {{site.data.alerts.end}}
 
-If you do not plan to restart the cluster, you may want to remove the nodes' data stores:
+클러스터를 다시 시작할 계획이 없는 경우 노드의 데이터 저장소를 제거하고 싶을 것입니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -210,6 +211,6 @@ $ rm -rf scale-node1 scale-node2 scale-node3 scale-node4 scale-node5
 
 ## 더 알아보기
 
-Explore other core CockroachDB benefits and features:
+CockroachDB의 다른 주요 이점 및 특징에 대해 알아보십시오:
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
