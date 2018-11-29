@@ -1,5 +1,5 @@
 ---
-title: COMMIT
+title : COMMIT
 summary: Commit a transaction with the COMMIT statement in CockroachDB.
 toc: true
 ---
