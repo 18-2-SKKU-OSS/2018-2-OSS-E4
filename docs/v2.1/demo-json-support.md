@@ -9,15 +9,14 @@ toc: true
 
 ## 1단계. 필수 구성 요소 설치
 
-<div class="filters filters-big clearfix">
-    <button class="filter-button" data-scope="go">Go</button>
+<div class="filters filters-big clearfix">	<div class="filters filters-big clearfix">
+    <button class="filter-button" data-scope="go">Go</button>	   
     <button class="filter-button" data-scope="python">Python</button>
 </div>
-
-<div class="filter-content" markdown="1" data-scope="go">
-- 최신 버전의 [CockroachDB](install-cockroachdb.html)를 설치하십시오.
+    
+- 최신 버전의 [CockroachDB](install-cockroachdb.html)를 설치하십시오. 
 - [Go](https://golang.org/dl/)의 최신 버전을 설치하십시오 : `brew install go`
-- [PostgreSQL 드라이버] (https://github.com/lib/pq)를 설치하십시오 : `go get github.com / lib / pq`
+- [PostgreSQL 드라이버](https://github.com/lib/pq)를 설치하십시오 : `go get github.com / lib / pq`
 </div>
 
 <div class="filter-content" markdown="1" data-scope="python">
@@ -50,7 +49,7 @@ $ cockroach user set maxroach --insecure --host=localhost:26257
 
 ## 4단계. 데이터베이스 생성 및 권한 부여
 
-`root`사용자로서, [빌트인 SQL 클라이언트](built-in-sql-client.html 사용)를 엽니다:
+`root`사용자로서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 엽니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -116,7 +115,6 @@ $ cockroach sql --insecure --host=localhost:26257
     <button class="filter-button" data-scope="python">Python</button>
 </div>
 
-<section class="filter-content" markdown="1" data-scope="go">
 이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다.
 Reddit API는 페이지당 25 개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
 
@@ -139,7 +137,6 @@ $ go run json-sample.go
 ~~~
 </section>
 
-<section class="filter-content" markdown="1" data-scope="python">
 이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다. Reddit API는 페이지당 25 개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
 
 1. API에 요청합니다.
@@ -166,7 +163,7 @@ $ python json-sample.py
 
 ## 7단계. 데이터 쿼리
 
-SQL 셸이 실행 중인 터미널로 돌아가서 데이터 행이 테이블에 삽입되고 있는지 확인합니다:
+SQL쉘이 실행 중인 터미널로 돌아가서 데이터 행이 테이블에 삽입되고 있는지 확인합니다:
 
 {% include copy-clipboard.html %}
 ~~~ sql
