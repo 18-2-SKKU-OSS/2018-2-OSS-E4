@@ -19,7 +19,6 @@ toc: true
 - [PostgreSQL 드라이버](https://github.com/lib/pq)를 설치하십시오 : `go get github.com / lib / pq`
 </div>
 
-<div class="filter-content" markdown="1" data-scope="python">
 - 최신 버전의 [CockroachDB](install-cockroachdb.html)를 설치하십시오.
 - [Python psycopg2 드라이버](http://initd.org/psycopg/docs/install.html)를 설치하십시오 : `pip install psycopg2`
 - [Python 리퀘스트 라이브러리](http://docs.python-requests.org/en/master/) 설치하십시오 : `pip install requests`
