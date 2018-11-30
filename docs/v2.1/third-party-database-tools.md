@@ -4,7 +4,7 @@ summary: Learn about third-party software that interoperates with CockroachDB.
 toc: true
 ---
 
-이것은 포스트그레스와 호환되는 [드라이버](build-an-app-with-cockroachdb.html), [ORMs](build-an-app-with-cockroachdb.html) 및 기타 타입의 제 3자 데이터베이스 툴을 CockroachDB와 함께 사용할 수 있게 합니다. 일부 툴은 현재로서는 부분적으로 만 지원되지만, 다른 툴은 철저히 검사 및 테스트되었습니다.
+이것은 포스트그레스와 호환되는 [드라이버](build-an-app-with-cockroachdb.html), [ORMs](build-an-app-with-cockroachdb.html) 및 기타 타입의 제 3자 데이터베이스 툴을 CockroachDB와 함께 사용할 수 있게 합니다. 일부 툴은 현재로서는 부분적으로만 지원되지만, 다른 툴은 철저히 검사 및 테스트되었습니다.
 
 <span class="version-tag">새로운 버전 2.1:</span> [DBeaver 데이터베이스 도구][dbeaver]는 우리가 전폭적으로 지원한다고 주장하는 툴 중 하나입니다.
 
@@ -39,7 +39,7 @@ DBeaver를 시작하고 메뉴에서 **Database > New Connection** 을 선택하
 
 <img src="{{ 'images/v2.1/dbeaver-02-cockroachdb-connection-settings.png' | relative_url }}" alt="DBeaver - CockroachDB connection settings" style="border:1px solid #eee;max-width:100%" />
 
-네트워크 설정에서 **SSL**탭을 클릭하십시오. 아래 스크린 샷처럼 보일 것입니다.
+네트워크 설정에서 **SSL**탭을 클릭하십시오. 아래 스크린샷처럼 보일 것입니다.
 
 <img src="{{ 'images/v2.1/dbeaver-03-ssl-tab.png' | relative_url }}" alt="DBeaver - SSL tab" style="border:1px solid #eee;max-width:100%" />
 
@@ -48,7 +48,7 @@ DBeaver를 시작하고 메뉴에서 **Database > New Connection** 을 선택하
 - **Root certificate**: 안전한 클러스터를 위해 생성한 `ca.crt` 파일을 사용하십시오.
 - **SSL certificate**: 클러스터의 루트 인증서에서 생성된 클라이언트 인증서를 사용하십시오. 루트 사용자의 경우, 이 이름은`client.root.crt`로 명명됩니다. 추가 보안을 위해 DBeaver와 함께 사용하기 위해 새 데이터베이스 사용자 및 클라이언트 인증서를 만들 수 있습니다.
 - **SSL certificate key**:  DBeaver는 Java 응용 프로그램이기 때문에 아래에 표시된 것과 같이 [OpenSSL 명령](https://wiki.openssl.org/index.php/Command_Line_Utilities#pkcs8_.2F_pkcs5)을 사용하여 키 파일을 `*.pk8` 형식으로 변환해야 합니다. 
-파일을 생성했으면 여기에 위치를 입력하십시오. 이 예제에서 파일 이름은 `client.root.pk8`이다.
+파일을 생성했으면 여기에 위치를 입력하십시오. 이 예제에서 파일 이름은 `client.root.pk8`입니다.
     {% include copy-clipboard.html %}
     ~~~ console
     $ openssl pkcs8 -topk8 -inform PEM -outform DER -in client.root.key -out client.root.pk8 -nocrypt
