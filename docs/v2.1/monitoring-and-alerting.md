@@ -48,15 +48,15 @@ replicas_quiescent{store="1"} 20
 ...
 ~~~
 
-{{site.data.alerts.callout_info}}In addition to using the exported timeseries data to monitor a cluster via an external system, you can write alerting rules against them to make sure you are promptly notified of critical events or issues that may require intervention or investigation. See <a href="#events-to-alert-on">Events to Alert On</a> for more details.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}외부 시스템을 통해 클러스터를 모니터링하기 위해 내보낸 timeseries 데이터를 사용하는 것 외에도. 더 많은 디테일 참고를 위해 <a href="#events-to-alert-on">Events to Alert On</a>를 보십시오.{{site.data.alerts.end}}
 
-### Health endpoints
+### 건강 엔드포인트
 
-CockroachDB provides two HTTP endpoints for checking the health of individual nodes.
+CockroachDB는 개별 노드의 상태를 확인하기 위해 두개의 HTTP 엔드포인트를 제공합니다. 
 
-#### /health
+#### /건강
 
-If a node is down, the `http://<host>:<http-port>/health` endpoint returns a `Connnection refused` error:
+노드가 중단된 경우, `http://<host>:<http-port>/health` 엔드포인트는 `Connnection refused` 에러를 리턴합니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -67,7 +67,7 @@ $ curl http://localhost:8080/health
 curl: (7) Failed to connect to localhost port 8080: Connection refused
 ~~~
 
-Otherwise, it returns an HTTP `200 OK` status response code with details about the node:
+그렇지 않으면, 노드에 대한 세부정보가 포함된 HTTP `200 OK` 상태 응답 코드를 반환합니다:
 
 ~~~
 {
@@ -92,11 +92,11 @@ Otherwise, it returns an HTTP `200 OK` status response code with details about t
 
 #### /health?ready=1
 
-The `http://<node-host>:<http-port>/health?ready=1` endpoint returns an HTTP `503 Service Unavailable` status response code with an error in the following scenarios:
+`http://<node-host>:<http-port>/health?ready=1` 의 끝점은 HTTP `503 서비스를 사용할 수 없음` 상태 응답 코드를 반환하고 다음과 같은 시나리오 오류를 발생시킵니다;
 
-- The node is being [decommissioned](remove-nodes.html) or in the process of [shutting down](stop-a-node.html) and is therefore not able to accept SQL connections and execute queries. This is especially useful for making sure load balancers do not direct traffic to nodes that are live but not "ready", which is a necessary check during [rolling upgrades](upgrade-cockroach-version.html).
-    {{site.data.alerts.callout_success}}If you find that your load balancer's health check is not always recognizing a node as unready before the node shuts down, you can increase the <code>server.shutdown.drain_wait</code> <a href="cluster-settings.html">cluster setting</a> to cause a node to return <code>503 Service Unavailable</code> even before it has started shutting down.{{site.data.alerts.end}}
-- The node is unable to communicate with a majority of the other nodes in the cluster, likely because the cluster is unavailable due to too many nodes being down.
+- 노드가 [decommissioned](remove-nodes.html) ㄸ;ㅗ는 [shutting down](stop-a-node.html)의 과정에 있으므로 SQL 연결과 쿼리를 실행하는 것이 불가능할 수 있습니다. 이 기능은 특히 로드 밸런서가 존재는 하지만 "ready" 상태가 아닌 노드로 직접 전송하지 않는데에 유용할 수 있습니다. 이 기능은 [롤링 업그레이드](upgrade-cockroach-version.html) 동안에 편리한 확인입니다.
+    {{site.data.alerts.callout_success}}만약 로드 밸런서의 상태 체크에서 노드가 종료되기 전의 노드 상태를 준비되지 않은 것으로 인식하지 않는 것을 발견했다면, <code>server.shutdown.drain_wait</code> <a href="cluster-settings.html">클러스터 세팅</a> 을 늘릴 수 있습니다. 이것은 심지어 셧다운을 하기 이전에 노드가 <code>503 Service Unavailable</code>를 반환하게 합니다.{{site.data.alerts.end}}
+- 노드는 클러스터에 있는 다른 주요한 노드와 의사소통이 불가능할 수 있는데, 그것은 노드가 너무 많아 클러스터를 사용할 수 없기 때문입니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -110,7 +110,7 @@ $ curl http://localhost:8080/health?ready=1
 }
 ~~~
 
-Otherwise, it returns an HTTP `200 OK` status response code with an empty body:
+그렇지 않으면, 비어있는 상태의 HTTP `200 OK` 상태 응답 코드를 반환합니다. :
 
 ~~~
 {
@@ -118,22 +118,22 @@ Otherwise, it returns an HTTP `200 OK` status response code with an empty body:
 }
 ~~~
 
-### Raw status endpoints
+### 원시적인 상태의 엔드포인트
 
-Several endpoints return raw status metrics in JSON at `http://<host>:<http-port>/#/debug`. Feel free to investigate and use these endpoints, but note that they are subject to change.  
+몇몇 엔드포인트는 `http://<host>:<http-port>/#/debug`에 있는 JSON에 원시 상태의 메트릭을 반환합니다. 이러한 엔드포인트를 자유롭게 조사하고 사용할 수 있습니다. 그러나 그것들이 바뀔 수 있다는 것을 인지하십시오.  
 
 <img src="{{ 'images/v2.1/raw-status-endpoints.png' | relative_url }}" alt="Raw Status Endpoints" style="border:1px solid #eee;max-width:100%" />
 
-### Node status command
+### 노드 상태 명령
 
-The [`cockroach node status`](view-node-details.html) command gives you metrics about the health and status of each node.
+[`cockroach node status`](view-node-details.html) 명령은 각 노드의 상태에 대해 메트릭을 제공합니다.
 
-- With the `--ranges` flag, you get granular range and replica details, including unavailability and under-replication.
-- With the `--stats` flag, you get granular disk usage details.
-- With the `--decommission` flag, you get details about the [node decommissioning](remove-nodes.html) process.
-- With the `--all` flag, you get all of the above.
+- `--ranges` 표시에서, 비가동률과 낮은 복제 기능을 포함하여세부적인 범위와 복제본의 세부 정보를 얻습니다.
+- `--stats` 표시에서, 디스크 사용량의 세부 정보를 얻습니다.
+- `--decommission` 표시에서, [node decommissioning](remove-nodes.html) 프로세스의 디테일에 대해서 얻습니다.
+- `--all` 표시에서, 위의 모든 것을 얻습니다.
 
-## Events to alert on
+## 경고할 이벤트
 
 Active monitoring helps you spot problems early, but it is also essential to create alerting rules that promptly send notifications when there are events that require investigation or intervention. This section identifies the most important events to create alerting rules for, with the [Prometheus Endpoint](#prometheus-endpoint) metrics to use for detecting the events.
 
