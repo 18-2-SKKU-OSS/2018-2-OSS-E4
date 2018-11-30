@@ -4,10 +4,10 @@ summary: Use a local cluster to explore how CockroachDB can store and query unst
 toc: true
 ---
 
-This page walks you through a simple demonstration of how CockroachDB can store and query unstructured [`JSONB`](jsonb.html) data from a third-party API, as well as how an [inverted index](inverted-indexes.html) can optimize your queries.
+이 페이지에서는 [역 인덱스](inverted-indexes.html)가 당신의 쿼리를 최적화하는 방법 뿐만 아니라 CockroachDB가 타사 API의 구조화되지 않은 [`JSONB`](jsonb.html) 데이터를 저장하고 쿼리하는 방법에 대한 간단한 설명을 보여줍니다. 
 
 
-## Step 1. Install prerequisites
+## 1단계. 필수 구성 요소 설치
 
 <div class="filters filters-big clearfix">
     <button class="filter-button" data-scope="go">Go</button>
@@ -15,20 +15,20 @@ This page walks you through a simple demonstration of how CockroachDB can store 
 </div>
 
 <div class="filter-content" markdown="1" data-scope="go">
-- Install the latest version of [CockroachDB](install-cockroachdb.html).
-- Install the latest version of [Go](https://golang.org/dl/): `brew install go`
-- Install the [PostgreSQL driver](https://github.com/lib/pq): `go get github.com/lib/pq`
+- 최신 버전의 [CockroachDB](install-cockroachdb.html)를 설치하십시오.
+- [Go](https://golang.org/dl/)의 최신 버전을 설치하십시오 : `brew install go`
+- [PostgreSQL 드라이버] (https://github.com/lib/pq)를 설치하십시오 : `go get github.com / lib / pq`
 </div>
 
 <div class="filter-content" markdown="1" data-scope="python">
-- Install the latest version of [CockroachDB](install-cockroachdb.html).
-- Install the [Python psycopg2 driver](http://initd.org/psycopg/docs/install.html): `pip install psycopg2`
-- Install the [Python Requests library](http://docs.python-requests.org/en/master/): `pip install requests`
+- 최신 버전의 [CockroachDB](install-cockroachdb.html)를 설치하십시오.
+- [Python psycopg2 드라이버](http://initd.org/psycopg/docs/install.html)를 설치하십시오 : `pip install psycopg2`
+- [Python 리퀘스트 라이브러리](http://docs.python-requests.org/en/master/) 설치하십시오 : `pip install requests`
 </div>
 
-## Step 2. Start a single-node cluster
+## 2단계. 단일 노드 클러스터 시작
 
-For the purpose of this tutorial, you need only one CockroachDB node running in insecure mode:
+이 튜토리얼의 목적을 위해, 비보안 모드에서 실행되는 CockroachDB 단 하나의 노드가 필요합니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -39,48 +39,48 @@ $ cockroach start \
 --http-addr=localhost:8080
 ~~~
 
-## Step 3. Create a user
+## 3단계. 사용자 생성
 
-In a new terminal, as the `root` user, use the [`cockroach user`](create-and-manage-users.html) command to create a new user, `maxroach`.
+새 터미널에서 `root` 사용자로 [`cockroach user`](create-and-manage-users.html) 명령을 사용하여 새로운 사용자인 `maxroach`를 생성합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach user set maxroach --insecure --host=localhost:26257
 ~~~
 
-## Step 4. Create a database and grant privileges
+## 4단계. 데이터베이스 생성 및 권한 부여
 
-As the `root` user, open the [built-in SQL client](use-the-built-in-sql-client.html):
+`root`사용자로서, [빌트인 SQL 클라이언트](built-in-sql-client.html 사용)를 엽니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --insecure --host=localhost:26257
 ~~~
 
-Next, create a database called `jsonb_test`:
+다음으로,`jsonb_test`라는 데이터베이스를 생성하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > CREATE DATABASE jsonb_test;
 ~~~
 
-Set the database as the default:
+데이터베이스를 기본값으로 설정하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > SET DATABASE = jsonb_test;
 ~~~
 
-Then [grant privileges](grant.html) to the `maxroach` user:
+그런 다음 `maxroach`사용자에게 [권한 부여](grant.html)하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > GRANT ALL ON DATABASE jsonb_test TO maxroach;
 ~~~
 
-## Step 5. Create a table
+## 5단계. 테이블 생성
 
-Still in the SQL shell, create a table called `programming`:
+여전히 SQL 쉘에서 `programming`이라는 테이블을 생성합니다:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -107,9 +107,9 @@ Still in the SQL shell, create a table called `programming`:
 +--------------+-------------------------------------------------+
 ~~~
 
-## Step 6. Run the code
+## 6단계. 코드 실행
 
-Now that you have a database, user, and a table, let's run code to insert rows into the table.
+이제 데이터베이스, 사용자 및 테이블이 있으므로 테이블에 행을 삽입하는 코드를 실행해 봅시다.
 
 <div class="filters filters-big clearfix">
     <button class="filter-button" data-scope="go">Go</button>
@@ -117,20 +117,21 @@ Now that you have a database, user, and a table, let's run code to insert rows i
 </div>
 
 <section class="filter-content" markdown="1" data-scope="go">
-The code queries the [Reddit API](https://www.reddit.com/dev/api/) for posts in [/r/programming](https://www.reddit.com/r/programming/). The Reddit API only returns 25 results per page; however, each page returns an `"after"` string that tells you how to get the next page. Therefore, the program does the following in a loop:
+이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다.
+Reddit API는 페이지당 25 개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
 
-1. Makes a request to the API.
-2. Inserts the results into the table and grabs the `"after"` string.
-3. Uses the new `"after"` string as the basis for the next request.
+1. API에 요청합니다.
+2. 테이블에 결과를 삽입하고 `"after"`문자열을 가져옵니다.
+3. 새로운 `"after"`문자열을 다음 요청의 기초로 사용합니다.
 
-Download the <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/json/json-sample.go" download><code>json-sample.go</code></a> file, or create the file yourself and copy the code into it:
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/json/json-sample.go" download><code>json-sample.go</code></a> 파일을 다운로드하거나, 직접 파일을 만들고 코드를 복사하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ go
 {% include {{ page.version.version }}/json/json-sample.go %}
 ~~~
 
-In a new terminal window, navigate to your sample code file and run it:
+새 터미널 창에서 샘플 코드 파일을 탐색하여 실행하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -139,21 +140,21 @@ $ go run json-sample.go
 </section>
 
 <section class="filter-content" markdown="1" data-scope="python">
-The code queries the [Reddit API](https://www.reddit.com/dev/api/) for posts in [/r/programming](https://www.reddit.com/r/programming/). The Reddit API only returns 25 results per page; however, each page returns an `"after"` string that tells you how to get the next page. Therefore, the program does the following in a loop:
+이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다. Reddit API는 페이지당 25 개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
 
-1. Makes a request to the API.
-2. Grabs the `"after"` string.
-3. Inserts the results into the table.
-4. Uses the new `"after"` string as the basis for the next request.
+1. API에 요청합니다.
+2. `"after"'문자열을 가져옵니다.
+3. 결과를 테이블에 삽입합니다.
+4. 새로운 `"after"` 문자열을 다음 요청의 기초로 사용합니다.
 
-Download the <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/json/json-sample.py" download><code>json-sample.py</code></a> file, or create the file yourself and copy the code into it:
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/json/json-sample.go" download><code>json-sample.go</code></a> 파일을 다운로드하거나, 직접 파일을 만들고 코드를 복사하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ python
 {% include {{ page.version.version }}/json/json-sample.py %}
 ~~~
 
-In a new terminal window, navigate to your sample code file and run it:
+새 터미널 창에서 샘플 코드 파일을 탐색하여 실행하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -161,11 +162,11 @@ $ python json-sample.py
 ~~~
 </section>
 
-The program will take awhile to finish, but you can start querying the data right away.
+프로그램을 완료하는 데 시간이 다소 걸리지만, 곧바로 데이터 쿼리를 시작할 수 있습니다.
 
-## Step 7. Query the data
+## 7단계. 데이터 쿼리
 
-Back in the terminal where the SQL shell is running, verify that rows of data are being inserted into your table:
+SQL 셸이 실행 중인 터미널로 돌아가서 데이터 행이 테이블에 삽입되고 있는지 확인합니다:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -191,7 +192,7 @@ Back in the terminal where the SQL shell is running, verify that rows of data ar
 +-------+
 ~~~
 
-Now, retrieve all the current entries where the link is pointing to somewhere on GitHub:
+이제 GitHub 어딘가에 링크가 가리키는 모든 현재 항목을 검색하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -223,20 +224,20 @@ WHERE posts @> '{"data": {"domain": "github.com"}}';
 Time: 105.877736ms
 ~~~
 
-{{site.data.alerts.callout_info}}Since you are querying live data, your results for this and the following steps may vary from the results documented in this tutorial.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}당신이 실시간 데이터를 쿼리하고 있으므로 이 단계 및 다음 단계의 결과는 이 튜토리얼에 기록된 결과와 다를 수 있습니다.{{site.data.alerts.end}}
 
-## Step 8. Create an inverted index to optimize performance
+## 8단계. 성능 최적화를 위한 역 인덱스 생성
 
-The query in the previous step took 105.877736ms. To optimize the performance of queries that filter on the `JSONB` column, let's create an [inverted index](inverted-indexes.html) on the column:
+`JSONB` 열에서 필터링하는 쿼리의 성능을 최적화하려면 열에 [역 인덱스](inverted-indexes.html)를 생성하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > CREATE INVERTED INDEX ON programming(posts);
 ~~~
 
-## Step 9. Run the query again
+## 9단계. 쿼리 다시 실행
 
-Now that there is an inverted index, the same query will run much faster:
+이제 역 인덱스가 있으므로 동일한 쿼리가 훨씬 더 빨리 실행됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -249,12 +250,12 @@ WHERE posts @> '{"data": {"domain": "github.com"}}';
 Time: 28.646769ms
 ~~~
 
-Instead of 105.877736ms, the query now takes 28.646769ms.
+이제 쿼리는 105.87736ms 대신 28.646769ms가 소요됩니다.
 
-## What's next?
+## 더 알아보기
 
-Explore other core CockroachDB benefits and features:
+CockroachDB의 다른 주요 이점 및 특징에 대해 알아보십시오:
 
 {% include {{ page.version.version }}/misc/explore-benefits-see-also.md %}
 
-You may also want to learn more about the [`JSONB`](jsonb.html) data type and [inverted indexes](inverted-indexes.html).
+[`JSONB`](jsonb.html) 데이터 타입과 [역 인덱스](inverted-indexes.html)에 대해 더 알고 싶을 수도 있습니다.
