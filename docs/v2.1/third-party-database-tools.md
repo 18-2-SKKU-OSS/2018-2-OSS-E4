@@ -4,78 +4,80 @@ summary: Learn about third-party software that interoperates with CockroachDB.
 toc: true
 ---
 
-CockroachDB supports the Postgres wire protocol. This makes it possible to use Postgres-compatible [drivers](build-an-app-with-cockroachdb.html), [ORMs](build-an-app-with-cockroachdb.html), and other types of third-party database tools with CockroachDB. Some tools are only partially supported at this time, while others have been thoroughly vetted and tested.
+이것은 포스트그레스와 호환되는 [드라이버](build-an-app-with-cockroachdb.html), [ORMs](build-an-app-with-cockroachdb.html) 및 기타 타입의 제 3자 데이터베이스 툴을 CockroachDB와 함께 사용할 수 있게 합니다. 일부 툴은 현재로서는 부분적으로 만 지원되지만, 다른 툴은 철저히 검사 및 테스트되었습니다.
 
-<span class="version-tag">New in v2.1:</span> The [DBeaver database tool][dbeaver] is one of the tools for which we claim full support.
+<span class="version-tag">새로운 버전 2.1:</span> [DBeaver 데이터베이스 도구][dbeaver]는 우리가 전폭적으로 지원한다고 주장하는 툴 중 하나입니다.
 
-According to the [DBeaver website][dbeaver]:
+[DBeaver website][dbeaver]에 따르면:
 
-> DBeaver is a cross-platform Database GUI tool for developers, SQL programmers, database administrators, and analysts.
+> DBeaver는 개발자, SQL 프로그래머, 데이터베이스 관리자 및 분석가를 위한 크로스 플랫폼 데이터베이스 GUI 툴입니다.
 
-In this tutorial, you'll work through the process of using DBeaver with a secure CockroachDB cluster.
+이 튜토리얼에서는 시큐어한 CockroachDB 클러스터와 함께 DBeaver를 사용하는 과정을 살펴보겠습니다.
 
 {{site.data.alerts.callout_success}}
-For more information about using DBeaver, see the [DBeaver documentation](https://dbeaver.io/docs/).
+DBeaver 사용에 대한 자세한 내용은 [DBever 설명서](https://dbeaver.io/docs/)를 참조하십시오.
 
-If you run into problems, please file an issue on the [DBeaver issue tracker](https://github.com/dbeaver/dbeaver/issues).
+문제가 발생하면 [DBeaver 이슈 트래커](https://github.com/dbeaver/dbeaver/issues)에서 문제를 신고하십시오.
 {{site.data.alerts.end}}
 
-## Before You Begin
+## 시작하기 전에
 
-To work through this tutorial, take the following steps:
+이 튜토리얼을 진행하려면 다음 단계를 수행하십시오:
 
-- [Install CockroachDB](install-cockroachdb.html) and [start a secure cluster](secure-a-cluster.html).
-- Download a copy of [DBeaver](https://dbeaver.io/download/) version 5.2.3 or greater.
+- [CockroachDB 설치](install-cockroachdb.html) 하고 [시큐어 클러스터 시작](secure-a-cluster.html) 합니다.
+- [DBeaver](https://dbeaver.io/download/) 버전 5.2.3 이상의 사본을 다운로드하십시오.
 
-## Step 1. Start DBeaver and connect to CockroachDB
+1단계. DBeaver를 시작하고 CockroachDB에 연결하십시오.
 
-Start DBeaver, and select **Database > New Connection** from the menu.  In the dialog that appears, select **CockroachDB** from the list.
+DBeaver를 시작하고 메뉴에서 **Database > New Connection** 을 선택하십시오. 나타나는 대화 상자에서 목록에서 **CockroachDB**를 선택하십시오.
 
-<img src="{{ 'images/v2.1/dbeaver-01-select-cockroachdb.png' | relative_url }}" alt="DBeaver - Select CockroachDB" style="border:1px solid #eee;max-width:100%" />
+<img src="{{ 'images/v2.1/dbeaver-01-select-cockroachdb.png' | relative_url }}" alt="DBeaver - select CockroachDB" style="border:1px solid #eee;max-width:100%" />
 
-## Step 2. Update the connection settings
+## 2단계. 연결 설정 업데이트
 
-On the **Create new connection** dialog that appears, click **Network settings**.  
+**Create new connection** 대화 상자가 나타나면 **Network settings**을 클릭하십시오:
 
 <img src="{{ 'images/v2.1/dbeaver-02-cockroachdb-connection-settings.png' | relative_url }}" alt="DBeaver - CockroachDB connection settings" style="border:1px solid #eee;max-width:100%" />
 
-From the network settings, click the **SSL** tab.  It will look like the screenshot below.
+네트워크 설정에서 **SSL**탭을 클릭하십시오. 아래 스크린 샷처럼 보일 것입니다.
 
 <img src="{{ 'images/v2.1/dbeaver-03-ssl-tab.png' | relative_url }}" alt="DBeaver - SSL tab" style="border:1px solid #eee;max-width:100%" />
 
-Check the **Use SSL** checkbox as shown, and fill in the text areas as follows:
+다음과 같이 **Use SSL** 체크 박스를 체크하고 텍스트 영역을 채우십시오:
 
-- **Root certificate**: Use the `ca.crt` file you generated for your secure cluster.
-- **SSL certificate**: Use a client certificate generated from your cluster's root certificate.  For the root user, this will be named `client.root.crt`.  For additional security, you may want to create a new database user and client certificate just for use with DBeaver.
-- **SSL certificate key**: Because DBeaver is a Java application, you will need to transform your key file to the `*.pk8` format using an [OpenSSL command](https://wiki.openssl.org/index.php/Command_Line_Utilities#pkcs8_.2F_pkcs5) like the one shown below.  Once you have created the file, enter its location here.  In this example, the filename is `client.root.pk8`.
+- **Root certificate**: 안전한 클러스터를 위해 생성한 `ca.crt` 파일을 사용하십시오.
+- **SSL certificate**: 클러스터의 루트 인증서에서 생성된 클라이언트 인증서를 사용하십시오. 루트 사용자의 경우, 이 이름은`client.root.crt`로 명명됩니다. 추가 보안을 위해 DBeaver와 함께 사용하기 위해 새 데이터베이스 사용자 및 클라이언트 인증서를 만들 수 있습니다.
+- **SSL certificate key**:  DBeaver는 Java 응용 프로그램이기 때문에 아래에 표시된 것과 같이 [OpenSSL 명령](https://wiki.openssl.org/index.php/Command_Line_Utilities#pkcs8_.2F_pkcs5)을 사용하여 키 파일을 `*.pk8` 형식으로 변환해야 합니다. 
+파일을 생성했으면 여기에 위치를 입력하십시오. 이 예제에서 파일 이름은 `client.root.pk8`이다.
     {% include copy-clipboard.html %}
     ~~~ console
     $ openssl pkcs8 -topk8 -inform PEM -outform DER -in client.root.key -out client.root.pk8 -nocrypt
     ~~~
 
-Select **require** from the **SSL mode** dropdown.  There is no need to set the **SSL Factory**, you can let DBeaver use the default.
+**SSL mode** 드롭 다운에서 **require** 을 선택하십시오. **SSL Factory**를 설정할 필요가 없으며, DBeaver가 기본값을 사용하도록 할 수 있습니다.
 
-## Step 3. Test the connection settings
 
-Click **Test Connection ...**.  If everything worked, you will see a **Success** dialog like the one shown below.
+## Step 3. 연결 설정 테스트
+
+**Test Connection...** 을 클릭하십시오. 모든 것이 작동하면 아래에 표시된 것과 같은 **Success** 대화 상자가 나타납니다.
 
 <img src="{{ 'images/v2.1/dbeaver-04-connection-success-dialog.png' | relative_url }}" alt="DBeaver - connection success dialog" style="border:1px solid #eee;max-width:100%" />
 
-## Step 4. Start using DBeaver
+## 4단계. DBeaver 사용 시작
 
-Click **Finish** to get started using DBeaver with CockroachDB.
+**Finish**를 클릭하여 CockroachDB와 함께 DBeaver를 시작하십시오.
 
 <img src="{{ 'images/v2.1/dbeaver-05-movr.png' | relative_url }}" alt="DBeaver - CockroachDB with the movr database" style="max-width:100%" />
 
-For more information about using DBeaver, see the [DBeaver documentation](https://dbeaver.io/docs/).
+DBeaver사용에 대한 자세한 내용은 [DBever 설명서](https://dbeaver.io/docs/)를 참조하십시오.
 
-If you run into problems, please file an issue on the [DBeaver issue tracker](https://github.com/dbeaver/dbeaver/issues).
+문제가 발생하면 [DBeaver 이슈 트래커](https://github.com/dbeaver/dbeaver/issues)에서 문제를 신고하십시오.
 
-## See Also
+## 더보기
 
-+ [DBeaver documentation](https://dbeaver.io/docs/)
-+ [DBeaver issue tracker](https://github.com/dbeaver/dbeaver/issues)
-+ [Learn CockroachDB SQL](learn-cockroachdb-sql.html)
++ [DBeaver 설명서](https://dbeaver.io/docs/)
++ [DBeaver 이슈 트래커](https://github.com/dbeaver/dbeaver/issues)
++ [CockroachDB SQL 배우기](learn-cockroachdb-sql.html)
 
 <!-- Reference Links -->
 
