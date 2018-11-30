@@ -13,7 +13,7 @@ CockroachDB의 다양한 [built-in safeguards against failure](high-availability
 
 ### Admin UI
 
-[built-in Admin UI](admin-ui-access-and-navigate.html) 는 실시간, 비활성 및 의심스러운 노드 수 등 클러스터 상태에 대한 필수 메트릭을 제공합니다. 기본적으로 UI 또는 `http://<host>:<http-port>`, `http://<host>:8080` 의 모든 노드에서 관리 UI에 엑세스할 수 있습니다.
+[built-in Admin UI](admin-ui-access-and-navigate.html)는 실시간, 비활성 및 의심스러운 노드 수 등 클러스터 상태에 대한 필수 메트릭을 제공합니다. 기본적으로 UI 또는 `http://<host>:<http-port>`, `http://<host>:8080` 의 모든 노드에서 관리 UI에 엑세스할 수 있습니다.
 
 #### Accessing the Admin UI for a secure cluster
 
@@ -23,7 +23,7 @@ CockroachDB의 다양한 [built-in safeguards against failure](high-availability
 
 ### Prometheus endpoint
 
-CockroachDB 클러스터의 모든 노드는 `http://<host>:<http-port>/_status/vars`에서 세분화된 시간 측정 지표를 내보냅니다. 메트릭은 [Prometheus](https://prometheus.io/)과 쉽게 통합될 수 있도록 포맷되어 있습니다. 타임리어 데이터를 저장, 집계 및 쿼리하기 위한 오픈 소스 도구이지만, 형식은 is **easy-to-parse** 이며 다른 타사 모니터링 시스템과 함께 작동하도록 될 수 있습니다. (e.g., [Sysdig](https://sysdig.atlassian.net/wiki/plugins/servlet/mobile?contentId=64946336#content/view/64946336) and [Stackdriver](https://github.com/GoogleCloudPlatform/k8s-stackdriver/tree/master/prometheus-to-sd)).
+CockroachDB 클러스터의 모든 노드는 `http://<host>:<http-port>/_status/vars`에서 세분화된 시간 측정 지표를 내보냅니다. 메트릭은 [Prometheus](https://prometheus.io/)과 쉽게 통합될 수 있도록 포맷되어 있습니다. 타임리어 데이터를 저장, 집계 및 쿼리하기 위한 오픈 소스 도구이지만, 형식은  **easy-to-parse** 이며 다른 타사 모니터링 시스템과 함께 작동하도록 될 수 있습니다. (e.g., [Sysdig](https://sysdig.atlassian.net/wiki/plugins/servlet/mobile?contentId=64946336#content/view/64946336) and [Stackdriver](https://github.com/GoogleCloudPlatform/k8s-stackdriver/tree/master/prometheus-to-sd)).
 
 Prometheus 사용에 대한 교육서는 [Monitor CockroachDB with Prometheus](monitor-cockroachdb-with-prometheus.html)를 참고하십시오.
 
@@ -56,7 +56,7 @@ CockroachDB는 개별 노드의 상태를 확인하기 위해 두개의 HTTP 엔
 
 #### /건강
 
-노드가 중단된 경우, `http://<host>:<http-port>/health` 엔드포인트는 `Connnection refused` 에러를 리턴합니다:
+노드가 중단된 경우, `http://<host>:<http-port>/health` 엔드포인트는 `Connnection refused`에러를 리턴합니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -92,9 +92,9 @@ curl: (7) Failed to connect to localhost port 8080: Connection refused
 
 #### /health?ready=1
 
-`http://<node-host>:<http-port>/health?ready=1` 의 끝점은 HTTP `503 서비스를 사용할 수 없음` 상태 응답 코드를 반환하고 다음과 같은 시나리오 오류를 발생시킵니다;
+`http://<node-host>:<http-port>/health?ready=1` 의 끝점은 HTTP `503 서비스를 사용할 수 없음` 상태 응답 코드를 반환하고 다음과 같은 시나리오 오류를 발생시킵니다:
 
-- 노드가 [decommissioned](remove-nodes.html) ㄸ;ㅗ는 [shutting down](stop-a-node.html)의 과정에 있으므로 SQL 연결과 쿼리를 실행하는 것이 불가능할 수 있습니다. 이 기능은 특히 로드 밸런서가 존재는 하지만 "ready" 상태가 아닌 노드로 직접 전송하지 않는데에 유용할 수 있습니다. 이 기능은 [롤링 업그레이드](upgrade-cockroach-version.html) 동안에 편리한 확인입니다.
+- 노드가 [decommissioned](remove-nodes.html) 또는 [shutting down](stop-a-node.html)의 과정에 있으므로 SQL 연결과 쿼리를 실행하는 것이 불가능할 수 있습니다. 이 기능은 특히 로드 밸런서가 존재는 하지만 "ready" 상태가 아닌 노드로 직접 전송하지 않는데에 유용할 수 있습니다. 이 기능은 [롤링 업그레이드](upgrade-cockroach-version.html) 동안에 편리한 확인입니다.
     {{site.data.alerts.callout_success}}만약 로드 밸런서의 상태 체크에서 노드가 종료되기 전의 노드 상태를 준비되지 않은 것으로 인식하지 않는 것을 발견했다면, <code>server.shutdown.drain_wait</code> <a href="cluster-settings.html">클러스터 세팅</a> 을 늘릴 수 있습니다. 이것은 심지어 셧다운을 하기 이전에 노드가 <code>503 Service Unavailable</code>를 반환하게 합니다.{{site.data.alerts.end}}
 - 노드는 클러스터에 있는 다른 주요한 노드와 의사소통이 불가능할 수 있는데, 그것은 노드가 너무 많아 클러스터를 사용할 수 없기 때문입니다.
 
@@ -110,7 +110,7 @@ $ curl http://localhost:8080/health?ready=1
 }
 ~~~
 
-그렇지 않으면, 비어있는 상태의 HTTP `200 OK` 상태 응답 코드를 반환합니다. :
+그렇지 않으면, 비어있는 상태의 HTTP `200 OK` 상태 응답 코드를 반환합니다:
 
 ~~~
 {
@@ -161,7 +161,7 @@ $ curl http://localhost:8080/health?ready=1
 
 - **규칙:** 노드가 연결 상태에서도 SQL을 실행하지 않는 경우 경고를 보냅니다.
 
-- **발견하는 방법:** `sql_query_count` 메트릭이 `0`인 동안에 노드의 `_status/vars` 출력값에 있는 `sql_conns` 메트릭은  `0` 보다 커질 것입니다. `sql_select_count`, `sql_insert_count`, `sql_update_count`, 그리고 `sql_delete_count`을 이요해서 statement 유형으로 세분화할 수 있습니다.
+- **발견하는 방법:** `sql_query_count` 메트릭이 `0`인 동안에 노드의 `_status/vars` 출력값에 있는 `sql_conns` 메트릭은  `0` 보다 커질 것입니다. `sql_select_count`, `sql_insert_count`, `sql_update_count`, 그리고 `sql_delete_count`을 이용해서 statement 유형으로 세분화할 수 있습니다.
 
 ### CA 인증서가 곧 끝남
 
