@@ -115,7 +115,7 @@ $ cockroach sql --insecure --host=localhost:26257
 </div>
 
 이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다.
-Reddit API는 페이지당 25 개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
+Reddit API는 페이지당 25개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
 
 1. API에 요청합니다.
 2. 테이블에 결과를 삽입하고 `"after"`문자열을 가져옵니다.
@@ -136,10 +136,10 @@ $ go run json-sample.go
 ~~~
 </section>
 
-이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다. Reddit API는 페이지당 25 개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
+이 코드는 [/r/programming](https://www.reddit.com/r/programming/)에서 게시물에 대해 [Reddit API](https://www.reddit.com/dev/api/)을 쿼리합니다. Reddit API는 페이지당 25개의 결과만 반환합니다; 그러나 각 페이지는 다음 페이지를 얻는 방법을 알려주는 `"after"`문자열을 반환합니다. 이제 프로그램은 다음과 같은 작업을 반복합니다.
 
 1. API에 요청합니다.
-2. `"after"'문자열을 가져옵니다.
+2. `"after"`문자열을 가져옵니다.
 3. 결과를 테이블에 삽입합니다.
 4. 새로운 `"after"` 문자열을 다음 요청의 기초로 사용합니다.
 
