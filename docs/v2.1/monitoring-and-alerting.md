@@ -135,47 +135,47 @@ $ curl http://localhost:8080/health?ready=1
 
 ## 경고할 이벤트
 
-Active monitoring helps you spot problems early, but it is also essential to create alerting rules that promptly send notifications when there are events that require investigation or intervention. This section identifies the most important events to create alerting rules for, with the [Prometheus Endpoint](#prometheus-endpoint) metrics to use for detecting the events.
+활성 모니터링은 문제를 조기에 발견하는데 도움이 되지만, 조사 또는 개입이 필요한 이벤트가 있을 때 알림을 즉시 전송하는 알림 규칙을 생성하는 것에도 중요한 역할을 합니다. 이 섹션에서는 이벤트를 탐지하는 데에 [Prometheus Endpoint](#prometheus-endpoint) 메트릭스를 사용하여 알림 규칙을 생성하는 가장 중요한 이벤트를 식별합니다.
 
-{{site.data.alerts.callout_success}}If you use Prometheus for monitoring, you can also use our pre-defined <a href="https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml">alerting rules</a> with Alertmanager. See <a href="monitor-cockroachdb-with-prometheus.html">Monitor CockroachDB with Prometheus</a> for guidance.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}만약 모니러팅을 위해 Prometheus을 사용한다면, <a href="https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml">alerting rules</a> 또한 사용할 수 있습니다. 가이드로 <a href="monitor-cockroachdb-with-prometheus.html">Monitor CockroachDB with Prometheus</a>를 보십시오.{{site.data.alerts.end}}
 
-### Node is down
+### 노드가 중단됨
 
-- **Rule:** Send an alert when a node has been down for 5 minutes or more.
+- **규칙:** 노드가 5분 이상 중단된 경우 경고를 보냅니다.
 
-- **How to detect:** If a node is down, its `_status/vars` endpoint will return a `Connection refused` error. Otherwise, the `liveness_livenodes` metric will be the total number of live nodes in the cluster.
+- **발견하는 방법:** 만약 노드가 중단된다면, 노드의 `_status/vars` 엔드포인트는 `Connection refused` 에러를 반환합니다. 그렇지 않으면, `liveness_livenodes` 메트릭은 클러스터에 있는 전체 활성 노드의 수가 됩니다.
 
-### Node is restarting too frequently
+### 노드가 너무 자주 다시 시작함
 
-- **Rule:** Send an alert if a node has restarted more than 5 times in 10 minutes.
+- **규칙:** 노드가 10분 이내에 5회 이상 재시작된 경우 알림을 보냅니다.
 
-- **How to detect:** Calculate this using the number of times the `sys_uptime` metric in the node's `_status/vars` output was reset back to zero. The `sys_uptime` metric gives you the length of time, in seconds, that the `cockroach` process has been running.
+- **발견하는 방법:** 노드의 `_status/vars` 출력값이 0으로 재설정되는 `sys_uptime` 메트릭의 실행 횟수를 이용하여 계산합니다. `sys_uptime` 메트릭은 `cockroach` 프로세스가 실행된 시간(초 단위)를 나타냅니다.
 
-### Node is running low on disk space
+### 노드가 디스크의 적은 공간에서 동작
 
-- **Rule:** Send an alert when a node has less than 15% of free space remaining.
+- **규칙:** 노드에 남은 사용 가능한 공간이 15% 미만인 경우 경고를 보냅니다.
 
-- **How to detect:** Divide the `capacity` metric by the `capacity_available` metric in the node's `_status/vars` output.
+- **발견하는 방법:** `capacity` 메트릭을 노드의 `_status/vars` 출력값에 있는 `capacity_available` 메트릭으로 나눕니다. 
 
-### Node is not executing SQL
+### 노드가 SQL을 실행하지 않음
 
-- **Rule:** Send an alert when a node is not executing SQL despite having connections.
+- **규칙:** 노드가 연결 상태에서도 SQL을 실행하지 않는 경우 경고를 보냅니다.
 
-- **How to detect:** The `sql_conns` metric in the node's `_status/vars` output will be greater than `0` while the `sql_query_count` metric will be `0`. You can also break this down by statement type using `sql_select_count`, `sql_insert_count`, `sql_update_count`, and `sql_delete_count`.
+- **발견하는 방법:** `sql_query_count` 메트릭이 `0`인 동안에 노드의 `_status/vars` 출력값에 있는 `sql_conns` 메트릭은  `0` 보다 커질 것입니다. `sql_select_count`, `sql_insert_count`, `sql_update_count`, 그리고 `sql_delete_count`을 이요해서 statement 유형으로 세분화할 수 있습니다.
 
-### CA certificate expires soon
+### CA 인증서가 곧 끝남
 
-- **Rule:** Send an alert when the CA certificate on a node will expire in less than a year.
+- **규칙:** CA 인증서 만료가 1년 미만으로 남았을 때 경고를 보냅니다.
 
-- **How to detect:** Calculate this using the `security_certificate_expiration_ca` metric in the node's `_status/vars` output.
+- **발견하는 방법:** 노드의 `_status/vars` 출력값에 있는 `security_certificate_expiration_ca` 메트릭을 사용하여 이 값을 계산합니다.
 
-### Node certificate expires soon
+### 노드 인증서가 곧 끝남
 
-- **Rule:** Send an alert when a node's certificate will expire in less than a year.
+- **규칙:** 노드의 인증서 만료가 1년 미만으로 남았을 때 경고를 보냅니다.
 
-- **How to detect:** Calculate this using the `security_certificate_expiration_node` metric in the node's `_status/vars` output.
+- **발견하는 방법:** 노드의 `_status/vars` 출력값에 있는 `security_certificate_expiration_node` 메트릭을 사용하여 이 값을 계산합니다.
 
-## See also
+## 또 다른 참고문헌
 
 - [Production Checklist](recommended-production-settings.html)
 - [Manual Deployment](manual-deployment.html)
