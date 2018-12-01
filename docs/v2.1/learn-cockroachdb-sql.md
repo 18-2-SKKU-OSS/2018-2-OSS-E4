@@ -33,7 +33,7 @@ CockroachDB는 표준 SQL에 확장 기능을 제공하는 것을 목표로 하�
 > CREATE DATABASE bank;
 ~~~
 
-데이터베이스 이름은 [이 식별자 규칙] (keywords-and-identifiers.html)뒤에 와야합니다. 데이터베이스가 이미 존재하는 경우 오류를 피하려면, `IF NOT EXISTS`을 포함시킬 수 있습니다:
+데이터베이스 이름은 [이 식별자 규칙](keywords-and-identifiers.html)뒤에 와야합니다. 데이터베이스가 이미 존재하는 경우 오류를 피하려면, `IF NOT EXISTS`을 포함시킬 수 있습니다:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -92,7 +92,7 @@ CockroachDB는 표준 SQL에 확장 기능을 제공하는 것을 목표로 하�
 
 ## 테이블 생성
 
-테이블을 생성하려면, 각 열에 대해 [`CREATE TABLE`](create-table.html)과 그 뒤에 따라오는 테이블 이름, 열 이름, [데이터 타입](data-types.html), 그리고 [제약사항](constraints.html)그리고 [데이터 형식] (data-types.html)을 사용하십시오:
+테이블을 생성하려면, 각 열에 대해 [`CREATE TABLE`](create-table.html)과 그 뒤에 따라오는 테이블 이름, 열 이름, [데이터 타입](data-types.html), 그리고 [제약사항](constraints.html)그리고 [데이터 형식](data-types.html)을 사용하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -102,7 +102,7 @@ CockroachDB는 표준 SQL에 확장 기능을 제공하는 것을 목표로 하�
 );
 ~~~
 
-테이블과 열 이름은 [이 규칙] (keywords-and-identifiers.html#identifiers)뒤에 와야합니다. 또한 [기본키] (primary-key.html)를 명시적으로 정의하지 않으면, CockroachDB는 숨겨진 `rowid` 열을 기본키로 자동 추가합니다.
+테이블과 열 이름은 [이 규칙](keywords-and-identifiers.html#identifiers)뒤에 와야합니다. 또한 [기본키](primary-key.html)를 명시적으로 정의하지 않으면, CockroachDB는 숨겨진 `rowid` 열을 기본키로 자동 추가합니다.
 
 테이블이 이미 존재할 경우, 에러를 피하기 위해 `IF NOT EXISTS`를 포함시킬 수 있습니다:
 
