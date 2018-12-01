@@ -29,7 +29,7 @@ Also, feel free to watch this process in action before going through the steps y
 
 ## 1단계. 보안 인증서 작성
 
-[`cockroach cert`](create-security-certificates.html) 명령이나 [`openssl` commands](create-security-certificates-openssl.html)을 사용하여 보안 인증서를 생성할 수 있습니다. 이 섹션에서는 `cockroach cert` 명령에 대해 설명합니다.
+[`cockroach cert`](create-security-certificates.html) 명령이나 [`openssl`](create-security-certificates-openssl.html) 명령을 사용하여 보안 인증서를 생성할 수 있습니다. 이 섹션에서는 `cockroach cert` 명령에 대해 설명합니다.
 
 1. 인증서를 위한 디렉토리 및 CA 키를 위한 안전한 디렉토리 만들기:
 
