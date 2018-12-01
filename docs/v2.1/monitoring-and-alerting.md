@@ -4,28 +4,28 @@ summary: Monitor the health and performance of a cluster and alert on critical e
 toc: true
 ---
 
-CockroachDB의 다양한 [built-in safeguards against failure](high-availability.html)에도 불구하고, 프로덕션에서 실행 중인 클러스터의 전반적인 상태 및 성능을 능동적으로 모니터링하고 즉시 알림을 보내는 경고 규칙을 만드는 것이 중요합니다.
+CockroachDB의 다양한 [장애에 대비한 내장형 보호 장치](high-availability.html)에도 불구하고, 프로덕션에서 실행 중인 클러스터의 전체적인 상태와 성능을 능동적으로 모니터링하는 것과 조사 또는 개입이 필요한 이벤트가 있을 때 알람을 보내는 알림 규칙을 만드는 것은 중요합니다.
 
-이 페이지에서는 사용 가능한 모니터링 툴과 경고할 중요 이벤트 및 메트릭을 설명합니다.
+이 페이지에서는 사용 가능한 모니터링툴과 경고할 중요 이벤트 및 메트릭을 설명합니다.
 
 
-## Monitoring tools
+## 모니터링 도구
 
-### Admin UI
+### 관리 UI
 
-[built-in Admin UI](admin-ui-access-and-navigate.html)는 실시간, 비활성 및 의심스러운 노드 수 등 클러스터 상태에 대한 필수 메트릭을 제공합니다. 기본적으로 UI 또는 `http://<host>:<http-port>`, `http://<host>:8080` 의 모든 노드에서 관리 UI에 엑세스할 수 있습니다.
+[기본 제공 관리 UI](admin-ui-access-and-navigate.html)는 활성화 상태인 노드의 개수, 비활성화 상태인 노드의 개수, 의심스러운 노드의 개수와 초당 쿼리와 클러스터 전체의 서비스 지연 시간 등과 같은 클러스터 상태에 대한 필수 메트릭을 제공합니다. 디폴트에 의해 `http://<host>:<http-port>`, 또는 `http://<host>:8080`의 모든 노드에서 관리 UI에 접근할 수 있습니다.
 
-#### Accessing the Admin UI for a secure cluster
+#### 보안 클러스터의 관리 UI에 접근
 
-보안클러스터의 관리 UI에 액세스 할 수 있는 각 사용자에 대해 [create a user with a password](create-user.html#create-a-user-with-a-password) 를 사용하여 사용자 생성, 관리 UI에 액세스하면 로그인 화면이 나타나고 사용자 이름과 암호를 임력해야 합니다.
+보안클러스터의 관리 UI에 접근 할 수 있는 각 사용자들은, [암호로 사용자를 만듭니다](create-user.html#create-a-user-with-a-password) 관리 UI에 접근하면, 사용자들은 그들의 사용이름과 비밀번호를 입력해야 하는 로그인 화면을 보게 됩니다.
 
-{{site.data.alerts.callout_danger}}관리 UI가 CockroachDB에 내장되어 있기 때문에 틀러스터를 사용할 수 없는 경우 대부분의 관리 UI도 사용할 수 없게 됩니다. 따라서 아래에 설명된 대로 클러스터 상태를 모니터링하는 추가 방법을 계획하는 것이 중요합니다.{{site.data.alerts.end}}
+{{site.data.alerts.callout_danger}}관리 UI가 CockroachDB에 내장되어 있기 때문에, 만약 클러스터를 사용할 수 없는 경우, 대부분의 관리 UI도 사용할 수 없게 됩니다. 따라서, 아래에 설명된 대로 클러스터 상태를 모니터링하는 추가 방법을 계획하는 것이 중요합니다.{{site.data.alerts.end}}
 
-### Prometheus endpoint
+### 프로메테우스 엔드포인트
 
-CockroachDB 클러스터의 모든 노드는 `http://<host>:<http-port>/_status/vars`에서 세분화된 시간 측정 지표를 내보냅니다. 메트릭은 [Prometheus](https://prometheus.io/)과 쉽게 통합될 수 있도록 포맷되어 있습니다. 타임리어 데이터를 저장, 집계 및 쿼리하기 위한 오픈 소스 도구이지만, 형식은  **easy-to-parse** 이며 다른 타사 모니터링 시스템과 함께 작동하도록 될 수 있습니다. (e.g., [Sysdig](https://sysdig.atlassian.net/wiki/plugins/servlet/mobile?contentId=64946336#content/view/64946336) and [Stackdriver](https://github.com/GoogleCloudPlatform/k8s-stackdriver/tree/master/prometheus-to-sd)).
+CockroachDB 클러스터의 모든 노드는 `http://<host>:<http-port>/_status/vars`로 세분화된 시계열 메트릭스를 내보냅니다. 메트릭스들은 시계열 데이터를 저장, 집계 및 쿼리할 수 있는 좋은 오픈소스 도구인 [Prometheus](https://prometheus.io/)과 쉽게 통합될 수 있도록 포맷되어 있습니다. 그러나, 형식은  **easy-to-parse** 이며 다른 타사 모니터링 시스템과 함께 작동하도록 될 수 있습니다. (e.g., [Sysdig](https://sysdig.atlassian.net/wiki/plugins/servlet/mobile?contentId=64946336#content/view/64946336) and [Stackdriver](https://github.com/GoogleCloudPlatform/k8s-stackdriver/tree/master/prometheus-to-sd)).
 
-Prometheus 사용에 대한 교육서는 [Monitor CockroachDB with Prometheus](monitor-cockroachdb-with-prometheus.html)를 참고하십시오.
+Prometheus 사용에 대한 교육서는 [프로메테우스와 CockroachDB ](monitor-cockroachdb-with-prometheus.html)를 참고하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -94,7 +94,7 @@ curl: (7) Failed to connect to localhost port 8080: Connection refused
 
 `http://<node-host>:<http-port>/health?ready=1` 의 끝점은 HTTP `503 서비스를 사용할 수 없음` 상태 응답 코드를 반환하고 다음과 같은 시나리오 오류를 발생시킵니다:
 
-- 노드가 [decommissioned](remove-nodes.html) 또는 [shutting down](stop-a-node.html)의 과정에 있으므로 SQL 연결과 쿼리를 실행하는 것이 불가능할 수 있습니다. 이 기능은 특히 로드 밸런서가 존재는 하지만 "ready" 상태가 아닌 노드로 직접 전송하지 않는데에 유용할 수 있습니다. 이 기능은 [롤링 업그레이드](upgrade-cockroach-version.html) 동안에 편리한 확인입니다.
+- 노드가 [해체된 상태](remove-nodes.html) 또는 [중단된 상태](stop-a-node.html)의 과정에 있으므로 SQL 연결과 쿼리를 실행하는 것이 불가능할 수 있습니다. 이 기능은 특히 로드 밸런서가 존재는 하지만 "ready" 상태가 아닌 노드로 직접 전송하지 않는데에 유용할 수 있습니다. 이 기능은 [롤링 업그레이드](upgrade-cockroach-version.html) 동안에 편리한 확인입니다.
     {{site.data.alerts.callout_success}}만약 로드 밸런서의 상태 체크에서 노드가 종료되기 전의 노드 상태를 준비되지 않은 것으로 인식하지 않는 것을 발견했다면, <code>server.shutdown.drain_wait</code> <a href="cluster-settings.html">클러스터 세팅</a> 을 늘릴 수 있습니다. 이것은 심지어 셧다운을 하기 이전에 노드가 <code>503 Service Unavailable</code>를 반환하게 합니다.{{site.data.alerts.end}}
 - 노드는 클러스터에 있는 다른 주요한 노드와 의사소통이 불가능할 수 있는데, 그것은 노드가 너무 많아 클러스터를 사용할 수 없기 때문입니다.
 
@@ -126,11 +126,11 @@ $ curl http://localhost:8080/health?ready=1
 
 ### 노드 상태 명령
 
-[`cockroach node status`](view-node-details.html) 명령은 각 노드의 상태에 대해 메트릭을 제공합니다.
+[`cockroach 노드 상태`](view-node-details.html) 명령은 각 노드의 상태에 대해 메트릭을 제공합니다.
 
 - `--ranges` 표시에서, 비가동률과 낮은 복제 기능을 포함하여세부적인 범위와 복제본의 세부 정보를 얻습니다.
 - `--stats` 표시에서, 디스크 사용량의 세부 정보를 얻습니다.
-- `--decommission` 표시에서, [node decommissioning](remove-nodes.html) 프로세스의 디테일에 대해서 얻습니다.
+- `--decommission` 표시에서, [해체된 노드](remove-nodes.html) 프로세스의 디테일에 대해서 얻습니다.
 - `--all` 표시에서, 위의 모든 것을 얻습니다.
 
 ## 경고할 이벤트
