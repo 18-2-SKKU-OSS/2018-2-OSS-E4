@@ -6,7 +6,7 @@ toc_not_nested: true
 ssh-link: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/mac-create-ssh-keys
 ---
 
-<div class="filters filters-big clearfix">
+<div class="filters filters-big clea rfix">
   <a href="deploy-cockroachdb-on-microsoft-azure.html"><button class="filter-button">Secure</button>
   <button class="filter-button current"><strong>Insecure</strong></button></a>
 </div>
