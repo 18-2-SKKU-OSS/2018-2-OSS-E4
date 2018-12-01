@@ -10,21 +10,21 @@ twitter: false
     <a href="build-a-go-app-with-cockroachdb-gorm.html"><button class="filter-button current">Use <strong>GORM</strong></button></a>
 </div>
 
-This tutorial shows you how build a simple Go application with CockroachDB using a PostgreSQL-compatible driver or ORM.
+이 튜토리얼에서는 PostgreSQL과 호환되는 드라이버나 ORM을 사용하여 CockroachDB로 간단한 어플리케이션을 제작하는 방법을 보여줍니다.
 
-We have tested the [Go pq driver](https://godoc.org/github.com/lib/pq) and the [GORM ORM](http://gorm.io) enough to claim **beta-level** support, so those are featured here. If you encounter problems, please [open an issue](https://github.com/cockroachdb/cockroach/issues/new) with details to help us make progress toward full support.
+[Go pq driver](https://godoc.org/github.com/lib/pq)와 [GORM ORM](http://gorm.io)는 **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다. 만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도로 도와주시길 부탁드립니다.
 
 {{site.data.alerts.callout_success}}
-For a more realistic use of GORM with CockroachDB, see our [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository.
+GORM을 CockroachDB와 함께 보다 현실적으로 사용하려면, [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository의 예시를 참조하세요.
 {{site.data.alerts.end}}
 
-## Before you begin
+## 시작하기 전에
 
 {% include {{page.version.version}}/app/before-you-begin.md %}
 
-## Step 1. Install the GORM ORM
+## 1단계. GORM ORM 설치하기
 
-To install [GORM](http://gorm.io), run the following commands:
+[GORM](http://gorm.io)을 설치하려면, 다음의 명령을 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -38,39 +38,39 @@ $ go get -u github.com/jinzhu/gorm
 
 <section class="filter-content" markdown="1" data-scope="secure">
 
-## Step 2. Create the `maxroach` user and `bank` database
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
 
 {% include {{page.version.version}}/app/create-maxroach-user-and-bank-database.md %}
 
-## Step 3. Generate a certificate for the `maxroach` user
+## 3단계. `maxroach` 사용자에 대한 인증서 생성하기
 
-Create a certificate and key for the `maxroach` user by running the following command.  The code samples will run as this user.
+다음 명령을 실행하여 `maxroach` 사용자에 대한 인증서와 키를 생성하시오. 코드 샘플은 이 사용자로 실행됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-directory/ca.key
 ~~~
 
-## Step 4. Run the Go code
+## 4단계. Go 코드 실행하기
 
-The following code uses the [GORM](http://gorm.io) ORM to map Go-specific objects to SQL operations. Specifically, `db.AutoMigrate(&Account{})` creates an `accounts` table based on the Account model, `db.Create(&Account{})` inserts rows into the table, and `db.Find(&accounts)` selects from the table so that balances can be printed.
+다음 코드는 [GORM](http://gorm.io) ORM을 사용하여 Go-specific 개체들을 SQL operation에 매핑합니다. 특히 `db.AutoMigrate(&Account{})`는 계좌 모델을 바탕으로 '계좌' 표를 생성하고, `db.Create(&Account{})`는 표에 행을 삽입하며, `db.Find(&accounts)`는 잔액을 프린트할 수 있도록 표에서 선택을 합니다.
 
-Copy the code or
-<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/gorm-basic-sample.go" download>download it directly</a>.
+코드를 복사하거나
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/gorm-basic-sample.go" download>직접 다운로드 받으시오</a>.
 
 {% include copy-clipboard.html %}
 ~~~ go
 {% include {{ page.version.version }}/app/gorm-basic-sample.go %}
 ~~~
 
-Then run the code:
+그리고 코드를 실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ go run gorm-basic-sample.go
 ~~~
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~ shell
 Initial balances:
@@ -78,7 +78,7 @@ Initial balances:
 2 250
 ~~~
 
-To verify that funds were transferred from one account to another, start the [built-in SQL client](use-the-built-in-sql-client.html):
+한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -95,70 +95,9 @@ $ cockroach sql --certs-dir=certs -e 'SELECT id, balance FROM accounts' --databa
 (2 rows)
 ~~~
 
-</section>
 
-<section class="filter-content" markdown="1" data-scope="insecure">
+## 더 보기
 
-## Step 2. Create the `maxroach` user and `bank` database
-
-{% include {{page.version.version}}/app/insecure/create-maxroach-user-and-bank-database.md %}
-
-</section>
-
-<section class="filter-content" markdown="1" data-scope="insecure">
-
-## Step 2. Create the `maxroach` user and `bank` database
-
-{% include {{page.version.version}}/app/insecure/create-maxroach-user-and-bank-database.md %}
-
-## Step 3. Run the Go code
-
-The following code uses the [GORM](http://gorm.io) ORM to map Go-specific objects to SQL operations. Specifically, `db.AutoMigrate(&Account{})` creates an `accounts` table based on the Account model, `db.Create(&Account{})` inserts rows into the table, and `db.Find(&accounts)` selects from the table so that balances can be printed.
-
-Copy the code or
-<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/insecure/gorm-basic-sample.go" download>download it directly</a>.
-
-{% include copy-clipboard.html %}
-~~~ go
-{% include {{ page.version.version }}/app/insecure/gorm-basic-sample.go %}
-~~~
-
-Then run the code:
-
-{% include copy-clipboard.html %}
-~~~ shell
-$ go run gorm-basic-sample.go
-~~~
-
-The output should be:
-
-~~~ shell
-Initial balances:
-1 1000
-2 250
-~~~
-
-To verify that funds were transferred from one account to another, start the [built-in SQL client](use-the-built-in-sql-client.html):
-
-{% include copy-clipboard.html %}
-~~~ shell
-$ cockroach sql --insecure -e 'SELECT id, balance FROM accounts' --database=bank
-~~~
-
-~~~
-+----+---------+
-| id | balance |
-+----+---------+
-|  1 |    1000 |
-|  2 |     250 |
-+----+---------+
-(2 rows)
-~~~
-
-</section>
-
-## What's next?
-
-Read more about using the [GORM ORM](http://gorm.io), or check out a more realistic implementation of GORM with CockroachDB in our [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository.
+[GORM ORM](http://gorm.io) 사용에 대해 자세히 알아보거나, [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository에서 CockroachDB를 이용한 GORM의 보다 현실적인 구현을 확인하세요.
 
 {% include {{ page.version.version }}/app/see-also-links.md %}
