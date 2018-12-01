@@ -70,7 +70,7 @@ CockroachDB는 두 포트에서 TCP 통신이 필요합니다:
 
 - SSD 지원 [EBS 볼륨](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html) 또는 [인스턴스 저장소 볼륨](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html)와 함께, `m`(범용), `c` (연산 최적화) 또는 `i` (스토리지 최적화) [인스턴스](https://aws.amazon.com/ec2/instance-types/)를 사용하십시오. 예를 들어, Cockroach Labs는 내부 테스트를 위해 `m3.large` 인스턴스 (인스턴스 당 2개의 vCPU 및 7.5 GiB)를 사용했습니다.
 
-- 단일 코어의 로드를 제한하는 ["burstable" `t2` instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/t2-instances.html)를 사용하지 마십시오. 
+- 단일 코어의 로드를 제한하는 [버스트가능한 `t2` ](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/t2-instances.html)를 사용하지 마십시오. 
 
 자세한 내용은 [하드웨어 권장 사항](recommended-production-settings.html) 및 [클러스터 위상 배치](recommended-production-settings.html)를 참조하십시오.
 
