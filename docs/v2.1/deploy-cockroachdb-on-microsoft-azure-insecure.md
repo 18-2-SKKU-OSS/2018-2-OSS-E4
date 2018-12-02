@@ -28,61 +28,61 @@ ssh-link: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/mac-crea
 
 CockroachDB는 두 개의 포트에서 TCP 통신을 필요로 합니다:
 
-- **26257** (`tcp:26257`) for inter-node communication (i.e., working as a cluster), for applications to connect to the load balancer, and for routing from the load balancer to nodes
-- **8080** (`tcp:8080`) for exposing your Admin UI
+- **26257** (`tcp:26257`) 노드간 통신 (i.e., working as a cluster), 어플리케이션을 로드밸런서에 연결, 로드 밸런서에서 노드로 노선을 연결하기 위함
+- **8080** (`tcp:8080`) 관리 UI 노출을 위함
 
-To enable this in Azure, you must create a Resource Group, Virtual Network, and Network Security Group.
+Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트워크, 네트워크 보안 그룹을 생성해야 합니다.
 
 1. [리소스 그룹 생성](https://azure.microsoft.com/en-us/updates/create-empty-resource-groups/).
 
-2. [가상 네트워크 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-vnet-arm-pportal) that uses your **Resource Group**.
+2. [가상 네트워크 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-vnet-arm-pportal) **리소스 그룹**.을 사용 합니다.
 
-3. [네트워크 보안 그룹 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-pportal) that uses your **리소스 그룹**, and then add the following **inbound** rules to it:
+3. [네트워크 보안 그룹 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-pportal) **리소스 그룹**을 사용하고, **인바운드** 규칙을 추가합니다:
     - **관리 UI 지원**:
 
          분야 | 추천 값 
         -------|-------------------
          이름 | **cockroachadmin** 
-         소스 | **IP Addresses** 
-         Source IP addresses/CIDR ranges | Your local network’s IP ranges 
-         Source port ranges | * 
-         Destination | **Any** 
-         Destination port range | **8080** 
+         소스 | **IP 주소** 
+         소스 IP 주소/CIDR 범위 | 지역 네트워크의 IP 범위 
+         포트 범위 소스 | * 
+         목적지 | **어떤 것이든** 
+         목적지 포트 범위 | **8080** 
          프로토콜 | **TCP** 
-         Action | **Allow** 
-         우선순위 | Any value > 1000 
-    - **Application support**:
+         행동 | **허락** 
+         우선순위 | 어떤 수 > 1000 
+    - **어플리케이션 지원**:
 
-        {{site.data.alerts.callout_success}}If your application is also hosted on the same Azure     Virtual Network, you will not need to create a firewall rule for your application to communicate     with your load balancer.{{site.data.alerts.end}}
+        {{site.data.alerts.callout_success}} 어플리케이션이 동일한 Azure 가상 네트워크에서도 호스팅 되는 경우, 어플리케이션이 로드 밸런서와 통신하는데 방화벽 규칙을 만들 필요가 없습니다.{{site.data.alerts.end}}
 
          분야 | 추천 값 
         -------|-------------------
          이름 | **cockroachapp** 
          소스 | **IP Addresses**
-         Source IP addresses/CIDR ranges | Your local network’s IP ranges 
-         Source port ranges | * 
-         Destination | **Any** 
-         Destination port range | **26257** 
-         Protocol | **TCP** 
-         Action | **Allow** 
-         Priority | Any value > 1000 
+         소스 IP 주소/CIDR 범위 | 로컬 네트워크의 IP 범위 
+         포트 범위 소스 | * 
+         목적지 | **Any** 
+         목적지 포트 범위 | **26257** 
+         프로토콜 | **TCP** 
+         행동 | **Allow** 
+         우선순위 | 어떤 수 > 1000
 
 
 ## 2 단계. VMs를 만드십시오.
 
-[리눅스 VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) for each node you plan to have in your cluster. If you plan to run a sample workload against the cluster, create a separate VM for that workload.
+[리눅스 VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) 클러스터에 포함될 각 노드에 대한 설명을 위해서 합니다. 클러스터 대신 샘플 워크로드를 실행할 계횓인 경우, 그 워크로드에 대한 분리된 VM을 생성하십시오.
 
-- Run at least 3 nodes to [생존 보장](recommended-production-settings.html#cluster-topology).
+- 최소한 3개의 노드를 실행하십시오 [생존 보장](recommended-production-settings.html#cluster-topology).
 
-- Use storage-optimized [Ls-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-storage) VMs with [Premium Storage](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage) or local SSD storage with a Linux filesystem such as `ext4` (not the Windows `ntfs` filesystem). For example, Cockroach Labs has used `Standard_L4s` VMs (4 vCPUs and 32 GiB of RAM per VM) for internal testing.
+- [Ls-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-storage) [프리미엄 저장소](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage)를 가지는 VMs 또는 Linux filesystem such as `ext4` (not the Windows `ntfs` filesystem)을 가지는 지역 SSD 저장소와 같은 최적화된 저장소를 사용하십시오. 예를 들어, Cockroach Labs 내부 테스트 용으로 `Standard_L4s` VMs (4 vCPUs and 32 GiB of RAM per VM)을 사용합니다.
 
-    - If you choose local SSD storage, on reboot, the VM can come back with the `ntfs` filesystem. Be sure your automation monitors for this and reformats the disk to the Linux filesystem you chose initially.
+    - 로컷 SSD 저장소를 선택한 경우, 재부팅 시, VM이 `ntfs` 과 함께 돌아올 수 있씁니다. 처음에 선택한 리눅스 파일 시스템으로 디스크를 재구성하는지 확인하십시오.
 
-- **Do not** use ["burstable" B-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/b-series-burstable) VMs, which limit the load on a single core. Also, Cockroach Labs has experienced data corruption issues on A-series VMs and irregular disk performance on D-series VMs, so we recommend avoiding those as well.
+- 단일 코어에 대한 로드를 제한하는 ["burstable" B-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/b-series-burstable) VMs을 **사용하지 마십시오**. 또한, Cockroach Labs는 A-series VMs에서 일어나는 데이터 손상 문제와 D-series VMs에서 발생하는 불규칙한 디스크 성능을 경험했으므로, 이러한 문제를 피하는 것을 추천합니다.
 
-- When creating the VMs, make sure to select the **Resource Group**, **Virtual Network**, and **Network Security Group** you created.
+- VMs을 생성할 때, 당신이 생성한 **리소스 그룹**, **가상 네트워크**, 그리고 **네트워크 보안 그룹** 을 선택하십시오.
 
-For more details, see [Hardware Recommendations](recommended-production-settings.html#hardware) and [Cluster Topology](recommended-production-settings.html#cluster-topology).
+더 자세한 설명을 위해, [하드웨어 추천](recommended-production-settings.html#hardware) 와 [클러스터 토폴로지](recommended-production-settings.html#cluster-topology)를 보십시오.
 
 ## 3 단계. 클락을 동기화 하십시오.
 
@@ -90,23 +90,23 @@ For more details, see [Hardware Recommendations](recommended-production-settings
 
 ## 4 단계. 로드밸런싱을 설정하십시오.
 
-Each CockroachDB node is an equally suitable SQL gateway to your cluster, but to ensure client performance and reliability, it's important to use load balancing:
+각각의 CockroachDB 노드는 클러스터에 동일하게 적절한 SQL 게이트웨이 이지만, 고객에게 성능과 신뢰성을 보장하기 위해, 로드 밸런싱을 사용하는 것은 중요합니다:
 
-- **성능:** Load balancers spread client traffic across nodes. This prevents any one node from being overwhelmed by requests and improves overall cluster performance (queries per second).
+- **성능:** 노드 밸런서가 노드 전체에 클라이언트 트래픽을 분산합니다. 따라서 한 개의 노드가 리퀘스트에 의해 압도되지 않고 전체 클러스터 성능이 향상됩니다 (초당 쿼리).
 
-- **신뢰성:** Load balancers decouple client health from the health of a single CockroachDB node. In cases where a node fails, the load balancer redirects client traffic to available nodes.
+- **신뢰성:** 로드 밸런서는 클라이언트 상태를 단일ㄹ CockroachDB 노드의 상태와 분리합니다. 노드가 실패한 케이스에, 로드 밸런서는 클라이언트 트래픽을 사용 가능한 노드로 다시 보냅니다.
 
-Microsoft Azure offers fully-managed load balancing to distribute traffic between instances.
+마이크로소프트 Azure는 인스턴스 간에 트래픽을 분산하기 위해 완전히 관리되는 로드 밸런싱을 제공합니다.
 
-1. [Add Azure load balancing](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview). Be sure to:
-	- Set forwarding rules to route TCP traffic from the load balancer's port **26257** to port **26257** on the nodes.
-	- Configure health checks to use HTTP port **8080** and path `/health?ready=1`. This [health endpoint](monitoring-and-alerting.html#health-ready-1) ensures that load balancers do not direct traffic to nodes that are live but not ready to receive requests.
+1. [Azure 로드 밸런싱 추가](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview):
+	- 로드 밸런서의 포트 **26257** 에서 노드에 있는 포트 **26257** 로 TCP 트래픽을 라우팅하는 포워딩 규칙을 설정합니다 .
+	- HTTP 포트 **8080** 과 경로 `/health?ready=1`을 사용하는 상태 체크을 설정합니다. [상태 엔드포인트](monitoring-and-alerting.html#health-ready-1) 로드 밸런서가 활성 상태이지만 요청을 수신할 준비가 되지 않은 노드로 트래픽을 전송하지 않도록 합니다.
 
-2. Note the provisioned **IP Address** for the load balancer. You'll use this later to test load balancing and to connect your application to the cluster.
+2. 로드 밸런서에 의해 공급된 **IP 주소** 를 기록합니다. 나중에 이 기능을 사용하여 로드 밸런싱을 테스트하고 응용 프로그램을 클러스터에 연결할 수 있습니다.
 
-{{site.data.alerts.callout_info}}If you would prefer to use HAProxy instead of Azure's managed load balancing, see the <a href="deploy-cockroachdb-on-premises-insecure.html">On-Premises</a> tutorial for guidance.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}Azure의 관리된 로드 밸런싱 대신에 HAProxy을 사용하는 것을 선호한다면, 가이드 라인을 위해 <a href="deploy-cockroachdb-on-premises-insecure.html">On-Premises</a> 을 보십시오.{{site.data.alerts.end}}
 
-## 5 단계. 노드들을 시작하십시오.
+## 5 단계. 노드들을 시작하십시오..
 
 {% include {{ page.version.version }}/prod-deployment/insecure-start-nodes.md %}
 
@@ -132,7 +132,7 @@ Microsoft Azure offers fully-managed load balancing to distribute traffic betwee
 
 ## 11 단계. 클러스터를 사용하십시오.
 
-이제 배포가 되는 중이므로, 다음을 수행할 수 있습니다:
+이제 배포가 되는 중이므로, 다음을 수행할 수 있습니다. :
 
 1. [데이터 모델 실행](sql-statements.html).
 2. [사용자 만들기](create-and-manage-users.html)과 [grant them privileges](grant.html).
