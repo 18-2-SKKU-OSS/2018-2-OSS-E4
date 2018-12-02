@@ -72,11 +72,11 @@ Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트
 
 [리눅스 VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) 클러스터에 포함될 각 노드에 대한 설명을 위해서 합니다. 클러스터 대신 샘플 워크로드를 실행할 계횓인 경우, 그 워크로드에 대한 분리된 VM을 생성하십시오.
 
-- 최소한 3개의 노드를 실행하십시오 [생존 보장](recommended-production-settings.html#cluster-topology).
+- 최소한 3개의 노드를 실행하여 [생존성을 보장](recommended-production-settings.html#cluster-topology)하십시오.
 
 - [Ls-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-storage) [프리미엄 저장소](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage)를 가지는 VMs 또는 `ext4` (윈도우의 `ntfs` 파일시스템이 아님)과 같은 리눅스 파일 시스템을 가지는 지역 SSD 저장소와 같은 최적화된 저장소를 사용하십시오. 예를 들어, Cockroach Labs 내부 테스트 용으로 `Standard_L4s` VMs (4 vCPUs and 32 GiB of RAM per VM)을 사용합니다.
 
-    - 로컷 SSD 저장소를 선택한 경우, 재부팅 시, VM이 `ntfs` 과 함께 돌아올 수 있습니다. 처음에 선택한 리눅스 파일 시스템으로 디스크를 재구성하는지 확인하십시오.
+    - 로컬 SSD 저장소를 선택한 경우, 재부팅 시, VM이 `ntfs` 과 함께 돌아올 수 있습니다. 처음에 선택한 리눅스 파일 시스템으로 디스크를 재구성하는지 확인하십시오.
 
 - 단일 코어에 대한 로드를 제한하는 ["burstable" B-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/b-series-burstable) VMs을 **사용하지 마십시오**. 또한, Cockroach Labs는 A-series VMs에서 일어나는 데이터 손상 문제와 D-series VMs에서 발생하는 불규칙한 디스크 성능을 경험했으므로, 이러한 문제를 피하는 것을 추천합니다.
 
