@@ -12,9 +12,9 @@ toc: true
 
 클러스터의 위상 배치를 올바르게 계획하려면, CockroachDB 관련 기본 용어 몇 가지를 검토하는 것이 중요합니다:
 
-용어 | 정의
------|------------
-**클러스터** | 하나 이상의 데이터베이스가 포함된 단일 논리 어플리케이션으로 작동하는 CockroachDB 배포
+용어    | 정의
+-------|------------
+**클러 스터** | 하나 이상의 데이터베이스가 포함된 단일 논리 어플리케이션으로 작동하는 CockroachDB 배포
 **노드** | CockroachDB를 실행하는 개별 머신. 많은 노드가 클러스터를 작성하기 위해 결합합니다.
 **범위** | CockroachDB는 모든 사용자 데이터와 거의 모든 시스템 데이터를 키-값 쌍으로 구성된 거대한 정렬 맵에 저장합니다. 이 키스페이스는 키스페이스의 연속적인 덩어리인 "범위"로 구분되어, 모든 키를 항상 단일 범위에서 찾을 수 있습니다.
 **복제본** | CockroachDB는 각 범위를 복제하고(기본적으로 3회) 각 복제본을 다른 노드에 저장합니다.
@@ -30,8 +30,8 @@ toc: true
     - 2개의 동시 노드 장애를 허용하려면, 최소한 5개의 노드를 사용하고, [기본 복제 요소를 증가](configure-replication-zones.html#edit-the-default-replication-zone)시켜 5로 설정하고, [중요한 내부 데이터에 대한 복제 요소를 증가](configure-replication-zones.html#create-a-a-a-system-range)시켜 5로 설정하십시오. 이 경우 2개의 노드가 동시에 실패하는 경우, 각 범위는 5개의 복제본 중 3개, 즉 대다수를 보유합니다.
 
 - 하나 이상의 지역에 있는 여러 데이터 센터에 배포할 때:
-    - To be able to tolerate the failure of 1 entire datacenter, use at least 3 datacenters and set `--locality` on each node to spread data evenly across datacenters (see next bullet for more details). 이 경우, 1개의 데이터 센터가 오프라인 상태가 되면, 나머지 2개의 데이터 센터는 대다수의 복제본을 유지합니다.
-    - When starting each node, use the [`--locality`](start-a-node.html#locality) flag to describe the node's location, for example, `--locality=region=west,datacenter=us-west-1`. The key-value pairs should be ordered from most to least inclusive, and the keys and order of key-value pairs must be the same on all nodes.
+    - 1개의 전체 데이터 센터의 오류를 허용하려면, 최소한 3개의 데이터 센터를 사용하고 각 노드에 `--locality`를 설정하여 데이터 센터 전체에 데이터를 고르게 분산시킵니다. (자세한 내용은 다음 문단을 참조하십시오). 이 경우, 1개의 데이터 센터가 오프라인 상태가 되면, 나머지 2개의 데이터 센터는 대다수의 복제본을 유지합니다.
+    - 각 노드를 시작할 때는, [`--locality`](start-a-node.html#locality) 플래그를 사용하여 노드의 위치를 설명합니다 (예를 들어, `--locality=region=west,datacenter=us-west-1`). 키-값 쌍은 가장 적게 포함하여 주문해야 하며, 키-값 쌍의 키와 순서는 모든 노드에서 동일해야 합니다.
         - CockroachDB spreads the replicas of each piece of data across as diverse a set of localities as possible, with the order determining the priority. However, locality can also be used to influence the location of data replicas in various ways using [replication zones](configure-replication-zones.html#replication-constraints).
         - When there is high latency between nodes, CockroachDB uses locality to move range leases closer to the current workload, reducing network round trips and improving read performance, also known as ["follow-the-workload"](demo-follow-the-workload.html). In a deployment across more than 3 datacenters, however, to ensure that all data benefits from "follow-the-workload", you must [increase the replication factor](configure-replication-zones.html#edit-the-default-replication-zone) to match the total number of datacenters.
         - Locality is also a prerequisite for using the [table partitioning](partitioning.html) and [**Node Map**](enable-node-map.html) enterprise features.        
@@ -48,7 +48,7 @@ CockroachDB의 결함 허용 및 자동 복구 기능에 대한 추가 컨텍스
 
 - 노드에는 워크로드를 처리할 수있는 충분한 CPU, RAM, 네트워크 및 저장 장치 용량이 있어야 합니다. 프로덕션 환경에 배포하기 전에 하드웨어 설정을 테스트하고 조정하는 것이 중요합니다.
 
-- At a bare minimum, each node should have **2 GB of RAM and one entire core**. More data, complex workloads, higher concurrency, and faster performance require additional resources.
+- 최소한 각 노드에는 **2GB RAM과 전체 코어**가 있어야 합니다. 더 많은 데이터, 복잡한 워크로드, 높은 동시성 및 빠른 성능을 위해서는 추가 자원이 필요합니다.
     {{site.data.alerts.callout_danger}}
     단일 코어의 로드를 제한하는 "버스트 가능" 또는 "공유 코어" 가상 머신을 피하십시오.
     {{site.data.alerts.end}}
@@ -59,7 +59,8 @@ CockroachDB의 결함 허용 및 자동 복구 기능에 대한 추가 컨텍스
 
 - 최고의 탄력성을 위해:
     - 적은 수의 대형 노드 대신 많은 수의 작은 노드를 사용하십시오. 데이터가 더 많은 노드로 확산될 때 실패한 노드에서 복구하는 것이 더 빠릅니다.
-    - Use [zone configs](configure-replication-zones.html) to increase the replication factor from 3 (the default) to 5. This is especially recommended if you are using local disks rather than a cloud providers' network-attached disks that are often replicated underneath the covers, because local disks have a greater risk of failure. You can do this for the [entire cluster](configure-replication-zones.html#edit-the-default-replication-zone) or for specific [databases](configure-replication-zones.html#create-a-replication-zone-for-a-database), [tables](configure-replication-zones.html#create-a-replication-zone-for-a-table), or [rows](configure-replication-zones.html#create-a-replication-zone-for-a-table-or-secondary-index-partition) (enterprise-only).
+    - 
+    [영역 구성](configure-replication-zones.html)를 사용하여 복제 요소를 3 (기본값)에서 5로 늘립니다. This is especially recommended if you are using local disks rather than a cloud providers' network-attached disks that are often replicated underneath the covers, because local disks have a greater risk of failure. You can do this for the [entire cluster](configure-replication-zones.html#edit-the-default-replication-zone) or for specific [databases](configure-replication-zones.html#create-a-replication-zone-for-a-database), [tables](configure-replication-zones.html#create-a-replication-zone-for-a-table), or [rows](configure-replication-zones.html#create-a-replication-zone-for-a-table-or-secondary-index-partition) (enterprise-only).
         {{site.data.alerts.callout_danger}}
         {% include {{page.version.version}}/known-limitations/system-range-replication.md %}
         {{site.data.alerts.end}}
@@ -71,23 +72,23 @@ Cockroach Labs는 자체 내부 테스트를 기반으로 다음과 같은 클�
 #### AWS
 
 - `m`(범용), `c`(연산 최적화) 또는 `i`(스토리지 최적화)[인스턴스](https://aws.amazon.com/ec2/instance-types/)를 사용하십시오. 예를 들어, Cockroach Labs는 내부 테스트를 위해 `m3.large` 인스턴스 (인스턴스당 2개의 vCPU 및 7.5 GiB)를 사용했습니다.
-- 단일 코어의 로드를 제한하는 ["버스터가능한" `t2` 인스턴스](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/t2-instances.html)를 **사용하지 마십시오**.
+- 단일 코어의 로드를 제한하는 ["버스터가능한" `t2` 인스턴스](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/t2-instances.html)를 사용하지 **마십시오**.
 - [공급된 IOPS SSD-backed (io1) EBS volumes](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html#EBSVolumeTypes_piops)이나 [SSD 인스턴스 저장소 볼륨](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html)을 사용하십시오.
 
 #### Azure
 
-- Use storage-optimized [Ls-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-storage) VMs. 예를 들어, Cockroach Labs는 내부 테스트를 위해 `Standard_L4s` VMs (VM당 4개의 vCPU 및 32 GiB의 RAM)을 사용했습니다.
-- Use [Premium Storage](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage) or local SSD storage with a Linux filesystem such as `ext4` (not the Windows `ntfs` filesystem). Note that [the size of a Premium Storage disk affects its IOPS](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage#premium-storage-disk-limits).
-- If you choose local SSD storage, on reboot, the VM can come back with the `ntfs` filesystem. Be sure your automation monitors for this and reformats the disk to the Linux filesystem you chose initially.
+- 스토리지에 최적화된 [Ls-시리즈](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-storage) VMs을 사용하십시오. 예를 들어, Cockroach Labs는 내부 테스트를 위해 `Standard_L4s` VMs (VM당 4개의 vCPU 및 32 GiB의 RAM)을 사용했습니다.
+- [프리미엄 스토리지](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage) 또는 로컬 SSD 스토리지를 `ext4` (Windows ' NTFS 파일 시스템이 아님)와 같은 Linux 파일 시스템과 함께 사용하십시오. [프리미엄 스토리지 디스크의 크기는 IOPS에 영향을 미친다](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage#premium-storage-disk-limits)는 것에 주의하십시오.
+- 재부팅할 때 로컬 SSD 스토리지를 선택하면, VM이 `ntfs` 파일 시스템으로 돌아올 수 있습니다. 자동화가 이를 모니터하고 처음에 선택한 Linux 파일 시스템으로 디스크를 다시 포맷하십시오.
 - 단일 코어에 대한 로드를 제한하는 ["버스트 가능한" B 시리즈](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/b-series-burstable) VMs를 사용하지 **마십시오**. 또한, Cockroach Labs는 A 시리즈 VM에서의 데이터 손상 문제와 D 시리즈 VM에서의 불규칙한 디스크 성능을 경험했으므로 피해야 합니다.
 
 #### 디지털 오션
 
-- Use any [droplets](https://www.digitalocean.com/pricing/) except standard droplets with only 1 GB of RAM, which is below our minimum requirement. All Digital Ocean droplets use SSD storage. 
+- 최소 요구 사항보다 낮은 1GB RAM만 사용하는 표준 Droplets을 제외한 모든 [droplets](https://www.digitalocean.com/pricing/)을 사용하십시오. 모든 Digital Ocean Droplets은 SSD 저장소를 사용합니다.
 
 #### GCE
 
-- Use `n1-standard` or `n1-highcpu` [predefined VMs](https://cloud.google.com/compute/pricing#predefined_machine_types), or [custom VMs](https://cloud.google.com/compute/pricing#custommachinetypepricing). For example, Cockroach Labs has used custom VMs (8 vCPUs and 16 GiB of RAM per VM) for internal testing.
+- `n1-standard` 또는 `n1-highcpu` [미리 정의된 VMs](https://cloud.google.com/compute/pricing#predefined_machine_types), 또는 [커스텀 VMs](https://cloud.google.com/compute/pricing#custommachinetypepricing)을 사용합니다. 예를 들어, Cockroach Labs는 내부 테스트에 사용자 지정 VMs(8 vCPU 및 VM당 RAM 16GiB)을 사용했습니다.
 - 단일 코어의 로드를 제한하는 `f1` 또는`g1` [공유 코어 머신](https://cloud.google.com/compute/docs/machine-types#sharedcore)을 사용하지 **마십시오**.
 - [로컬 SSD](https://cloud.google.com/compute/docs/disks/#localssds) 또는 [SSD 영구 디스크](https://cloud.google.com/compute/docs/disks/#pdspecs)를 사용하십시오. [SSD 영구 디스크의 IOPS는 디스크 크기와 컴퓨터의 CPU 수에 의존](https://cloud.google.com/compute/docs/disks/performance#optimizessdperformance)한다는 것에 주의하십시오.
 
@@ -132,10 +133,10 @@ Cockroach Labs는 자체 내부 테스트를 기반으로 다음과 같은 클�
 
 단일 네트워크에서 클러스터를 실행하는 경우, 네트워크가 개인용인지 여부에 따라 설정이 달라집니다. 개인 네트워크에서 머신은 주소가 네트워크에만 국한되어, 공용 인터넷에 액세스 할 수 없습니다. 이 주소를 사용하는 것이 더 안전하며 일반적으로 공용 주소보다 대기 시간이 짧습니다.
 
-Private? | 권장 설정
+프라이벳? | 권장 설정
 ---------|------------------
-Yes | Start each node with `--listen-addr` set to its private IP address and do not specify `--advertise-addr`. This will tell other nodes to use the private IP address advertised. 개인 네트워크의 로드 밸런서/클라이언트는 이를 사용해야 합니다.
-No | Start each node with `--advertise-addr` set to a stable public IP address that routes to the node and do not specify `--listen-addr`. This will tell other nodes to use the specific IP address advertised, but load balancers/clients will be able to use any address that routes to the node.<br><br>If load balancers/clients are outside the network, also configure firewalls to allow external traffic to reach the cluster.
+O | Start each node with `--listen-addr` set to its private IP address and do not specify `--advertise-addr`. `--listen-addr`가 사설 IP 주소로 설정된 각 노드를 시작하고 `--advertise-addr`을 지정하지 마십시오.
+X | Start each node with `--advertise-addr` set to a stable public IP address that routes to the node and do not specify `--listen-addr`. This will tell other nodes to use the specific IP address advertised, but load balancers/clients will be able to use any address that routes to the node.<br><br>If load balancers/clients are outside the network, also configure firewalls to allow external traffic to reach the cluster.
 
 ### 여러 네트워크에 걸친 클러스터
 
@@ -143,8 +144,8 @@ No | Start each node with `--advertise-addr` set to a stable public IP address t
 
 Nodes reachable across networks? | 권장 설정
 ---------------------------------|------------------
-Yes | This is typical when all networks are on the same cloud. In this case, use the relevant [single network setup](#cluster-on-a-single-network) above.
-No | This is typical when networks are on different clouds. In this case, set up a [VPN](https://en.wikipedia.org/wiki/Virtual_private_network), [VPC](https://en.wikipedia.org/wiki/Virtual_private_cloud), [NAT](https://en.wikipedia.org/wiki/Network_address_translation), or another such solution to provide unified routing across the networks. Then start each node with `--advertise-addr` set to the address that is reachable from other networks and do not specify `--listen-addr`. This will tell other nodes to use the specific IP address advertised, but load balancers/clients will be able to use any address that routes to the node.<br><br><span class="version-tag">New in v2.1:</span> Also, if a node is reachable from other nodes in its network on a private or local address, set [`--locality-advertise-addr`](start-a-node.html#networking) to that address. This will tell nodes within the same network to prefer the private or local address to improve performance. Note that this feature requires that each node is started with the [`--locality`](start-a-node.html#locality) flag. 자세한 내용은, 이 [예시](start-a-node.html#start-a-multi-node-cluster-across-private-networks)를 참조하십시오.
+O | 이는 모든 네트워크가 동일한 클라우드에 있는 경우 일반적입니다. 이 경우, 위의 관련 [단일 네트워크 설정](#cluster-on-a-single-network)을 사용하십시오.
+X | 이것은 네트워크가 다른 클라우드에 있을 경우 일반적입니다. In this case, set up a [VPN](https://en.wikipedia.org/wiki/Virtual_private_network), [VPC](https://en.wikipedia.org/wiki/Virtual_private_cloud), [NAT](https://en.wikipedia.org/wiki/Network_address_translation), or another such solution to provide unified routing across the networks. Then start each node with `--advertise-addr` set to the address that is reachable from other networks and do not specify `--listen-addr`. This will tell other nodes to use the specific IP address advertised, but load balancers/clients will be able to use any address that routes to the node.<br><br><span class="version-tag">New in v2.1:</span> Also, if a node is reachable from other nodes in its network on a private or local address, set [`--locality-advertise-addr`](start-a-node.html#networking) to that address. This will tell nodes within the same network to prefer the private or local address to improve performance. Note that this feature requires that each node is started with the [`--locality`](start-a-node.html#locality) flag. 자세한 내용은, 이 [예시](start-a-node.html#start-a-multi-node-cluster-across-private-networks)를 참조하십시오.
 
 ## 로드 밸런싱
 
@@ -165,7 +166,7 @@ No | This is typical when networks are on different clouds. In this case, set up
 [On-Premises](deploy-cockroachdb-on-premises.html#step-6-set-up-haproxy-load-balancers) | HAProxy 사용.
 [AWS](deploy-cockroachdb-on-aws.html#step-4-set-up-load-balancing) | Amazon의 관리 로드 밸런싱 서비스를 사용.
 [Azure](deploy-cockroachdb-on-microsoft-azure.html#step-4-set-up-load-balancing) | Azure의 관리 로드 밸런싱 서비스를 사용.
-[디지털 오션](deploy-cockroachdb-on-digital-ocean.html#step-3-set-up-load-balancing) | 디지털 오션의 관리 로드 밸런싱 서비스를 사용.
+[Digital Ocean](deploy-cockroachdb-on-digital-ocean.html#step-3-set-up-load-balancing) | 디지털 오션의 관리 로드 밸런싱 서비스를 사용.
 [GCE](deploy-cockroachdb-on-google-cloud-platform.html#step-4-set-up-tcp-proxy-load-balancing) | GCE의 관리 TCP 프록시 로드 밸런싱 서비스를 사용.
 
 ## 모니터링 및 경고
@@ -178,7 +179,7 @@ No | This is typical when networks are on different clouds. In this case, set up
 
 ## 캐시 및 SQL 메모리 크기
 
-By default, each node's cache size and temporary SQL memory size is `128MiB` respectively. These defaults were chosen to facilitate development and testing, where users are likely to run multiple CockroachDB nodes on a single computer. When running a production cluster with one node per host, however, it's recommended to increase these values:
+기본적으로 각 노드의 캐시 크기와 임시 SQL 메모리 크기는 각각 `128MiB`입니다. 이러한 기본값은 사용자가 단일 컴퓨터에서 여러 CockroachDB 노드를 실행할 가능성이 있는 개발 및 테스트를 용이하게 하기 위해 선택되었습니다. 그러나 호스트당 하나의 노드가 있는 프로덕션 클러스터를 실행할 때는, 이 크기들을 늘리는 것이 좋습니다.
 
 - 노드의 **캐시 크기**를 늘리면 노드의 읽기 성능이 향상됩니다.
 - Increasing a node's **SQL memory size** will increase the number of simultaneous client connections it allows (the `128MiB` default allows a maximum of 6200 simultaneous connections) as well as the node's capacity for in-memory processing of rows when using `ORDER BY`, `GROUP BY`, `DISTINCT`, joins, and window functions.
@@ -201,7 +202,7 @@ CockroachDB는 종종 기본적으로 사용할 수 있는 것보다 많은 수�
 각 CockroachDB 노드에 대하여:
 
 - **최소**에서 파일 설명자 제한은 1956 (스토어당 1700 네트워킹의 경우 +256)이어야 합니다. 한계가 이 임계 값보다 낮으면 노드가 시작되지 않습니다. 
-- It is **recommended** to set the file descriptors limit to unlimited; otherwise, the recommended limit is at least 15000 (10000 per store plus 5000 for networking). This higher limit ensures performance and accommodates cluster growth.
+- 파일 설명자 제한을 무제한으로 설정하는 것이 **좋습니다**. otherwise, the recommended limit is at least 15000 (10000 per store plus 5000 for networking). This higher limit ensures performance and accommodates cluster growth.
 - When the file descriptors limit is not high enough to allocate the recommended amounts, CockroachDB allocates 10000 per store and the rest for networking; if this would result in networking getting less than 256, CockroachDB instead allocates 256 for networking and evenly splits the rest across stores.
 
 ### 파일 설명자 제한 증가
@@ -285,7 +286,7 @@ $(document).ready(function(){
 
 #### 요세미티와 그 이후
 
-To adjust the file descriptors limit for a single process in Mac OS X Yosemite and later, you must create a property list configuration file with the hard limit set to the recommendation mentioned [above](#file-descriptors-limit). Note that CockroachDB always uses the hard limit, so it's not technically necessary to adjust the soft limit, although we do so in the steps below.
+Linux에서 단일 프로세스에 대한 파일 설명자 제한을 조정하려면, PAM 사용자 제한을 활성화하고 [위](#file-descriptors-limit)에서 설명한 권장 사항으로 엄격한 한계를 설정하십시오. CockroachDB는 항상 엄격한 한계를 사용하므로, 부드러운 한계를 조정하는 것은 기술적으로 필수적이지는 않지만, 아래 단계에서 그렇게 합니다.
 
 예를 들어, 3개의 스토어가 있는 노드의 경우, 엄한 한계를 다음과 같이 최소 35000(상점당 10000개 및 네트워킹용 5000 개)으로 설정합니다:
 
@@ -343,7 +344,7 @@ To adjust the file descriptors limit for a single process in Mac OS X Yosemite a
 
 #### 이전 버전
 
-To adjust the file descriptors limit for a single process in OS X versions earlier than Yosemite, edit `/etc/launchd.conf` and increase the hard limit to the recommendation mentioned [above](#file-descriptors-limit). Note that CockroachDB always uses the hard limit, so it's not technically necessary to adjust the soft limit, although we do so in the steps below.
+Linux에서 단일 프로세스에 대한 파일 설명자 제한을 조정하려면, PAM 사용자 제한을 활성화하고 [위](#file-descriptors-limit)에서 설명한 권장 사항으로 엄격한 한계를 설정하십시오. CockroachDB는 항상 엄격한 한계를 사용하므로, 부드러운 한계를 조정하는 것은 기술적으로 필수적이지는 않지만, 아래 단계에서 그렇게 합니다.
 
 예를 들어, 3개의 스토어가 있는 노드의 경우, 엄한 한계를 다음과 같이 최소 35000(상점당 10000개 및 네트워킹용 5000 개)으로 설정합니다.
 
@@ -387,7 +388,7 @@ To adjust the file descriptors limit for a single process in OS X versions earli
 
 #### 프로세스당 한도
 
-To adjust the file descriptors limit for a single process on Linux, enable PAM user limits and set the hard limit to the recommendation mentioned [above](#file-descriptors-limit). Note that CockroachDB always uses the hard limit, so it's not technically necessary to adjust the soft limit, although we do so in the steps below.
+Linux에서 단일 프로세스에 대한 파일 설명자 제한을 조정하려면, PAM 사용자 제한을 활성화하고 [위](#file-descriptors-limit)에서 설명한 권장 사항으로 엄격한 한계를 설정하십시오. CockroachDB는 항상 엄격한 한계를 사용하므로, 부드러운 한계를 조정하는 것은 기술적으로 필수적이지는 않지만, 아래 단계에서 그렇게 합니다.
 
 예를 들어, 3개의 스토어가 있는 노드의 경우, 엄한 한계를 다음과 같이 최소 35000(상점당 10000 개 및 네트워킹용 5000 개)으로 설정합니다:
 
