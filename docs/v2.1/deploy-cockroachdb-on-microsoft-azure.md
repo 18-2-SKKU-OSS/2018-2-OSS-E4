@@ -11,63 +11,63 @@ ssh-link: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/mac-crea
   <a href="deploy-cockroachdb-on-microsoft-azure-insecure.html"><button class="filter-button">Insecure</button></a>
 </div>
 
-This page shows you how to manually deploy a secure multi-node CockroachDB cluster on Microsoft Azure, using Azure's managed load balancing service to distribute client traffic.
+이 페이지는 클라이언트 트래픽을 배포하는 Azure의 관리된 로드 밸런싱 서비스를 사용하여 CockroachDB 클러스터의 안전한 다중 노드를 Microsoft Azure에 배포하는 방법을 보여줍니다. 
 
-If you are only testing CockroachDB, or you are not concerned with protecting network communication with TLS encryption, you can use an insecure cluster instead. Select **Insecure** above for instructions.
+만약 TLS 암호화를 사용한 네트워크 커뮤니케이션을 신경쓰지 않고, 오직 CockroachDB를 테스트해 보고 싶기만 하다면, 보안되지 않는 클러스를 대신 사용할 수 있습니다. 설명서를 보려면 위의 **Insecure** 을 선택하십시오.
 
 
-## Requirements
+## 요구사항
 
 {% include {{ page.version.version }}/prod-deployment/secure-requirements.md %}
 
-## Recommendations
+## 추천사항
 
 {% include {{ page.version.version }}/prod-deployment/secure-recommendations.md %}
 
-## Step 1. Configure your network
+## 단계 1. 네트워크 구성
 
-CockroachDB requires TCP communication on two ports:
+CockroachDB는 두 개의 포트에서 TCP 통신을 필요로 합니다:
 
-- **26257** (`tcp:26257`) for inter-node communication (i.e., working as a cluster), for applications to connect to the load balancer, and for routing from the load balancer to nodes
-- **8080** (`tcp:8080`) for exposing your Admin UI
+- **26257** (`tcp:26257`) 노드간 통신 (i.e., working as a cluster), 어플리케이션을 로드밸런서에 연결, 로드 밸런서에서 노드로 노선을 연결하기 위함
+- **8080** (`tcp:8080`) 관리 UI 노출을 위함
 
-To enable this in Azure, you must create a Resource Group, Virtual Network, and Network Security Group.
+Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트워크, 네트워크 보안 그룹을 생성해야 합니다.
 
-1. [Create a Resource Group](https://azure.microsoft.com/en-us/updates/create-empty-resource-groups/).
-2. [Create a Virtual Network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-vnet-arm-pportal) that uses your **Resource Group**.
-3. [Create a Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-pportal) that uses your **Resource Group**, and then add the following **inbound** rules to it:
-    - **Admin UI support**:
+1. [리소스 그룹 생성](https://azure.microsoft.com/en-us/updates/create-empty-resource-groups/).
+2. [가상 네트워크 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-vnet-arm-pportal) that uses your **Resource Group**.
+3. [네트워크 보안 그룹 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-pportal) **리소스 그룹**을 사용하고, **인바운드** 규칙을 추가합니다:
+    - **관리 UI 지원**:
 
-         Field | Recommended Value 
+         분야 | 추천 값
         -------|-------------------
-         Name | **cockroachadmin** 
-         Source | **IP Addresses** 
-         Source IP addresses/CIDR ranges | Your local network’s IP ranges 
-         Source port ranges | * 
-         Destination | **Any** 
-         Destination port range | **8080** 
-         Protocol | **TCP** 
-         Action | **Allow** 
-         Priority | Any value > 1000 
+         이름 | **cockroachadmin** 
+         소스 | **IP 주소** 
+         소스 IP 주소/CIDR 범위 | 지역 네트워크의 IP 범위 
+         포트 범위 소스 | * 
+         목적지 | **어떤 것이든** 
+         목적지 포트 범위 | **8080** 
+         프로토콜 | **TCP** 
+         행동 | **허락** 
+         우선순위 | 어떤 수 > 1000 
     - **Application support**:
 
-        {{site.data.alerts.callout_success}}If your application is also hosted on the same Azure     Virtual Network, you will not need to create a firewall rule for your application to communicate     with your load balancer.{{site.data.alerts.end}}
+        {{site.data.alerts.callout_success}}어플리케이션이 동일한 Azure 가상 네트워크에서도 호스팅 되는 경우, 어플리케이션이 로드 밸런서와 통신하는데 방화벽 규칙을 만들 필요가 없습니다.{{site.data.alerts.end}}
 
-         Field | Recommended Value 
+         분야 | 추천 값 
         -------|-------------------
-         Name | **cockroachapp** 
-         Source | **IP Addresses** 
-         Source IP addresses/CIDR ranges | Your local network’s IP ranges 
-         Source port ranges | * 
-         Destination | **Any** 
-         Destination port range | **26257** 
-         Protocol | **TCP** 
-         Action | **Allow** 
-         Priority | Any value > 1000 
+         이름 | **cockroachapp** 
+         소스 | **IP 주소** 
+         소스 IP 주소/CIDR 범위 | 지역 네트워크의 IP 범위 
+         포트 범위 소스 | * 
+         목적지 | **어떤 것이든** 
+         목적지 포트 범위 | **26257** 
+         프로토콜 | **TCP** 
+         행동 | **허락** 
+         우선순위 | 어떤 수 > 1000 
 
-## Step 2. Create VMs
+## 단계 2. VMs 이 인증서 생성
 
-[Create Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) for each node you plan to have in your cluster. If you plan to run a sample workload against the cluster, create a separate VM for that workload.
+[Linux VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) for each node you plan to have in your cluster. If you plan to run a sample workload against the cluster, create a separate VM for that workload.
 
 - Run at least 3 nodes to [ensure survivability](recommended-production-settings.html#cluster-topology).
 
@@ -81,11 +81,11 @@ To enable this in Azure, you must create a Resource Group, Virtual Network, and 
 
 For more details, see [Hardware Recommendations](recommended-production-settings.html#hardware) and [Cluster Topology](recommended-production-settings.html#cluster-topology).
 
-## Step 3. Synchronize clocks
+## 단계 3. 클락 동기화
 
 {% include {{ page.version.version }}/prod-deployment/synchronize-clocks.md %}
 
-## Step 4. Set up load balancing
+## 단계 4. 로드 밸런싱 설정
 
 Each CockroachDB node is an equally suitable SQL gateway to your cluster, but to ensure client performance and reliability, it's important to use load balancing:
 
@@ -103,38 +103,38 @@ Microsoft Azure offers fully-managed load balancing to distribute traffic betwee
 
 {{site.data.alerts.callout_info}}If you would prefer to use HAProxy instead of Azure's managed load balancing, see the <a href="deploy-cockroachdb-on-premises.html">On-Premises</a> tutorial for guidance.{{site.data.alerts.end}}
 
-## Step 5. Generate certificates
+## 단계 5. 인증서 생성
 
 {% include {{ page.version.version }}/prod-deployment/secure-generate-certificates.md %}
 
-## Step 6. Start nodes
+## 단계 6. 노드 시작
 
 {% include {{ page.version.version }}/prod-deployment/secure-start-nodes.md %}
 
-## Step 7. Initialize the cluster
+## 단계 7. 클러스터 초기화
 
 {% include {{ page.version.version }}/prod-deployment/secure-initialize-cluster.md %}
 
-## Step 8. Test the cluster
+## 단계 8. 클러스터 테스트
 
 {% include {{ page.version.version }}/prod-deployment/secure-test-cluster.md %}
 
-## Step 9. Run a sample workload
+## 단계 9. 샘플 워크로드 실행
 
 {% include {{ page.version.version }}/prod-deployment/secure-test-load-balancing.md %}
 
-## Step 10. Set up monitoring and alerting
+## 단계 10. 모니터링 및 알림 설정
 
 {% include {{ page.version.version }}/prod-deployment/monitor-cluster.md %}
 
-## Step 11. Scale the cluster
+## 단계 11. 클러스터 확장
 
 {% include {{ page.version.version }}/prod-deployment/secure-scale-cluster.md %}
 
-## Step 12. Use the database
+## 단계 12. 데이터베이스 사용
 
 {% include {{ page.version.version }}/prod-deployment/use-cluster.md %}
 
-## See also
+## 또 다른 참고 사항
 
 {% include {{ page.version.version }}/prod-deployment/prod-see-also.md %}
