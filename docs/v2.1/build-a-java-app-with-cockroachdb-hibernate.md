@@ -10,107 +10,107 @@ twitter: false
     <a href="build-a-java-app-with-cockroachdb-hibernate.html"><button class="filter-button current">Use <strong>Hibernate</strong></button></a>
 </div>
 
-This tutorial shows you how build a simple Java application with CockroachDB using a PostgreSQL-compatible driver or ORM.
+이 튜토리얼에서는 PostgreSQL과 호환되는 드라이버나 ORM을 사용하여 CockroachDB로 간단한 Java 어플리케이션을 제작하는 방법을 보여줍니다.
 
-We have tested the [Java JDBC driver](https://jdbc.postgresql.org/) and the [Hibernate ORM](http://hibernate.org/) enough to claim **beta-level** support, so those are featured here. If you encounter problems, please [open an issue](https://github.com/cockroachdb/cockroach/issues/new) with details to help us make progress toward full support.
+[Java JDBC driver](https://jdbc.postgresql.org/)와 [Hibernate ORM](http://hibernate.org/)는 **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다.만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도록 도와주시길 부탁드립니다.
 
 {{site.data.alerts.callout_success}}
-For a more realistic use of Hibernate with CockroachDB, see our [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository.
+Hibernate를 CockroachDB와 함께 보다 현실적으로 사용하려면,  [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository의 예시를 참조하세요.
 {{site.data.alerts.end}}
 
-## Before you begin
+## 시작하기 전에
 
 {% include {{page.version.version}}/app/before-you-begin.md %}
 
 {{site.data.alerts.callout_danger}}
-The examples on this page assume you are using a Java version <= 9. They do not work with Java 10.
+이 페이지의 예제에서는 java 버전 9를 사용한다고 가정합니다. Java 10과는 작동하지 않습니다.
 {{site.data.alerts.end}}
 
-## Step 1. Install the Gradle build tool
+## 1단계. Gradle 빌드 툴 설치하기
 
-This tutorial uses the [Gradle build tool](https://gradle.org/) to get all dependencies for your application, including Hibernate.
+이 튜토리얼은 [Gradle build tool](https://gradle.org/)을 사용하여 Hibernate를 포함하여 어플리케이션의 모든 종속성을 가져옵니다.
 
-To install Gradle on Mac, run the following command:
+Mac에서 Gradle을 설치하려면, 다음의 명령을 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ brew install gradle
 ~~~
 
-To install Gradle on a Debian-based Linux distribution like Ubuntu:
+Ubuntu와 같은 Debian-기반 Linux 배포판에서 Gradle을 설치하려면:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ apt-get install gradle
 ~~~
 
-To install Gradle on a Red Hat-based Linux distribution like Fedora:
+Fedora와 같은 Red Hat-기반 Linux 배포판에서 Gradle을 설치하려면:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ dnf install gradle
 ~~~
 
-For other ways to install Gradle, see [its official documentation](https://gradle.org/install).
+Gradle을 설치하는 다른 방법은 [its official documentation](https://gradle.org/install)을 참조하세요.
 
 <section class="filter-content" markdown="1" data-scope="secure">
 
-## Step 2. Create the `maxroach` user and `bank` database
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
 
 {% include {{page.version.version}}/app/create-maxroach-user-and-bank-database.md %}
 
-## Step 3. Generate a certificate for the `maxroach` user
+## 3단계. `maxroach` 사용자에 대한 인증서 생성하기
 
-Create a certificate and key for the `maxroach` user by running the following command.  The code samples will run as this user.
+다음 명령을 실행하여 `maxroach` 사용자에 대한 인증서와 키를 생성하시오. 코드 샘플은 이 사용자로 실행됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-directory/ca.key
 ~~~
 
-## Step 4. Convert the key file for use with Java
+## 4단계. Java에 사용할 키 파일 변환하기
 
-The private key generated for user `maxroach` by CockroachDB is [PEM encoded](https://tools.ietf.org/html/rfc1421).  To read the key in a Java application, you will need to convert it into [PKCS#8 format](https://tools.ietf.org/html/rfc5208), which is the standard key encoding format in Java.
+CockroachDB에서 사용자 `maxroach` 용으로 생성한 개인 키는 [PEM encoded](https://tools.ietf.org/html/rfc1421)입니다. 키를 Java 어플리케이션에서 읽으려면 Java의 표준 키 인코딩 형식인 [PKCS#8 format](https://tools.ietf.org/html/rfc5208)으로 변환해야 합니다.
 
-To convert the key to PKCS#8 format, run the following OpenSSL command on the `maxroach` user's key file in the directory where you stored your certificates (`/tmp/certs` in this example):
+키를 PKCS#8 형식으로 변환하려면, 이 예제의 인증서를 저장한 디렉토리의 `maxroach` 사용자의 키 파일에서 다음의 OpenSSL 명령을 실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ openssl pkcs8 -topk8 -inform PEM -outform DER -in client.maxroach.key -out client.maxroach.pk8 -nocrypt
 ~~~
 
-## Step 5. Run the Java code
+## 5단계. Java 코드 실행하기
 
-Download and extract [hibernate-basic-sample.tgz](https://github.com/cockroachdb/docs/raw/master/_includes/v2.1/app/hibernate-basic-sample/hibernate-basic-sample.tgz), which contains a Java project that includes the following files:
+다음의 파일들을 포함하는 Java 프로젝트를 다운로드 및 추출 [hibernate-basic-sample.tgz](https://github.com/cockroachdb/docs/raw/master/_includes/v2.1/app/hibernate-basic-sample/hibernate-basic-sample.tgz):
 
-File | Description
+파일 | 설명
 -----|------------
-[`Sample.java`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/hibernate-basic-sample/Sample.java) | Uses [Hibernate](http://hibernate.org/orm/) to map Java object state to SQL operations.  For more information, see [Sample.java](#sample-java).
-[`hibernate.cfg.xml`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/hibernate-basic-sample/hibernate.cfg.xml) | Specifies how to connect to the database and that the database schema will be deleted and recreated each time the app is run.  For more information, see [hibernate.cfg.xml](#hibernate-cfg-xml).
-[`build.gradle`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/hibernate-basic-sample/build.gradle) | Used to build and run your app.  For more information, see [build.gradle](#build-gradle).
+[`Sample.java`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/hibernate-basic-sample/Sample.java) |[Hibernate](http://hibernate.org/orm/)를 사용하여 Java 객체 를 SQL operation에 매핑합니다. 더 많은 정보는 [Sample.java](#sample-java)을 참조하십시오.
+[`hibernate.cfg.xml`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/hibernate-basic-sample/hibernate.cfg.xml) | 데이터베이스에 연결하는 방법을 지정하고, 어플리케이션을 실행할 때마다 데이터베이스 스키마를 삭제하고 다시 만들도록 합니다. 더 많은 정보는 [hibernate.cfg.xml](#hibernate-cfg-xml)을 참조하십시오.
+[`build.gradle`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/hibernate-basic-sample/build.gradle) | 어플리케이션을 빌드하고 실행하는데 사용됩니다. 더 많은 정보는 [build.gradle](#build-gradle)을 참조하십시오.
 
-In the `hibernate-basic-sample` directory, build and run the application:
+`hibernate-basic-sample` 디렉토리에서 어플리케이션을 빌드하고 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ gradle run
 ~~~
 
-Toward the end of the output, you should see:
+출력의 끝 부분은 다음과 같이 보여아합니다:
 
 ~~~
 1 1000
 2 250
 ~~~
 
-To verify that the table and rows were created successfully, start the [built-in SQL client](use-the-built-in-sql-client.html):
+표와 행이 성공적으로 생성되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --certs-dir=certs --database=bank
 ~~~
 
-To check the account balances, issue the following statement:
+계좌의 잔액을 확인하려면 다음의 명령문을 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -129,13 +129,13 @@ To check the account balances, issue the following statement:
 
 ### Sample.java
 
-The Java code shown below uses the [Hibernate ORM](http://hibernate.org/orm/) to map Java object state to SQL operations. Specifically, this code:
+아래의 Java 코드는 [Hibernate ORM](http://hibernate.org/orm/)을 사용하여 Java 객체를 SQL operation에 매핑합니다. 특히, 이 코드는:
 
-- Creates an `accounts` table in the database based on the `Account` class.
+- `Account` 클래스를 바탕으로 데이터베이스에 `accounts` 표를 생성합니다.
 
-- Inserts rows into the table using `session.save(new Account())`.
+- `session.save(new Account())`을 사용하여 표에 행을 삽입합니다.
 
-- Defines the SQL query for selecting from the table so that balances can be printed using the `CriteriaQuery<Account> query` object.
+- `CriteriaQuery<Account> query` 객체를 사용하여 잔액을 출력할 수 있도록 표에서 선택할 SQL 쿼리를 정합니다.
 
 {% include copy-clipboard.html %}
 ~~~ java
@@ -144,7 +144,7 @@ The Java code shown below uses the [Hibernate ORM](http://hibernate.org/orm/) to
 
 ### hibernate.cfg.xml
 
-The Hibernate config (in `hibernate.cfg.xml`, shown below) specifies how to connect to the database.  Note the [connection URL](connection-parameters.html#connect-using-a-url) that turns on SSL and specifies the location of the security certificates.
+Hibernate config (아래의 `hibernate.cfg.xml` 안에)은 데이터베이스에 연결하는 방법을 지정합니다. SSL을 설정하고 보안 인증서의 위치를 지정하는 [연결 URL](connection-parameters.html#connect-using-a-url)을 기록해 두십시오.
 
 {% include copy-clipboard.html %}
 ~~~ xml
@@ -153,7 +153,7 @@ The Hibernate config (in `hibernate.cfg.xml`, shown below) specifies how to conn
 
 ### build.gradle
 
-The Gradle build file specifies the dependencies (in this case the Postgres JDBC driver and Hibernate):
+Gradle 빌드 파일은 종속성(이 경우에는 Postgres JDBC driver와 Hibernate)을 명시합니다:
 
 {% include copy-clipboard.html %}
 ~~~ groovy
@@ -164,42 +164,42 @@ The Gradle build file specifies the dependencies (in this case the Postgres JDBC
 
 <section class="filter-content" markdown="1" data-scope="insecure">
 
-## Step 2. Create the `maxroach` user and `bank` database
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
 
 {% include {{page.version.version}}/app/insecure/create-maxroach-user-and-bank-database.md %}
 
-## Step 3. Run the Java code
+## 3단계. Java 코드 
 
-Download and extract [hibernate-basic-sample.tgz](https://github.com/cockroachdb/docs/raw/master/_includes/v2.1/app/insecure/hibernate-basic-sample/hibernate-basic-sample.tgz), which contains a Java project that includes the following files:
+다음의 파일들을 포함하는 Java 프로젝트를 다운로드 및 추출 [hibernate-basic-sample.tgz](https://github.com/cockroachdb/docs/raw/master/_includes/v2.1/app/insecure/hibernate-basic-sample/hibernate-basic-sample.tgz):
 
-File | Description
+파일 | 설명
 -----|------------
-[`Sample.java`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/hibernate-basic-sample/Sample.java) | Uses [Hibernate](http://hibernate.org/orm/) to map Java object state to SQL operations.  For more information, see [Sample.java](#sample-java).
-[`hibernate.cfg.xml`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/hibernate-basic-sample/hibernate.cfg.xml) | Specifies how to connect to the database and that the database schema will be deleted and recreated each time the app is run.  For more information, see [hibernate.cfg.xml](#hibernate-cfg-xml).
-[`build.gradle`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/hibernate-basic-sample/build.gradle) | Used to build and run your app.  For more information, see [build.gradle](#build-gradle).
+[`Sample.java`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/hibernate-basic-sample/Sample.java) | [Hibernate](http://hibernate.org/orm/)를 사용하여 Java 객체 상태를 SQL operation에 매핑합니다. 더 많은 정보는 [Sample.java](#sample-java)를 참조하십시오.
+[`hibernate.cfg.xml`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/hibernate-basic-sample/hibernate.cfg.xml) | 데이터베이스에 연결하는 방법을 지정하고, 어플리케이션을 실행할 때마다 데이터베이스 스키마를 삭제하고 다시 만들도록 합니다. 더 많은 정보는 [hibernate.cfg.xml](#hibernate-cfg-xml)를 참조하십시오.
+[`build.gradle`](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/hibernate-basic-sample/build.gradle) | 어플리케이션을 빌드하고 실행하는데 사용됩니다. 더 많은 정보는 [build.gradle](#build-gradle)을 참조하십시오.
 
-In the `hibernate-basic-sample` directory, build and run the application:
+`hibernate-basic-sample` 디렉토리에서 어플리케이션을 빌드하고 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ gradle run
 ~~~
 
-Toward the end of the output, you should see:
+출력의 끝 부분은 다음과 같이 보여아합니다:
 
 ~~~
 1 1000
 2 250
 ~~~
 
-To verify that the table and rows were created successfully, start the [built-in SQL client](use-the-built-in-sql-client.html):
+표와 행이 성공적으로 생성되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --insecure --database=bank
 ~~~
 
-To check the account balances, issue the following statement:
+계좌의 잔액을 확인하려면 다음의 명령문을 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -218,13 +218,13 @@ To check the account balances, issue the following statement:
 
 ### Sample.java
 
-The Java code shown below uses the [Hibernate ORM](http://hibernate.org/orm/) to map Java object state to SQL operations. Specifically, this code:
+아래의 Java 코드는 [Hibernate ORM](http://hibernate.org/orm/)을 사용하여 Java 객체를 SQL operation에 매핑합니다. 특히, 이 코드는:
 
-- Creates an `accounts` table in the database based on the `Account` class.
+- `Account` 클래스를 바탕으로 데이터베이스에 `accounts` 표를 생성합니다.
 
-- Inserts rows into the table using `session.save(new Account())`.
+- `session.save(new Account())`을 사용하여 표에 행을 삽입합니다.
 
-- Defines the SQL query for selecting from the table so that balances can be printed using the `CriteriaQuery<Account> query` object.
+- `CriteriaQuery<Account> query` 객체를 사용하여 잔액을 출력할 수 있도록 표에서 선택할 SQL 쿼리를 정합니다.
 
 {% include copy-clipboard.html %}
 ~~~ java
@@ -233,7 +233,7 @@ The Java code shown below uses the [Hibernate ORM](http://hibernate.org/orm/) to
 
 ### hibernate.cfg.xml
 
-The Hibernate config (in `hibernate.cfg.xml`, shown below) specifies how to connect to the database.  Note the [connection URL](connection-parameters.html#connect-using-a-url) that turns on SSL and specifies the location of the security certificates.
+Hibernate config (아래의 `hibernate.cfg.xml` 안에)은 데이터베이스에 연결하는 방법을 지정합니다. SSL을 설정하고 보안 인증서의 위치를 지정하는 [연결 URL](connection-parameters.html#connect-using-a-url)을 기록해 두십시오.
 
 {% include copy-clipboard.html %}
 ~~~ xml
@@ -242,7 +242,7 @@ The Hibernate config (in `hibernate.cfg.xml`, shown below) specifies how to conn
 
 ### build.gradle
 
-The Gradle build file specifies the dependencies (in this case the Postgres JDBC driver and Hibernate):
+Gradle 빌드 파일은 종속성(이 경우에는 Postgres JDBC driver와 Hibernate)을 명시합니다:
 
 {% include copy-clipboard.html %}
 ~~~ groovy
@@ -251,8 +251,8 @@ The Gradle build file specifies the dependencies (in this case the Postgres JDBC
 
 </section>
 
-## What's next?
+## 더 보기
 
-Read more about using the [Hibernate ORM](http://hibernate.org/orm/), or check out a more realistic implementation of Hibernate with CockroachDB in our [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository.
+Hibernate ORM](http://hibernate.org/orm/)사용에 대해 자세히 알아보거나, [`examples-orms`](https://github.com/cockroachdb/examples-orms) repository에서 CockroachDB를 이용한 Hibernate의 보다 현실적인 구현을 확인하세요.
 
 {% include {{page.version.version}}/app/see-also-links.md %}
