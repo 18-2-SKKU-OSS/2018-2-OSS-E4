@@ -53,7 +53,7 @@ $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-direc
 
 ## 4단계. Go 코드 실행하기
 
-다음 코드는 [GORM](http://gorm.io) ORM을 사용하여 Go-specific 개체들을 SQL operation에 매핑합니다. 특히 `db.AutoMigrate(&Account{})`는 계좌 모델을 바탕으로 '계좌' 표를 생성하고, `db.Create(&Account{})`는 표에 행을 삽입하며, `db.Find(&accounts)`는 잔액을 프린트할 수 있도록 표에서 선택을 합니다.
+다음 코드는 [GORM](http://gorm.io) ORM을 사용하여 Go-specific 개체들을 SQL operation에 매핑합니다. 특히 `db.AutoMigrate(&Account{})`는 계좌 모델을 바탕으로 'Account' 표를 생성하고, `db.Create(&Account{})`는 표에 행을 삽입하며, `db.Find(&accounts)`는 잔액을 프린트할 수 있도록 표에서 선택을 합니다.
 
 코드를 복사하거나
 <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/gorm-basic-sample.go" download>직접 다운로드 받으시오</a>.
