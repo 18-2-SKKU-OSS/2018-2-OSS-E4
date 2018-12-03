@@ -49,7 +49,7 @@ toc: true
 
 {% include {{ page.version.version }}/orchestration/test-cluster-insecure.md %}
 
-## 5단계.  UI 접근
+## 5단계. Admin UI 접근
 
 {% include {{ page.version.version }}/orchestration/monitor-cluster.md %}
 
