@@ -16,10 +16,10 @@ To link directly to the linux or windows tab, append #os-linux or #os-windows to
     <button id="windows" class="filter-button" data-scope="os-windows">Windows</button>
 </div>
 
-Once you've [installed the official CockroachDB Docker image](install-cockroachdb.html), it's simple to run an insecure multi-node cluster across multiple Docker containers on a single host, using Docker volumes to persist node data.
+[CockroachDB를 설치](install-cockroachdb.html)했다면, Docker 볼륨을 사용하여 노드 데이터를 유지하면서 단일 호스트의 멀티 Docker 컨테이너에서 인시큐어한 멀티노드 클러스터를 실행하는 것은 간단합니다.
 
 {{site.data.alerts.callout_danger}}
-Running a stateful application like CockroachDB in Docker is more complex and error-prone than most uses of Docker and is not recommended for production deployments. To run a physically distributed cluster in containers, use an orchestration tool like Kubernetes or Docker Swarm. See [Orchestration](orchestration.html) for more details.
+Docker에서 CockroachDB와 같은 상태 저장 애플리케이션을 실행하는 것은 Docker를 사용하는 것보다 훨씬 복잡하고 오류가 발생하기 쉽기에 프로덕션 배포에는 권장되지 않습니다. 물리적으로 분산된 클러스터를 컨테이너 환경에서 실행하려면 Kubernetes 또는 Docker Swarm과 같은 오케스트레이션 도구를 사용하십시오. 자세한 내용은 [Orchestration](orchestration.html)을 참조하십시오.
 {{site.data.alerts.end}}
 
 <div id="toc" style="display: none"></div>
@@ -27,21 +27,21 @@ Running a stateful application like CockroachDB in Docker is more complex and er
 <div class="filter-content current" markdown="1" data-scope="os-mac">
 {% include {{ page.version.version }}/start-in-docker/mac-linux-steps.md %}
 
-## Step 5. Monitor the cluster
+## 5단계. 클러스터 모니터링
 
-When you started the first container/node, you mapped the node's default HTTP port `8080` to port `8080` on the host. To check out the Admin UI metrics for your cluster, point your browser to that port on `localhost`, i.e., `http://localhost:8080`, and click **Metrics** on the left-hand navigation bar.
+첫 번째 컨테이너/노드를 시작할 때 노드의 기본 HTTP 포트 `8080`이 호스트의 포트 `8080`에 매핑되었습니다. 클러스터의 Admin UI 치수(metrics)를 확인하려면 브라우저가 `localhost`의 해당 포트(예: `http://localhost:8080`)를 가리키도록 한 다음 왼쪽의 네비게이션 바에서 **Metrics**을 클릭합니다.
 
-As mentioned earlier, CockroachDB automatically replicates your data behind-the-scenes. To verify that data written in the previous step was replicated successfully, scroll down to the **Replicas per Node** graph and hover over the line:
+앞서 언급했듯이 CockroachDB는 백그라운드에서 자동으로 데이터를 복제합니다. 이전 단계에서 기록한 데이터가 성공적으로 복제되었는지 확인하려면 아래로 스크롤하여 **Replicas per Node**를 확인하십시오.
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_per_node.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-The replica count on each node is identical, indicating that all data in the cluster was replicated 3 times (the default).
+각 노드의 레플리카 카운트가 동일한 것은, 클러스터에 있는 모든 데이터가 3회 복제되었음(기본값)을 나타냅니다.
 
-{{site.data.alerts.callout_success}}For more insight into how CockroachDB automatically replicates and rebalances data, and tolerates and recovers from failures, see our <a href="demo-data-replication.html">replication</a>, <a href="demo-automatic-rebalancing.html">rebalancing</a>, <a href="demo-fault-tolerance-and-recovery.html">fault tolerance</a> demos.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}CockroachDB의 자동 레플리케이션, 리밸런싱, 장애 내성 등에 더 자세히 알고 싶으면, <a href="demo-data-replication.html">레플리케이션</a>, <a href="demo-automatic-rebalancing.html">리밸런싱</a>, <a href="demo-fault-tolerance-and-recovery.html">장애 내성</a>을 참조하십시오.{{site.data.alerts.end}}
 
-## Step 6.  Stop the cluster
+## 6단계. 클러스터 중지
 
-Use the `docker stop` and `docker rm` commands to stop and remove the containers (and therefore the cluster):
+`docker stop`과`docker rm` 명령을 사용하여 컨테이너와 클러스터를 중지하고 제거하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -53,7 +53,7 @@ $ docker stop roach1 roach2 roach3
 $ docker rm roach1 roach2 roach3
 ~~~
 
-If you do not plan to restart the cluster, you may want to remove the nodes' data stores:
+클러스터를 다시 시작하지 않으려는 경우, 노드의 데이터 저장소를 제거할 수 있습니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -64,23 +64,23 @@ $ rm -rf cockroach-data
 <div class="filter-content" markdown="1" data-scope="os-linux">
 {% include {{ page.version.version }}/start-in-docker/mac-linux-steps.md %}
 
-## Step 5. Monitor the cluster
+## 5단계. 클러스터 모니터링
 
-When you started the first container/node, you mapped the node's default HTTP port `8080` to port `8080` on the host. To check out the Admin UI metrics for your cluster, point your browser to that port on `localhost`, i.e., `http://localhost:8080` and click **Metrics** on the left.
+첫 번째 컨테이너/노드를 시작할 때 노드의 기본 HTTP 포트 `8080`이 호스트의 포트 `8080`에 매핑되었습니다. 클러스터의 Admin UI 크기(metrics)를 확인하려면 브라우저가 `localhost`의 해당 포트(예: `http://localhost:8080`)를 가리키도록 한 다음 왼쪽의 네비게이션 바에서 **Metrics**을 클릭합니다.
 
-As mentioned earlier, CockroachDB automatically replicates your data behind-the-scenes. To verify that data written in the previous step was replicated successfully, scroll down to the **Replicas per Node** graph and hover over the line:
+앞서 언급했듯이 CockroachDB는 백그라운드에서 자동으로 데이터를 복제합니다. 이전 단계에서 기록한 데이터가 성공적으로 복제되었는지 확인하려면 아래로 스크롤하여 **Replicas per Node**를 확인하십시오.
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_per_node.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-The replica count on each node is identical, indicating that all data in the cluster was replicated 3 times (the default).
+각 노드의 레플리카 카운트가 동일한 것은, 클러스터에 있는 모든 데이터가 3회 복제되었음(기본값)을 나타냅니다.
 
 {{site.data.alerts.callout_success}}
-For more insight into how CockroachDB automatically replicates and rebalances data, and tolerates and recovers from failures, see our [replication](demo-data-replication.html), [rebalancing](demo-automatic-rebalancing.html), [fault tolerance](demo-fault-tolerance-and-recovery.html) demos.
+CockroachDB의 자동 레플리케이션, 리밸런싱, 장애 내성 등에 더 자세히 알고 싶으면, [레플리케이션](demo-data-replication.html), [리밸런싱](demo-automatic-rebalancing.html), [장애 내성](demo-fault-tolerance-and-recovery.html)을 참조하십시오. 
 {{site.data.alerts.end}}
 
-## Step 6.  Stop the cluster
+## 6단계. 클러스터 중지
 
-Use the `docker stop` and `docker rm` commands to stop and remove the containers (and therefore the cluster):
+`docker stop`과`docker rm` 명령을 사용하여 컨테이너와 클러스터를 중지하고 제거하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -92,7 +92,7 @@ $ docker stop roach1 roach2 roach3
 $ docker rm roach1 roach2 roach3
 ~~~
 
-If you do not plan to restart the cluster, you may want to remove the nodes' data stores:
+클러스터를 다시 시작하지 않으려는 경우, 노드의 데이터 저장소를 제거할 수 있습니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -101,21 +101,22 @@ $ rm -rf cockroach-data
 </div>
 
 <div class="filter-content" markdown="1" data-scope="os-windows">
-## Before you begin
 
-If you have not already installed the official CockroachDB Docker image, go to [Install CockroachDB](install-cockroachdb.html) and follow the instructions under **Use Docker**.
+## 시작하기 전에
 
-## Step 1. Create a bridge network
+공식 CockroachDB Docker 이미지를 아직 설치하지 않았다면 [CockroachDB를 설치](install-cockroachdb.html)로 이동하여 **Use Docker**의 지침을 따르십시오.
 
-Since you'll be running multiple Docker containers on a single host, with one CockroachDB node per container, you need to create what Docker refers to as a [bridge network](https://docs.docker.com/engine/userguide/networking/#/a-bridge-network). The bridge network will enable the containers to communicate as a single cluster while keeping them isolated from external networks.
+## 1단계. 브리지망(bridge network) 생성
+
+하나의 컨테이너 당 하나의 CockroachDB 노드를 사용하여 단일 호스트에서 여러 개의 Docker 컨테이너를 실행하게되므로, Docker가 [브리지망](https://docs.docker.com/engine/userguide/networking/#/a-bridge-network)이라고 부르는 것을 생성해야합니다. 브리지망를 사용하면 컨테이너를 외부 네트워크와 격리된 상태에서 단일 클러스터로 통신할 수 있습니다.
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="nb">PS </span>C:\Users\username&gt; docker network create -d bridge roachnet</code></pre></div>
 
-We've used `roachnet` as the network name here and in subsequent steps, but feel free to give your network any name you like.
+여기서는 네트워크 이름으로 `roachnet`을 썼지만, 네트워크에 원하는 이름을 지정해도 됩니다.
 
-## Step 2. Start the first node
+## 2단계. 첫 노드를 실행
 
-{{site.data.alerts.callout_info}}Be sure to replace <code>&#60;username&#62;</code> in the <code>-v</code> flag with your actual username.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}<code>-v</code> 플래그의 <code>&#60;username&#62;</code>을 실제 사용자 이름으로 바꾸십시오.{{site.data.alerts.end}}
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="nb">PS </span>C:\Users\username&gt; docker run -d <span class="sb">`</span>
 --name<span class="o">=</span>roach1 <span class="sb">`</span>
@@ -125,24 +126,24 @@ We've used `roachnet` as the network name here and in subsequent steps, but feel
 -v <span class="s2">"//c/Users/&lt;username&gt;/cockroach-data/roach1:/cockroach/cockroach-data"</span> <span class="sb">`</span>
 {{page.release_info.docker_image}}:{{page.release_info.version}} <span class="nb">start</span> --insecure</code></pre></div>
 
-This command creates a container and starts the first CockroachDB node inside it. Let's look at each part:
+이 명령은 컨테이너를 생성하고 그 안에서 첫 번째 CockroachDB 노드를 실행합니다. 각 부분을 살펴 보겠습니다.
 
-- `docker run`: The Docker command to start a new container.
-- `-d`: This flag runs the container in the background so you can continue the next steps in the same shell.
-- `--name`: The name for the container. This is optional, but a custom name makes it significantly easier to reference the container in other commands, for example, when opening a Bash session in the container or stopping the container.
-- `--hostname`: The hostname for the container. You will use this to join other containers/nodes to the cluster.
-- `--net`: The bridge network for the container to join. See step 1 for more details.
-- `-p 26257:26257 -p 8080:8080`: These flags map the default port for inter-node and client-node communication (`26257`) and the default port for HTTP requests to the Admin UI (`8080`) from the container to the host. This enables inter-container communication and makes it possible to call up the Admin UI from a browser.
-- `-v "//c/Users/<username>/cockroach-data/roach1:/cockroach/cockroach-data"`: This flag mounts a host directory as a data volume. This means that data and logs for this node will be stored in `Users/<username>/cockroach-data/roach1` on the host and will persist after the container is stopped or deleted. For more details, see Docker's <a href="https://docs.docker.com/engine/admin/volumes/bind-mounts/">Bind Mounts</a> topic.
-- `{{page.release_info.docker_image}}:{{page.release_info.version}} start --insecure`: The CockroachDB command to [start a node](start-a-node.html) in the container in insecure mode.
+- `docker run`: 새 컨테이너를 실행시키는 Docker 명령.
+- `-d`: 이 플래그는 백그라운드에서 컨테이너를 실행하므로 같은 쉘에서 다음 단계를 계속할 수 있습니다.
+- `--name`: 컨테이너의 이름. 선택 사항이지만 사용자 정의 이름을 사용하면 다른 명령(예: 컨테이너에서 Bash 세션을 열거나 컨테이너를 중지할 때)에서 컨테이너를 쉽게 참조 할 수 있습니다.
+- `--hostname`: 컨테이너의 호스트 명. 이를 사용하여 다른 컨테이너 / 노드를 클러스터에 연결할 수 있습니다.
+- `- net`: 컨테이너가 접속할 브리지망. 자세한 내용은 1 단계를 참조하십시오.
+- `-p 26257:26257 -p 8080:8080`: 이 플래그는 컨테이너에서 호스트로 노드 간 및 클라이언트 노드 통신을 위한 기본 포트 (`26257`)와 Admin UI (`8080`)에 대한 HTTP 요청의 기본 포트를 매핑합니다. 이는 컨테이너 간 통신을 가능하게 하며 브라우저에서 Admin UI를 불러올 수 있게 합니다.
+- `-v "//c/Users/<username>/cockroach-data/roach1:/cockroach/cockroach-data"`: 이 플래그는 호스트 디렉토리를 데이터 볼륨으로 마운트합니다. 즉, 이 노드의 데이터와 로그는 호스트의 `Users/<username>/cockroach-data/roach1`에 저장되고 컨테이너가 정지되거나 삭제된 후에도 유지됩니다. 자세한 내용은 Docker의 <a href="https://docs.docker.com/engine/admin/volumes/bind-mounts/">Bind Mounts</a> 항목을 참조하십시오.
+- `{{page.release_info.docker_image}}:{{page.release_info.version}} start --insecure`: 인시큐어한 모드의 컨테이너에서 [노드를 실행하는](start-a-node.html) CockroachDB 명령.
 
-## Step 3. Add nodes to the cluster
+## 3단계. 클러스터에 노드 추가하기
 
-At this point, your cluster is live and operational. With just one node, you can already connect a SQL client and start building out your database. In real deployments, however, you'll always want 3 or more nodes to take advantage of CockroachDB's [automatic replication](demo-data-replication.html), [rebalancing](demo-automatic-rebalancing.html), and [fault tolerance](demo-fault-tolerance-and-recovery.html) capabilities.
+이 시점에, 클러스터는 활성화되어 작동 중입니다. 하나의 노드만 있어도 SQL 클라이언트를 연결하고 데이터베이스 구축을 시작할 수 있습니다. 그러나 실제 환경에서는 최소 3개 이상의 노드가 있어야 CockroachDB의 [자동 레플리케이션](demo-data-replication.html), [리밸런싱](demo-automatic-rebalancing.html), [장애 내성 기능](demo-fault-tolerance-and-recovery.html)을 사용할 수 있습니다.
 
-To simulate a real deployment, scale your cluster by adding two more nodes:
+실제 환경을 시뮬레이션하려면 두 개의 노드를 더 추가하여 클러스터를 확장하십시오.
 
-{{site.data.alerts.callout_info}}Again, be sure to replace <code>&#60;username&#62;</code> in the <code>-v</code> flag with your actual username.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}다시 한번, <code>-v</code> 플래그의 <code>&#60;username&#62;</code>을 실제 사용자 이름으로 바꾸십시오.{{site.data.alerts.end}}
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="c1"># Start the second container/node:</span>
 <span class="nb">PS </span>C:\Users\username&gt; docker run -d <span class="sb">`</span>
@@ -160,21 +161,21 @@ To simulate a real deployment, scale your cluster by adding two more nodes:
 -v <span class="s2">"//c/Users/&lt;username&gt;/cockroach-data/roach3:/cockroach/cockroach-data"</span> <span class="sb">`</span>
 {{page.release_info.docker_image}}:{{page.release_info.version}} <span class="nb">start</span> --insecure --join<span class="o">=</span>roach1</code></pre></div>
 
-These commands add two more containers and start CockroachDB nodes inside them, joining them to the first node. There are only a few differences to note from step 2:
+이 명령들은 컨테이너를 두 개 더 추가하고 CockroachDB 노드를 실행하여 첫 번째 노드에 연결합니다. 2단계에서 유의할 점이 몇 가지 있습니다.
 
-- `-v`: This flag mounts a host directory as a data volume. Data and logs for these nodes will be stored in `Users/<username>/cockroach-data/roach2` and `Users/<username>/cockroach-data/roach3` on the host and will persist after the containers are stopped or deleted.
-- `--join`: This flag joins the new nodes to the cluster, using the first container's `hostname`. Note that since each node is in a unique container, using identical default ports will not cause conflicts.
+- `-v`: 이 플래그는 호스트 디렉토리를 데이터 볼륨으로 마운트합니다. 이 노드에 대한 데이터와 로그는 호스트의 `Users/<username>/cockroach-data/roach2`와 `Users/<username>/cockroach-data/roach3`에 저장되며 컨테이너가 정지되거나 삭제된 후에도 유지됩니다.
+- `--join`: 이 플래그는 첫 번째 컨테이너의 `hostname`을 사용하여 새로운 노드를 클러스터에 연결합니다. 각 노드는 고유한 컨테이너에 있으므로 동일한 기본 포트를 사용하더라도 충돌이 발생하지 않습니다.
 
-## Step 4. Test the cluster
+## 4단계. 클러스터 테스트
 
-Now that you've scaled to 3 nodes, you can use any node as a SQL gateway to the cluster. To demonstrate this, use the `docker exec` command to start the [built-in SQL shell](use-the-built-in-sql-client.html) in the first container:
+이제 3개의 노드로 확장되었습니다. 어떤 노드라도 클러스터를 사용하기 위한 SQL 게이트웨이로 사용가능합니다. 이것을 보기 위해 `docker exec` 명령을 사용하여 첫 번째 컨테이너에서 [빌트인 SQL 쉘](use-the-built-in-sql-client.html)를 시작하십시오.
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="nb">PS </span>C:\Users\username&gt; docker <span class="nb">exec</span> -it roach1 ./cockroach sql --insecure
 <span class="c1"># Welcome to the cockroach SQL interface.</span>
 <span class="c1"># All statements must be terminated by a semicolon.</span>
 <span class="c1"># To exit: CTRL + D.</span></code></pre></div>
 
-Run some basic [CockroachDB SQL statements](learn-cockroachdb-sql.html):
+기본 [CockroachDB SQL](learn-cockroachdb-sql.html) 몇가지를 실행해봅시다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -205,21 +206,21 @@ Run some basic [CockroachDB SQL statements](learn-cockroachdb-sql.html):
 (1 row)
 ~~~
 
-Exit the SQL shell on node 1:
+노드 1의 SQL 쉘에서 나옵니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > \q
 ~~~
 
-Then start the SQL shell in the second container:
+두 번째 컨테이너에서 SQL 쉘을 시작합니다.
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="nb">PS </span>C:\Users\username&gt; docker <span class="nb">exec</span> -it roach2 ./cockroach sql --insecure
 <span class="c1"># Welcome to the cockroach SQL interface.</span>
 <span class="c1"># All statements must be terminated by a semicolon.</span>
 <span class="c1"># To exit: CTRL + D.</span></code></pre></div>
 
-Now run the same `SELECT` query:
+동일한 `SELECT` 쿼리를 실행합니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -235,32 +236,32 @@ Now run the same `SELECT` query:
 (1 row)
 ~~~
 
-As you can see, node 1 and node 2 behaved identically as SQL gateways.
+보시다시피, 노드 1과 노드 2의 SQL 게이트웨이는 동일하게 동작합니다.
 
-When you're done, exit the SQL shell on node 2:
+노드 2의 SQL 클라이언트에서 나옵니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > \q
 ~~~
 
-## Step 5. Monitor the cluster
+## 5단계. 클러스터 모니터링
 
-When you started the first container/node, you mapped the node's default HTTP port `8080` to port `8080` on the host. To check out the [Admin UI](admin-ui-overview.html) metrics for your cluster, point your browser to that port on `localhost`, i.e., `http://localhost:8080` and click **Metrics** on the left.
+첫 번째 컨테이너/노드를 시작할 때 노드의 기본 HTTP 포트 `8080`이 호스트의 포트 `8080`에 매핑되었습니다. 클러스터의 [Admin UI](admin-ui-overview.html) 크기(metrics)를 확인하려면 브라우저가 `localhost`의 해당 포트(예: `http://localhost:8080`)를 가리키도록 한 다음 왼쪽의 네비게이션 바에서 **Metrics**을 클릭합니다.
 
-As mentioned earlier, CockroachDB automatically replicates your data behind-the-scenes. To verify that data written in the previous step was replicated successfully, scroll down to the **Replicas per Node** graph and hover over the line:
+앞서 언급했듯이 CockroachDB는 백그라운드에서 자동으로 데이터를 복제합니다. 이전 단계에서 기록한 데이터가 성공적으로 복제되었는지 확인하려면 아래로 스크롤하여 **Replicas per Node**를 확인하십시오.
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_per_node.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-The replica count on each node is identical, indicating that all data in the cluster was replicated 3 times (the default).
+각 노드의 레플리카 카운트가 동일한 것은, 클러스터에 있는 모든 데이터가 3회 복제되었음(기본값)을 나타냅니다.
 
 {{site.data.alerts.callout_success}}
-For more insight into how CockroachDB automatically replicates and rebalances data, and tolerates and recovers from failures, see our [replication](demo-data-replication.html), [rebalancing](demo-automatic-rebalancing.html), [fault tolerance](demo-fault-tolerance-and-recovery.html) demos.
+CockroachDB의 자동 레플리케이션, 리밸런싱, 장애 내성 등에 더 자세히 알고 싶으면, [레플리케이션](demo-data-replication.html), [리밸런싱](demo-automatic-rebalancing.html), [장애 내성](demo-fault-tolerance-and-recovery.html)을 참조하십시오.
 {{site.data.alerts.end}}
 
-## Step 6.  Stop the cluster
+## 6단계. 클러스터 중지
 
-Use the `docker stop` and `docker rm` commands to stop and remove the containers (and therefore the cluster):
+`docker stop`과`docker rm` 명령을 사용하여 컨테이너와 클러스터를 중지하고 제거하십시오.
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="c1"># Stop the containers:</span>
 <span class="nb">PS </span>C:\Users\username&gt; docker stop roach1 roach2 roach3
@@ -268,15 +269,15 @@ Use the `docker stop` and `docker rm` commands to stop and remove the containers
 <span class="c1"># Remove the containers:</span>
 <span class="nb">PS </span>C:\Users\username&gt; docker rm roach1 roach2 roach3</code></pre></div>
 
-If you do not plan to restart the cluster, you may want to remove the nodes' data stores:
+클러스터를 다시 시작하지 않으려는 경우, 노드의 데이터 저장소를 제거할 수 있습니다.
 
 <div class="language-powershell highlighter-rouge"><pre class="highlight"><code><span class="nb">PS </span>C:\Users\username&gt; rm -rf cockroach-data</span></code></pre></div>
 
 </div>
 
-## What's next?
+## 다음은?
 
-- Learn more about [CockroachDB SQL](learn-cockroachdb-sql.html) and the [built-in SQL client](use-the-built-in-sql-client.html)
-- [Install the client driver](install-client-drivers.html) for your preferred language
-- [Build an app with CockroachDB](build-an-app-with-cockroachdb.html)
-- [Explore core CockroachDB features](demo-data-replication.html) like automatic replication, rebalancing, and fault tolerance
+- [CockroachDB SQL](learn-cockroachdb-sql.html)과 [빌트인 SQL client](use-the-built-in-sql-client.html)에 대해 더 알아보기
+- 선호하는 언어를 사용하여 [클라이언트 드라이버 설치](install-client-drivers.html)
+- [애플리케이션을 CockroachDB와 만들기](build-an-app-with-cockroachdb.html)
+- 자동 레플리케이션, 리밸런싱, 장애 내성, 클라우드 통합과 같은 [CockroachDB 코어 기능](demo-data-replication.html) 둘러보기.
