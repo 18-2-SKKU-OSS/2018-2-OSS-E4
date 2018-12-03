@@ -86,7 +86,7 @@ GCE는 완벽하게 관리되는 [TCP 프록시 로드 밸런싱](https://cloud.
 
 GCE의 TCP 프록시 로드 밸런싱 서비스를 사용하려면 다음과 같이 하십시오:
 
-    1. 인스턴스를 실행 중인 각 영역에 대해, [고유한 인스턴스 그룹을 생성](https://cloud.google.com/compute/docs/instance-groups/creating-groups-of-unmanaged-instances)하십시오.
+   1. 인스턴스를 실행 중인 각 영역에 대해, [고유한 인스턴스 그룹을 생성](https://cloud.google.com/compute/docs/instance-groups/creating-groups-of-unmanaged-instances)하십시오.
     - 로드 밸런서가 트래픽을 지시할 곳을 확실히 알려면, **Port name**으로 `tcp26257`을, **Port number**로`26257`을 사용하여 포트 이름 맵핑을 지정하십시오.
 2. [각 인스턴스 그룹에 관련 인스턴스를 추가](https://cloud.google.com/compute/docs/instance-groups/creating-groups-of-unmanaged-instances#addinstances)하십시오.
 3. [프록시 로드 밸런싱 구성](https://cloud.google.com/load-balancing/docs/tcp/setting-up-tcp#configure_load_balancer).
