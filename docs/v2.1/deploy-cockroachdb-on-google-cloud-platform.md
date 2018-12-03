@@ -31,7 +31,7 @@ CockroachDB는 두 포트에서 TCP 통신이 필요합니다
 - **26257** (`tcp:26257`) 노드 간 통신을 위해 (즉, 클러스터로서 동작)
 - **8080** (`tcp:8080`) Admin UI 노출을 위해
 
-노드 간 통신은 GCE 인스턴스의 내부 IP 주소를 사용하여 기본적으로 작동하며, CockroachDB의 기본 포트인 26257에서 다른 인스턴스와 통신할 수 있습니다. 그러나, Admin UI를 노출하고 TCP 프록시로드 밸런서 및 상태 검사기의 트래픽을 인스턴스에 허용하려면, [프로젝트에 대한 방화벽 규칙 생성](https://cloud.google.com/compute/docs/vpc/firewalls)이 필요합니다.
+노드 간 통신은 GCE 인스턴스의 내부 IP 주소를 사용하여 기본적으로 작동하며, CockroachDB의 기본 포트인 `26257`에서 다른 인스턴스와 통신할 수 있습니다. 그러나, Admin UI를 노출하고 TCP 프록시로드 밸런서 및 상태 검사기의 트래픽을 인스턴스에 허용하려면, [프로젝트에 대한 방화벽 규칙 생성](https://cloud.google.com/compute/docs/vpc/firewalls)이 필요합니다.
 
 ### 방화벽 규칙 생성
 
