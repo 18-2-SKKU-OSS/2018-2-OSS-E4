@@ -126,7 +126,7 @@ GCE의 TCP 프록시 로드 밸런싱 서비스를 사용하려면 다음과 같
 배포가 완료되었으므로, 다음 작업을 수행 할 수 있습니다:
 
 1. [데이터 모델 구현](sql-statements.html).
-2. [사용자 생성](create-and-manage-users.html)  [권한 부여](grant.html).
+2. [사용자 생성](create-and-manage-users.html) 및 [권한 부여](grant.html).
 3. [어플리케이션 연결](install-client-drivers.html). 어플리케이션을 CockroachDB 노드가 아닌 GCE 로드 밸런서에 연결하십시오.
 
 ## 더 보기
