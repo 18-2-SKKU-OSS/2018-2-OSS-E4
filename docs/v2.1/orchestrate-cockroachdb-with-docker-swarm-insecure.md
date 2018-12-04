@@ -9,27 +9,27 @@ toc: true
   <button class="filter-button current"><strong>Insecure</strong></button></a>
 </div>
 
-This page shows you how to orchestrate the deployment and management of an insecure three-node CockroachDB cluster as a [swarm of Docker Engines](https://docs.docker.com/engine/swarm/).
+이 페이지에서는 안전하지 않은 세 노드 CockroachDB 클러스터의 배포, 관리를 [도커 엔진 무리](https://docs.docker.com/engine/swarm/)로 바꾸는 것을 보여줍니다.
 
-If you plan to use CockroachDB in production, we recommend using a secure cluster instead. Select **Secure** above for instructions.
+프로덕션에서 CockroachDB를 사용하는 것을 계획하는 경우, 대신 보안 클러스터를 사용하는 것을 추천합니다. 설명서를 보러면 위의 **Secure** 을 선택하십시오.
 
 
-## Before you begin
+## 시작하기 전에
 
-Before you begin, it's helpful to review some terminology:
+시작하기 전에, 용어를 복습하는 것은 도움이 됩니다:
 
-Feature | Description
+특징 | 묘사
 --------|------------
-instance | A physical or virtual machine. In this tutorial, you'll use three, one per CockroachDB node.
-[Docker Engine](https://docs.docker.com/engine/) | This is the core Docker application that creates and runs containers. In this tutorial, you'll install and start Docker Engine on each of your three instances.
-[swarm](https://docs.docker.com/engine/swarm/key-concepts/#/swarm) | A swarm is a group of Docker Engines joined into a single, virtual host.
-[swarm node](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/) | Each member of a swarm is considered a node. In this tutorial, each instance will be a swarm node, one as the master node and the two others as worker nodes. You'll submit service definitions to the master node, which will dispatch work to the worker nodes.
-[service](https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/) | A service is the definition of the tasks to execute on swarm nodes. In this tutorial, you'll define three services, each starting a CockrochDB node inside a container and joining it into a single cluster. Each service also ensures a stable network identity on restart via a resolvable DNS name.
-[overlay network](https://docs.docker.com/engine/userguide/networking/#/an-overlay-network-with-docker-engine-swarm-mode) | An overlay network enables communication between the nodes of a swarm. In this tutorial, you'll create an overlay network and use it in each of your services.
+인스턴스 | 실제 또는 가상의 머신. 이 튜토리얼에서는, CockroachDB노드 당 3개씩을 사용하십시오.
+[도커 엔진](https://docs.docker.com/engine/) | 이것은 컨테이너를 생성하고 실행하는 핵심 Docker 어플리케이션입니다. 이 튜토리얼에서는, 세 개의 예시 각각에 도커 엔진을 설치하고 시작하십시오.
+[스웜](https://docs.docker.com/engine/swarm/key-concepts/#/swarm) | 스웜은 단일, 가상의 호스트로 된 도커 엔진 그룹입니다.
+[노드 무리](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/) | Each member of a swarm is considered a node. In this tutorial, each instance will be a swarm node, one as the master node and the two others as worker nodes. You'll submit service definitions to the master node, which will dispatch work to the worker nodes.
+[서비스](https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/) | A service is the definition of the tasks to execute on swarm nodes. In this tutorial, you'll define three services, each starting a CockrochDB node inside a container and joining it into a single cluster. Each service also ensures a stable network identity on restart via a resolvable DNS name.
+[오버레이 네트워크](https://docs.docker.com/engine/userguide/networking/#/an-overlay-network-with-docker-engine-swarm-mode) | An overlay network enables communication between the nodes of a swarm. In this tutorial, you'll create an overlay network and use it in each of your services.
 
-## Step 1. Create instances
+## 단계 1. 인스턴스 생성
 
-Create three instances, one for each node of your cluster.
+클러스터의 각 노드에 하나씩, 3개의 인스턴스를 생성하십시오.
 
 - For GCE-specific instructions, read through step 2 of [Deploy CockroachDB on GCE](deploy-cockroachdb-on-google-cloud-platform-insecure.html).
 - For AWS-specific instructions, read through step 2 of [Deploy CockroachDB on AWS](deploy-cockroachdb-on-aws-insecure.html).
@@ -39,11 +39,11 @@ Be sure to configure your network to allow TCP communication on these ports:
 - `26257` for inter-node communication (i.e., working as a cluster) and connecting with applications
 - `8080` for exposing your Admin UI
 
-## Step 2. Install Docker Engine
+## 단계 2. 도커 엔진 설치
 
-On each instance:
+각각의 인스턴스에서:
 
-1. [Install and start Docker Engine](https://docs.docker.com/engine/installation/).
+1. [도커 엔진 설치하고 시작](https://docs.docker.com/engine/installation/).
 
 2. Confirm that the Docker daemon is running in the background:
 
@@ -52,9 +52,9 @@ On each instance:
     $ sudo docker version
     ~~~
 
-## Step 3. Start the swarm
+## 단계 3. 스웜 시작
 
-1. On the instance where you want to run your manager node, [initialize the swarm](https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/).
+1. 관리자 노드를 실행할 인스턴스에, [스웜을 설치](https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/) 하십시오.
 
     Take note of the output for `docker swarm init` as it includes the command you'll use in the next step. It should look like this:
 
@@ -102,7 +102,7 @@ On each instance:
     aivjg2joxyvzvbksjsix27khy    instance-3  Ready   Active
     ~~~
 
-## Step 4. Create an overlay network
+## 단계 4. 오버레이 네트워크 생성
 
 On the instance running your manager node, create an overlay network so that the containers in your swarm can talk to each other:
 
@@ -113,7 +113,7 @@ $ sudo docker network create --driver overlay --attachable cockroachdb
 
 The `--attachable` option enables non-swarm containers running on Docker to access services on the network, which makes the service easier to use interactively.
 
-## Step 5. Start the CockroachDB cluster
+## 단계 5. CockroachDB 클러스터 시작
 
 1. On the instance running your manager node, create one swarm service for each CockroachDB node:
 
@@ -208,7 +208,7 @@ The `--attachable` option enables non-swarm containers running on Docker to acce
     ~~~
 
 
-## Step 6. Use the built-in SQL client
+## 단계 6. 기본제공 SQL 클라이언트 사용
 
 1. Use the `sudo docker run` command to start a new container attached to the CockroachDB network, run the built-in SQL shell, and connect it to the cluster:
 
@@ -226,7 +226,7 @@ The `--attachable` option enables non-swarm containers running on Docker to acce
 
 3. Use **CTRL-D**, **CTRL-C**, or `\q` to exit the SQL shell.
 
-## Step 7. Monitor the cluster
+## 단계 7. 클러스터 모니터링
 
 To view your cluster's Admin UI, open a browser and go to `http://<any node's external IP address>:8080`.
 
@@ -238,7 +238,7 @@ On this page, verify that the cluster is running as expected:
 
 2. Click the **Databases** tab on the left to verify that `insecurenodetest` is listed.
 
-## Step 8. Simulate node failure
+## 단계 8. 노드 고장 시뮬레이션
 
 Since we have three service definitions, one for each node, Docker swarm will ensure that there are three nodes running at all times. If a node fails, Docker swarm will automatically create another node with the same network identity and storage.
 
@@ -275,7 +275,7 @@ To see this in action:
 
 4. Back in the Admin UI, view the **Node list** and verify that all 3 nodes are live.
 
-## Step 9. Scale the cluster
+## 단계 9. 클러스터 확장
 
 To increase the number of nodes in your CockroachDB cluster:
 
@@ -284,7 +284,7 @@ To increase the number of nodes in your CockroachDB cluster:
 3. Join the instance to the swarm as a worker node (see [Step 3.2](#step-3-start-the-swarm)).
 4. Create a new service to start another node and join it to the CockroachDB cluster (see [Step 5.1](#step-5-start-the-cockroachdb-cluster)).
 
-## Step 10. Stop the cluster
+## 단계 10. 클러스터 중단
 
 To stop the CockroachDB cluster, on the instance running your manager node, remove the services:
 
@@ -317,6 +317,6 @@ cockroachdb-0
 $ sudo docker volume rm cockroachdb-0
 ~~~
 
-## See also
+## 또 다른 참고
 
 {% include {{ page.version.version }}/prod-deployment/prod-see-also.md %}
