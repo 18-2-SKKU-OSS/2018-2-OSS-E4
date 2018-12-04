@@ -130,7 +130,7 @@ Initial balances:
 2 250
 ~~~
 
-한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작:
+한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
