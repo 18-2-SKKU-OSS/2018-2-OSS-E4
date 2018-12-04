@@ -11,66 +11,66 @@ twitter: false
     <a href="build-a-python-app-with-cockroachdb-sqlalchemy.html"><button style="width: 28%" class="filter-button">Use <strong>SQLAlchemy</strong></button></a>
 </div>
 
-This tutorial shows you how build a simple Python application with CockroachDB using a PostgreSQL-compatible driver or ORM.
+이 튜토리얼에서는 PostgreSQL과 호환되는 드라이버나 ORM을 사용하여 CockroachDB로 간단한 Python 어플리케이션을 제작하는 방법을 보여줍니다.
 
-We have tested the [Python psycopg2 driver](http://initd.org/psycopg/docs/) and the [SQLAlchemy ORM](https://docs.sqlalchemy.org/en/latest/) enough to claim **beta-level** support, so those are featured here. If you encounter problems, please [open an issue](https://github.com/cockroachdb/cockroach/issues/new) with details to help us make progress toward full support.
+[Python psycopg2 driver](http://initd.org/psycopg/docs/)와 [SQLAlchemy ORM](https://docs.sqlalchemy.org/en/latest/)는 **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다. 만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도 도와주시길 부탁드립니다.
 
-## Before you begin
+## 시작하기 전에
 
 {% include {{page.version.version}}/app/before-you-begin.md %}
 
-## Step 1. Install the psycopg2 driver
+## 1단계. psycopg2 driver 설치하기
 
-To install the Python psycopg2 driver, run the following command:
+Python psycopg2 driver를 설치하려면, 다음의 명령을 실행시키시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ pip install psycopg2
 ~~~
 
-For other ways to install psycopg2, see the [official documentation](http://initd.org/psycopg/docs/install.html).
+psycopg2를 설치하는 다른 방법에 대해서는 [공식 설명서](http://initd.org/psycopg/docs/install.html)를 참조하십시오.
 
 <section class="filter-content" markdown="1" data-scope="secure">
 
-## Step 2. Create the `maxroach` user and `bank` database
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
 
 {% include {{page.version.version}}/app/create-maxroach-user-and-bank-database.md %}
 
-## Step 3. Generate a certificate for the `maxroach` user
+## 3단계. `maxroach` 사용자에 대한 인증서 생성하기
 
-Create a certificate and key for the `maxroach` user by running the following command.  The code samples will run as this user.
+다음 명령을 실행하여 `maxroach` 사용자에 대한 인증서와 키를 생성하시오. 코드 샘플은 이 사용자로 실행됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-directory/ca.key
 ~~~
 
-## Step 4. Run the Python code
+## 4단계. Python 코드 실행하기
 
-Now that you have a database and a user, you'll run the code shown below to:
+이제 데이터베이스와 사용자가 있으므로 아래 코드를 실행하여 다음을 수행할 수 있습니다.
 
-- Create a table and insert some rows
-- Read and update values as an atomic [transaction](transactions.html)
+- 표를 만들고 행을 삽입합니다.
+- 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
 
-### Basic statements
+### 기초적인 명령문
 
-First, use the following code to connect as the `maxroach` user and execute some basic SQL statements, creating a table, inserting rows, and reading and printing the rows.
+첫째로, 다음 코드를 이용하여 `maxroach` 사용자에 연결하고, 몇 가지 기본 SQL 명령문을 실행하고, 표를 생성하고, 행을 삽입하고, 행을 읽고 인쇄합니다.
 
-Download the <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/basic-sample.py" download><code>basic-sample.py</code></a> file, or create the file yourself and copy the code into it.
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/basic-sample.py" download><code>basic-sample.py</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
 
 {% include copy-clipboard.html %}
 ~~~ python
 {% include {{page.version.version}}/app/basic-sample.py %}
 ~~~
 
-Then run the code:
+그리고 코드를 실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ python basic-sample.py
 ~~~
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~
 Initial balances:
@@ -78,27 +78,27 @@ Initial balances:
 ['2', '250']
 ~~~
 
-### Transaction (with retry logic)
+### 트랜잭션 (재시도 논리 사용)
 
-Next, use the following code to again connect as the `maxroach` user but this time execute a batch of statements as an atomic transaction to transfer funds from one account to another, where all included statements are either committed or aborted.
+다음으로, 다음 코드를 이용하여 다시 `maxroach` 사용자로 연결하지만, 이번에는 포함된 모든 명령문이 커밋되거나 중단되는 한 계좌에서 다른 계좌로 자금을 이전하기 위해 원자성 트랜잭션으로 명령문 그룹을 실행할 것입니다.
 
-Download the <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/txn-sample.py" download><code>txn-sample.py</code></a> file, or create the file yourself and copy the code into it.
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/txn-sample.py" download><code>txn-sample.py</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
 
-{{site.data.alerts.callout_info}}With the default <code>SERIALIZABLE</code> isolation level, CockroachDB may require the <a href="transactions.html#transaction-retries">client to retry a transaction</a> in case of read/write contention. CockroachDB provides a generic <strong>retry function</strong> that runs inside a transaction and retries it as needed. You can copy and paste the retry function from here into your code.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}기본 <code>SERIALIZABLE</code> 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 <a href="transactions.html#transaction-retries">클라이언트가 트랜잭션을 다시 시도하기</a>를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 <strong>재시도 함수</strong>를 제공합니다. CockroachDB에서 재시도 기능을 복사하여 코드에 붙여 넣을 수 있습니다.{{site.data.alerts.end}}
 
 {% include copy-clipboard.html %}
 ~~~ python
 {% include {{page.version.version}}/app/txn-sample.py %}
 ~~~
 
-Then run the code:
+그리고 코드를 실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ python txn-sample.py
 ~~~
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~ 
 Balances after transfer:
@@ -106,14 +106,14 @@ Balances after transfer:
 ['2', '350']
 ~~~
 
-To verify that funds were transferred from one account to another, start the [built-in SQL client](use-the-built-in-sql-client.html):
+한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --certs-dir=certs --database=bank
 ~~~
 
-To check the account balances, issue the following statement:
+계 잔액을 확인하려면 다음 명령문을 실행하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -134,36 +134,36 @@ To check the account balances, issue the following statement:
 
 <section class="filter-content" markdown="1" data-scope="insecure">
 
-## Step 2. Create the `maxroach` user and `bank` database
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
 
 {% include {{page.version.version}}/app/insecure/create-maxroach-user-and-bank-database.md %}
 
-## Step 3. Run the Python code
+## 3단계. Python 코드 실행하기
 
-Now that you have a database and a user, you'll run the code shown below to:
+이제 데이터베이스와 사용자가 있으므로 아래 코드를 실행하여 다음을 수행할 수 있습니다.
 
-- Create a table and insert some rows
-- Read and update values as an atomic [transaction](transactions.html)
+- 표를 만들고 행을 삽입합니다.
+- 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
 
-### Basic statements
+### 기초적인 명령문
 
-First, use the following code to connect as the `maxroach` user and execute some basic SQL statements, creating a table, inserting rows, and reading and printing the rows.
+첫째로, 다음 코드를 이용하여 `maxroach` 사용자에 연결하고, 몇 가지 기본 SQL 명령문을 실행하고, 표를 생성하고, 행을 삽입하고, 행을 읽고 인쇄합니다.
 
-Download the <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/basic-sample.py" download><code>basic-sample.py</code></a> file, or create the file yourself and copy the code into it.
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/basic-sample.py" download><code>basic-sample.py</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
 
 {% include copy-clipboard.html %}
 ~~~ python
 {% include {{page.version.version}}/app/insecure/basic-sample.py %}
 ~~~
 
-Then run the code:
+그리고 코드를 실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ python basic-sample.py
 ~~~
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~
 Initial balances:
@@ -171,27 +171,27 @@ Initial balances:
 ['2', '250']
 ~~~
 
-### Transaction (with retry logic)
+### 트랜잭션 (재시도 논리 사용)
 
-Next, use the following code to again connect as the `maxroach` user but this time execute a batch of statements as an atomic transaction to transfer funds from one account to another, where all included statements are either committed or aborted.
+다음으로, 다음 코드를 이용하여 다시 `maxroach` 사용자로 연결하지만, 이번에는 포함된 모든 명령문이 커밋되거나 중단되는 한 계좌에서 다른 계좌로 자금을 이전하기 위해 원자성 트랜잭션으로 명령문 그룹을 실행할 것입니다.
 
-Download the <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/txn-sample.py" download><code>txn-sample.py</code></a> file, or create the file yourself and copy the code into it.
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/insecure/txn-sample.py" download><code>txn-sample.py</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
 
-{{site.data.alerts.callout_info}}With the default <code>SERIALIZABLE</code> isolation level, CockroachDB may require the <a href="transactions.html#transaction-retries">client to retry a transaction</a> in case of read/write contention. CockroachDB provides a generic <strong>retry function</strong> that runs inside a transaction and retries it as needed. You can copy and paste the retry function from here into your code.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}기본 <code>SERIALIZABLE</code> 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 <a href="transactions.html#transaction-retries">클라이언트가 트랜잭션을 다시 시도하기</a>를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 <strong>재시도 함수</strong>를 제공합니다. CockroachDB에서 재시도 기능을 복사하여 코드에 붙여 넣을 수 있습니다.{{site.data.alerts.end}}
 
 {% include copy-clipboard.html %}
 ~~~ python
 {% include {{page.version.version}}/app/insecure/txn-sample.py %}
 ~~~
 
-Then run the code:
+그리고 코드를 실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ python txn-sample.py
 ~~~
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~ 
 Balances after transfer:
@@ -199,14 +199,14 @@ Balances after transfer:
 ['2', '350']
 ~~~
 
-To verify that funds were transferred from one account to another, start the [built-in SQL client](use-the-built-in-sql-client.html):
+한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --insecure --database=bank
 ~~~
 
-To check the account balances, issue the following statement:
+계좌의 잔액을 확인하려면 다음 명령문을 실행하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -225,8 +225,8 @@ To check the account balances, issue the following statement:
 
 </section>
 
-## What's next?
+## 다음은?
 
-Read more about using the [Python psycopg2 driver](http://initd.org/psycopg/docs/).
+[Python psycopg2 driver](http://initd.org/psycopg/docs/) 사용법에 대해 자세히 읽어보십시오.
 
 {% include {{page.version.version}}/app/see-also-links.md %}
