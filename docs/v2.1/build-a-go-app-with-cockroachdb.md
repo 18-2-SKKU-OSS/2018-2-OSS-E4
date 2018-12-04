@@ -29,7 +29,7 @@ $ go get -u github.com/lib/pq
 
 <section class="filter-content" markdown="1" data-scope="secure">
 
-## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
 
 {% include {{page.version.version}}/app/create-maxroach-user-and-bank-database.md %}
 
@@ -45,7 +45,6 @@ $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-direc
 ## 4단계. Go 코드 실행하기
 
 이제 데이터베이스와 사용자가 있으므로 코드를 실행하여 표를 만들고 행을 삽입한 다음, 코드를 실행하여 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
-
 
 ### 기초적인 명령문
 
@@ -83,7 +82,7 @@ Initial balances:
 ~~~ go
 {% include {{ page.version.version }}/app/txn-sample.go %}
 ~~~
-기본 `SERIALIZABLE` 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 [클라이언트가 트랜잭션을 다시 시도하기](transactions.html#transaction-retries)를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 **재시도 함수**를 제공합니다. Go의 경우, CockroachDB 재시도 함수는 CockroachDB Go 클라이언트의 패키지에 있습니다. 설치하려면 다음과 같이 라이브러리를 `$GOPATH`에 복제하시오:
+기본 `SERIALIZABLE` 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 [클라이언트가 트랜잭션을 다시 시도하기](transactions.html#transaction-retries)를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 **재시도 함수**를 제공합니다. Go의 경우, CockroachDB 재시도 함수는 CockroachDB Go 클라이언트의 `crdb`패키지에 있습니다. 설치하려면 다음과 같이 라이브러리를 `$GOPATH`에 복제하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -130,6 +129,95 @@ $ cockroach sql --certs-dir=certs -e 'SELECT id, balance FROM accounts' --databa
 (2 rows)
 ~~~
 
+</section>
+
+<section class="filter-content" markdown="1" data-scope="insecure">
+
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
+
+{% include {{page.version.version}}/app/insecure/create-maxroach-user-and-bank-database.md %}
+
+## 3단계. Go 코드 실행하기
+
+이제 데이터베이스와 사용자가 있으므로 코드를 실행하여 표를 만들고 행을 삽입한 다음, 코드를 실행하여 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
+
+### 기초적인 명령문
+
+첫째로, 다음 코드를 이용하여 `maxroach` 사용자에 연결하고, 몇 가지 기본 SQL 명령문을 실행하고, 표를 생성하고, 행을 삽입하고, 행을 읽고 인쇄합니다.
+
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/insecure/basic-sample.go" download><code>basic-sample.go</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
+
+{% include copy-clipboard.html %}
+~~~ go
+{% include {{ page.version.version }}/app/insecure/basic-sample.go %}
+~~~
+
+그리고 코드를 실행하시오:
+
+{% include copy-clipboard.html %}
+~~~ shell
+$ go run basic-sample.go
+~~~
+
+출력은 다음과 같아야 합니다:
+
+~~~ shell
+Initial balances:
+1 1000
+2 250
+~~~
+
+### 트랜잭션 (재시도 논리 사용)
+
+다음으로, 다음 코드를 이용하여 다시 `maxroach` 사용자로 연결하지만, 이번에는 포함된 모든 명령문이 커밋되거나 중단되는 한 계좌에서 다른 계좌로 자금을 이전하기 위해 원자성 트랜잭션으로 명령문 그룹을 실행할 것입니다.
+
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/insecure/txn-sample.go" download><code>txn-sample.go</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
+
+{% include copy-clipboard.html %}
+~~~ go
+{% include {{ page.version.version }}/app/insecure/txn-sample.go %}
+~~~
+
+CockroachDB는 읽기/쓰기 경합 시 [클라이언트가 트랜잭션을 다시 시도하기](transactions.html#transaction-retries)를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 **재시도 함수**를 제공합니다. Go의 경우, CockroachDB 재시도 함수는 CockroachDB Go 클라이언트의 `crdb` 패키지에 있습니다.
+
+[CockroachDB Go client](https://github.com/cockroachdb/cockroach-go)를 설치하려면, 다음 명령을 실행하시오:
+
+{% include copy-clipboard.html %}
+~~~ shell
+$ go get -d github.com/cockroachdb/cockroach-go
+~~~
+
+그리고 코드를 실행하시오:
+
+{% include copy-clipboard.html %}
+~~~ shell
+$ go run txn-sample.go
+~~~
+
+출력은 다음과 같아야 합니다:
+
+~~~ shell
+Success
+~~~
+
+한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 :
+
+{% include copy-clipboard.html %}
+~~~ shell
+$ cockroach sql --insecure -e 'SELECT id, balance FROM accounts' --database=bank
+~~~
+
+~~~
++----+---------+
+| id | balance |
++----+---------+
+|  1 |     900 |
+|  2 |     350 |
++----+---------+
+(2 rows)
+~~~
+
+</section>
 
 ## 더 보기
 
