@@ -4,51 +4,50 @@ summary: Orchestrate the deployment and management of an local cluster using Kub
 toc: true
 ---
 
-Other tutorials in this section feature the ways that CockroachDB automates operations for you. On top of this built-in automation, you can use a third-party [orchestration](orchestration.html) system to simplify and automate even more of your operations, from deployment to scaling to overall cluster management.
+이 섹션의 다른 튜토리얼에서는 CockroachDB가 작업을 자동화하는 방법을 설명합니다. 이 기본 제공 자동화(automation) 기능 외에도 타사 조정 ( [orchestration](orchestration.html) ) 시스템을 사용하여 구축 및 확장, 전체 클러스터 관리에 이르기까지 훨씬 더 많은 작업을 간소화하고 자동화할 수 있습니다.
 
-This page walks you through a simple demonstration, using the open-source Kubernetes orchestration system. Starting with a few configuration files, you'll quickly create an insecure 3-node local cluster. You'll run a load generator against the cluster and then simulate node failure, watching how Kubernetes auto-restarts without the need for any manual intervention. You'll then scale the cluster with a single command before shutting the cluster down, again with a single command.
+이 페이지에서는 오픈 소스 Kubernetes 조정 시스템을 사용하여 간단한 데모를 보여줍니다. 몇 개의 구성 파일을 시작으로, 보안되지 않은 3-노드 로컬 클러스터를 빠르게 만들 수 있다. 클러스터에 대해 부하 발생기(load generator)를 실행한 다음 노드 장애를 시뮬레이션하여 Kubernet이 수동 개입 없이 auto-restarts 를 수행하는 방법을 확인하십시오. 그런 다음 단일 명령으로 클러스터를 축소하고 클러스터를 종료합니다.
 
-{{site.data.alerts.callout_info}}To orchestrate a physically distributed cluster in production, see <a href="orchestration.html">Orchestrated Deployment</a>.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}프로덕션에서 물리적으로 분산된 클러스터를 조정하려면 <a href="orchestration.html">Orchestrated Deployment</a> 를 참조하십시오.{{site.data.alerts.end}}
 
 
-## Before you begin
+## 시작하기 전에
 
-Before getting started, it's helpful to review some Kubernetes-specific terminology:
+시작하기 전에, Kubernetes 관련 용어를 알아봅시다:
 
-Feature | Description
+특징 | 설명
 --------|------------
-[minikube](http://kubernetes.io/docs/getting-started-guides/minikube/) | This is the tool you'll use to run a Kubernetes cluster inside a VM on your local workstation.
-[pod](http://kubernetes.io/docs/user-guide/pods/) | A pod is a group of one of more Docker containers. In this tutorial, all pods will run on your local workstation, each containing one Docker container running a single CockroachDB node. You'll start with 3 pods and grow to 4.
-[StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | A StatefulSet is a group of pods treated as stateful units, where each pod has distinguishable network identity and always binds back to the same persistent storage on restart. StatefulSets are considered stable as of Kubernetes version 1.9 after reaching beta in version 1.5.
-[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | A persistent volume is a piece of local storage mounted into a pod. The lifetime of a persistent volume is decoupled from the lifetime of the pod that's using it, ensuring that each CockroachDB node binds back to the same storage on restart.<br><br>When using `minikube`, persistent volumes are external temporary directories that endure until they are manually deleted or until the entire Kubernetes cluster is deleted.
-[persistent volume claim](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) | When pods are created (one per CockroachDB node), each pod will request a persistent volume claim to “claim” durable storage for its node.
+[minikube](http://kubernetes.io/docs/getting-started-guides/minikube/) | 로컬 워크스테이션의 VM 내에서 Kubernetes 클러스터를 실행하는 데 사용할 도구
+[pod](http://kubernetes.io/docs/user-guide/pods/) | A pod is a group of one of more Docker containers. In this tutorial, all pods will run on your local workstation, each containing one Docker container running a single CockroachDB node. You'll start with 3 pods and grow to 4. 더커 (Docker) 컨테이너 중 하나의 그룹. 이 튜토리얼에서는 모든 포드가 로컬 워크스테이션에서 실행되며, 각 포드는 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 이 튜토리얼에서 포드는 3 포드로 시작하여 4포드로 늘어납니다.
+[StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | StatefulSet은 상태 저장 장치로 취급되는 포드의 그룹이며, 각 포드는 구별할 수 있는 네트워크 ID를 가지며, 재시작 시 항상 동일한 영구 스토리지에 다시 바인딩된다. StatefulSets는 버전 1.5에서 베타 버전에 도달한 후 Kubernets 버전 1.9에서는 안정적인 것으로 간주됩니다.
+[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | persistent volume 은 포드에 장착된 로컬 스토리지의 한 부분이다. persistent volume의 수명은 해당 볼륨을 사용하는 포드의 수명과 분리되어 각 CockroachDB 노드가 재시작 시 동일한 스토리지에 다시 바인딩되도록 보장한다.<br><br>'minikube'를 사용할 때 persistent volume은 외부 임시 디렉토리로, 수동으로 삭제하거나 전체 쿠베르네 클러스터를 삭제할 때까지 지속됩니다.
+[persistent volume claim](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) | 포드 (CockroachDB 노드 당 하나씩)가 생성되면 각 포드는 해당 노드의 내구성 스토리지를 "claim(청구)"하기 위해 persistent volume claim을 요청합니다.
 
-## Step 1. Start Kubernetes
+## Step 1. Kubernetes 시작하기
 
-1. Follow Kubernetes' [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/) to install `minikube`, the tool used to run Kubernetes locally, for your OS. This includes installing a hypervisor and `kubectl`, the command-line tool used to managed Kubernetes from your local workstation.
+1. Follow Kubernetes' to install `minikube`, the tool used to run Kubernetes locally, for your OS. This includes installing a hypervisor and `kubectl`, the command-line tool used to managed Kubernetes from your local workstation. Kubernetes의 [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/)에 따라 Kubernetes를 로컬에서 실행하는 데 사용되는 도구 인 minikube를 OS에 설치하십시오. 여기에는 로컬 워크 스테이션에서 Kubernetes를 관리하는 데 사용되는 command-line 도구인 hypervisor 및 'kubectl' 설치가 포함됩니다. 
 
-    {{site.data.alerts.callout_info}}Make sure you install <code>minikube</code> version 0.21.0 or later. Earlier versions do not include a Kubernetes server that supports the <code>maxUnavailability</code> field and <code>PodDisruptionBudget</code> resource type used in the CockroachDB StatefulSet configuration.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_info}}<code>minikube</code> 버전 0.21.0 이상을 설치해야합니다. 이전 버전에는 CockroachDB StatefulSet 구성에 사용 된 <code>maxUnavailability</code> 필드 및 <code>PodDisruptionBudget</code> 리소스 유형을 지원하는 Kubernetes 서버가 포함되어 있지 않습니다.{{site.data.alerts.end}}
 
-2. Start a local Kubernetes cluster:
+2. 로컬 Kubernetes 클러스터 시작하기:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ minikube start
     ~~~
 
-## Step 2. Start CockroachDB nodes
+## Step 2. CockroachDB 노드 시작하기
 
-When starting a cluster manually, you run the <code>cockroach start</code> command multiple times, once per node. In this step, you use a Kubernetes StatefulSet configuration instead, reducing the effort of starting 3 nodes to a single command.
-
+클러스터를 수동으로 시작할 때는 노드당 한 번씩 <code>cockroach start</code> 명령을 여러 번 실행하십시오. 이 단계에서는 Kubernetes StatefulSet 구성을 대신 사용하여 단일 명령으로 노드 3개를 시작하는 데 필요한 작업보다 간단하게 작업을 수행할 수 있습니다.
 {% include {{ page.version.version }}/orchestration/start-cluster.md %}
 
-## Step 3. Initialize the cluster
+## Step 3. 클러스터 초기화하기
 
 {% include {{ page.version.version }}/orchestration/initialize-cluster-insecure.md %}
 
 ## Step 4. Test the cluster
 
-To test the cluster, launch a temporary pod for using the built-in SQL client, and then use a deployment configuration file to run a high-traffic load generator against the cluster from another pod.
+클러스터를 테스트하려면, 기본 제공 SQL 클라이언트를 사용하기위한 임시 포드를 실행 한 다음 배포 구성(deployment configuration) 파일을 사용하여 다른 포드의 클러스터에 대해 high-traffic load generator(하이트래픽 부하 생성기)를 실행하십시오.
 
 {% include {{ page.version.version }}/orchestration/test-cluster-insecure.md %}
 
