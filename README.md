@@ -1,6 +1,6 @@
 # 2018-2-OSS-E4
 
-## OSS Team Members
+## 1. OSS Team Members
 
 - [팀장]
 양주원,  melrose98 / melrose98@naver.com
@@ -18,28 +18,32 @@
 최성영, tjddud3345 / tjddud3345@naver.com  
 
 
-## OSS Project
+## 2. OSS Project
 
-- CockroachDB user documentation Translation (EN->KN) 
-
-- https://www.cockroachlabs.com/docs/stable/
+### CockroachDB user documentation Translation (EN->KN) 
 
 ### What is CockroachDB?
 
  ![cockroach_db](https://user-images.githubusercontent.com/32799078/49074189-86b77480-f277-11e8-93dd-3a92effbe6ad.png)
 
-- CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters.
+* CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters.
+
+  * Massive scale without giving up SQL
+  
+  * Simplify operations with orchestration tools
+  
+  * Avoid lock-in with a cloud-neutral database
 
 ### CockroachDB Docs
 
-- This repository contains the source files for the CockroachDB documentation available at cockroachlabs.com/docs
+- This repository contains the source files for the CockroachDB documentation available at https://www.cockroachlabs.com/docs/stable/
 
  ![cockroach db docs site](https://user-images.githubusercontent.com/38908158/49432909-15863d00-f7f4-11e8-9a75-5b5f13d25d6b.PNG)
 
-- You can select these and then view the document contents.
+   You can select these and then view the document contents.
 
 
-## Why did we select this project? 
+## 3. Why did we select this project? 
 
 - Opened Issue : translation to Korean
 
@@ -48,7 +52,7 @@
  ![issue](https://user-images.githubusercontent.com/32799078/49083069-dc4b4b80-f28e-11e8-877d-1c8916a9dfdc.png)
 
 
-## If you want to know more
+## 4. If you want to know more
 
 - [Home](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4.wiki.git) : Wiki Home
 
