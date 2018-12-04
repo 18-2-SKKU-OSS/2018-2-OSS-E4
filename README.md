@@ -32,13 +32,13 @@
 
 출처: http://www.venturesquare.net/748833
 
-* CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters.
+CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters.
 
-  * Massive scale without giving up SQL
+  - Massive scale without giving up SQL
   
-  * Simplify operations with orchestration tools
+  - Simplify operations with orchestration tools
   
-  * Avoid lock-in with a cloud-neutral database
+  - Avoid lock-in with a cloud-neutral database
 
 ### CockroachDB Docs
 
