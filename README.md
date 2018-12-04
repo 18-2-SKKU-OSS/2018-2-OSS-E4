@@ -17,25 +17,43 @@
 - [팀원]
 최성영, tjddud3345 / tjddud3345@naver.com  
 
+
 ## OSS Project
 
 - CockroachDB user documentation Translation (EN->KN) 
 
->> https://www.cockroachlabs.com/docs/stable/
+- https://www.cockroachlabs.com/docs/stable/
+
+### What is CockroachDB?
+
+ ![cockroach_db](https://user-images.githubusercontent.com/32799078/49074189-86b77480-f277-11e8-93dd-3a92effbe6ad.png)
+
+- CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters.
+
+### CockroachDB Docs
+
+- This repository contains the source files for the CockroachDB documentation available at cockroachlabs.com/docs
+
+ ![cockroach db docs site](https://user-images.githubusercontent.com/38908158/49432909-15863d00-f7f4-11e8-9a75-5b5f13d25d6b.PNG)
+
+- You can select these and then view the document contents.
 
 
-## CockroachDB
+## Why did we select this project? 
 
-> ![cockroach_db](https://user-images.githubusercontent.com/32799078/49074189-86b77480-f277-11e8-93dd-3a92effbe6ad.png)
+- Opened Issue : translation to Korean
 
-> CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters.
+- https://github.com/cockroachdb/docs/issues/4053
 
-## CockroachDB Docs
+ ![issue](https://user-images.githubusercontent.com/32799078/49083069-dc4b4b80-f28e-11e8-877d-1c8916a9dfdc.png)
 
-> This repository contains the source files for the CockroachDB documentation available at cockroachlabs.com/docs
 
-## Issues : translate to Korea
+## If you want to know more
 
-> https://github.com/cockroachdb/docs/issues/4053
+- [Home](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4.wiki.git) : Wiki Home
 
-> ![issue](https://user-images.githubusercontent.com/32799078/49083069-dc4b4b80-f28e-11e8-877d-1c8916a9dfdc.png)
+- [Diary](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki/Diary) : What we did everyday
+
+- [Docs List](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki/Docs-List) : List of docs in order of documents on website
+
+- [Meeting Log](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki/Meeting-Log) : Face-to-face meeting every Tuesday on OSS class
