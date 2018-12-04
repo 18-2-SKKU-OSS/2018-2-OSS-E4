@@ -14,7 +14,7 @@ toc: true
 
 용어    | 정의
 -------|------------
-**클러 스터** | 하나 이상의 데이터베이스가 포함된 단일 논리 어플리케이션으로 작동하는 CockroachDB 배포
+**클러스터**| 하나 이상의 데이터베이스가 포함된 단일 논리 어플리케이션으로 작동하는 CockroachDB 배포
 **노드** | CockroachDB를 실행하는 개별 머신. 많은 노드가 클러스터를 작성하기 위해 결합합니다.
 **범위** | CockroachDB는 모든 사용자 데이터와 거의 모든 시스템 데이터를 키-값 쌍으로 구성된 거대한 정렬 맵에 저장합니다. 이 키스페이스는 키스페이스의 연속적인 덩어리인 "범위"로 구분되어, 모든 키를 항상 단일 범위에서 찾을 수 있습니다.
 **복제본** | CockroachDB는 각 범위를 복제하고(기본적으로 3회) 각 복제본을 다른 노드에 저장합니다.
@@ -32,14 +32,15 @@ toc: true
 - 하나 이상의 지역에 있는 여러 데이터 센터에 배포할 때:
     - 1개의 전체 데이터 센터의 오류를 허용하려면, 최소한 3개의 데이터 센터를 사용하고 각 노드에 `--locality`를 설정하여 데이터 센터 전체에 데이터를 고르게 분산시킵니다. (자세한 내용은 다음 문단을 참조하십시오). 이 경우, 1개의 데이터 센터가 오프라인 상태가 되면, 나머지 2개의 데이터 센터는 대다수의 복제본을 유지합니다.
     - 각 노드를 시작할 때는, [`--locality`](start-a-node.html#locality) 플래그를 사용하여 노드의 위치를 설명합니다 (예를 들어, `--locality=region=west,datacenter=us-west-1`). 키-값 쌍은 가장 적게 포함하여 주문해야 하며, 키-값 쌍의 키와 순서는 모든 노드에서 동일해야 합니다.
-        - CockroachDB spreads the replicas of each piece of data across as diverse a set of localities as possible, with the order determining the priority. However, locality can also be used to influence the location of data replicas in various ways using [replication zones](configure-replication-zones.html#replication-constraints).
-        - When there is high latency between nodes, CockroachDB uses locality to move range leases closer to the current workload, reducing network round trips and improving read performance, also known as ["follow-the-workload"](demo-follow-the-workload.html). In a deployment across more than 3 datacenters, however, to ensure that all data benefits from "follow-the-workload", you must [increase the replication factor](configure-replication-zones.html#edit-the-default-replication-zone) to match the total number of datacenters.
-        - Locality is also a prerequisite for using the [table partitioning](partitioning.html) and [**Node Map**](enable-node-map.html) enterprise features.        
+        - CockroachDB는 각 데이터 조각의 복제본을 우선 순위를 결정하는 순서와 함께 가능한 한 다양한 지역 집합으로 분산시킵니다. 그러나 지역성은 다양한 방식으로 [복제 영역](configure-replication-zones.html#replication-constraints)을 사용하여 데이터 복제본의 위치에 영향을 주는 데 사용될 수 있습니다. 
+        - 노드간에 대기 시간이 긴 경우, CockroachDB는 지역성을 사용하여 현재 워크로드에보다 가까운 레인지 리스를 이동시키고, 네트워크 왕복을 줄이며 읽기 성능을 향상시킵니다 ([팔로우 워크로드](demo-follow-the-workload.html)라고도 함). 
+        그러나 3개 이상의 데이터 센터에 배포할 경우, 모든 데이터가 "팔로우 워크로드"의 이점을 얻도록 하려면, 데이터 센터의 총 수와 일치하도록 [복제 요소를 증가](configure-replication-zones.html#edit-the-default-replication-zone)시켜야 합니다.
+        - 지역성은 [테이블 파티셔닝](partitioning.html) 및 [**노드 맵**](enable-node-map.html) 엔터프라이즈 기능을 사용하기 위한 전제 조건입니다.      
 
-- 5개 이상의 노드로 이루어진 클러스터를 실행하는 경우, 사용자 데이터에 대해 그렇게 하지 않더라도, [중요한 내부 데이터의 복제 요소를 증가](configure-replication-zones.html#create-a-a-system-range for a system-range)시켜 5로 설정하는 것이 가장 안전합니다. 전체 클러스터를 계속 사용하려면, 이 내부 데이터의 범위에 항상 복제본의 대부분을 보유해야 합니다.
+- 5개 이상의 노드로 이루어진 클러스터를 실행하는 경우, 사용자 데이터에 대해 그렇게 하지 않더라도, [중요한 내부 데이터의 복제 요소를 증가](configure-replication-zones.html#create-a-a-system-rangeforasystem-range)시켜 5로 설정하는 것이 가장 안전합니다. 전체 클러스터를 계속 사용하려면, 이 내부 데이터의 범위에 항상 복제본의 대부분을 보유해야 합니다.
 
 {{site.data.alerts.callout_success}}
-CockroachDB의 결함 허용 및 자동 복구 기능에 대한 추가 컨텍스트를 보려면, [이 트레이닝](training / fault-tolerance-and-automated-repair.html)을 참조하십시오.
+CockroachDB의 결함 허용 및 자동 복구 기능에 대한 추가 컨텍스트를 보려면, [이 트레이닝](training/fault-tolerance-and-automated-repair.html)을 참조하십시오.
 {{site.data.alerts.end}}
 
 ## 하드웨어
@@ -59,8 +60,7 @@ CockroachDB의 결함 허용 및 자동 복구 기능에 대한 추가 컨텍스
 
 - 최고의 탄력성을 위해:
     - 적은 수의 대형 노드 대신 많은 수의 작은 노드를 사용하십시오. 데이터가 더 많은 노드로 확산될 때 실패한 노드에서 복구하는 것이 더 빠릅니다.
-    - 
-    [영역 구성](configure-replication-zones.html)를 사용하여 복제 요소를 3 (기본값)에서 5로 늘립니다. This is especially recommended if you are using local disks rather than a cloud providers' network-attached disks that are often replicated underneath the covers, because local disks have a greater risk of failure. You can do this for the [entire cluster](configure-replication-zones.html#edit-the-default-replication-zone) or for specific [databases](configure-replication-zones.html#create-a-replication-zone-for-a-database), [tables](configure-replication-zones.html#create-a-replication-zone-for-a-table), or [rows](configure-replication-zones.html#create-a-replication-zone-for-a-table-or-secondary-index-partition) (enterprise-only).
+    - [영역 구성](configure-replication-zones.html)을 사용하여 복제 요소를 3 (기본값)에서 5로 늘립니다. 이는 로컬 디스크가 실패의 위험이 더 높기 때문에, 종종 커버 아래에 복제되는 클라우드 공급자의 네트워크 연결 디스크가 아닌 로컬 디스크를 사용하는 경우에 특히 좋습니다. [전체 클러스터](configure-replication-zones.html#edit-the-default-replication-zone) 또는 특정 [데이터베이스](configure-replication-zones.html#create-a-replication-zone-for-a-database), [테이블](configure-replication-zones.html#create-a-replication-zone-for-a-table) 또는 [행](configure-replication-zones.html#create-a-replication-zone-for-a-table-or-secondary-index-partition)에 대해 이 작업을 수행할 수 있습니다 (enterprise-only).
         {{site.data.alerts.callout_danger}}
         {% include {{page.version.version}}/known-limitations/system-range-replication.md %}
         {{site.data.alerts.end}}
@@ -107,7 +107,7 @@ Cockroach Labs는 자체 내부 테스트를 기반으로 다음과 같은 클�
 - 배포에 포함된 각 노드에 대해 공통 이름 `node`를 가진 별도의 인증서와 키.
 - 공통 이름은 사용자 이름으로 설정되는 노드에 연결할 각 클라이언트 및 사용자에 대한 별도의 인증서 및 키. 기본 사용자는 `root`입니다.
 
-    또는 CockroachDB는 [비밀번호 인증](create-and-manage-users.html#사용자 인증)을 지원합니다. 일반적으로 대신 클라이언트 인증서를 사용하는 것이 좋습니다.
+    또는 CockroachDB는 [비밀번호 인증](create-and-manage-users.html#사용자인증)을 지원합니다. 일반적으로 대신 클라이언트 인증서를 사용하는 것이 좋습니다.
 
 ## 네트워킹
 
@@ -126,7 +126,7 @@ Cockroach Labs는 자체 내부 테스트를 기반으로 다음과 같은 클�
 | **명시된`--advertise-addr`** | 노드는 포트 `27257`의 모든 IP 주소를 청취하고 정식 호스트 이름을 다른 노드에 알려줍니다. **대부분의 경우 권장됨** | 노드는 `--listen-addr`에 지정된 IP 주소/호스트 이름과 `--advertise-addr`에 명시된 포트를 듣고 `--advertise-addr`에 지정된 값을 다른 노드에 알려줍니다. `--advertise-addr` 포트 번호가 `--listen-addr`에서 사용된 것과 다른 경우, 포트 포워딩이 필요합니다.
 
 {{site.data.alerts.callout_success}}
-호스트 이름을 사용할 때, 그들이 올바르게 해석되는지 확인하십시오(예를 들어, DNS나 `etc/hosts`). In particular, be careful about the value advertised to other nodes, either via `--advertise-addr` or via `--listen-addr` when `--advertise-addr` is not specified.
+호스트 이름을 사용할 때, 그들이 올바르게 해석되는지 확인하십시오(예를 들어, DNS나 `etc/hosts`). 특히 `--advertise-addr`가 지정되지 않은 경우, `--advertise-addr` 또는 `--listen-addr`를 통해 다른 노드에 알려지는 값에 주의하십시오.
 {{site.data.alerts.end}}
 
 ### 단일 네트워크상의 클러스터
@@ -135,8 +135,8 @@ Cockroach Labs는 자체 내부 테스트를 기반으로 다음과 같은 클�
 
 프라이벳? | 권장 설정
 ---------|------------------
-O | Start each node with `--listen-addr` set to its private IP address and do not specify `--advertise-addr`. `--listen-addr`가 사설 IP 주소로 설정된 각 노드를 시작하고 `--advertise-addr`을 지정하지 마십시오.
-X | Start each node with `--advertise-addr` set to a stable public IP address that routes to the node and do not specify `--listen-addr`. This will tell other nodes to use the specific IP address advertised, but load balancers/clients will be able to use any address that routes to the node.<br><br>If load balancers/clients are outside the network, also configure firewalls to allow external traffic to reach the cluster.
+O | `--listen-addr`가 사설 IP 주소로 설정된 각 노드를 시작하고 `--advertise-addr`을 지정하지 마십시오. 
+X | 각 노드를`--advertise-addr`가 노드에 전송하는 안정된 공용 IP 주소로 설정된 각 노드를 시작하고 `--listen-addr`을 지정하지 마십시오. 이렇게 하면 다른 노드가 보급된 특정 IP 주소를 사용하게 되지만, 로드 밸런서/클라이언트는 노드로 전송하는 모든 주소를 사용할 수 있습니다.<br><br>로드 밸런서/클라이언트가 네트워크 외부에 있는 경우, 외부 트래픽이 클러스터에 도달할 수 있도록 방화벽을 구성하십시오.
 
 ### 여러 네트워크에 걸친 클러스터
 
@@ -145,7 +145,7 @@ X | Start each node with `--advertise-addr` set to a stable public IP address th
 Nodes reachable across networks? | 권장 설정
 ---------------------------------|------------------
 O | 이는 모든 네트워크가 동일한 클라우드에 있는 경우 일반적입니다. 이 경우, 위의 관련 [단일 네트워크 설정](#cluster-on-a-single-network)을 사용하십시오.
-X | 이것은 네트워크가 다른 클라우드에 있을 경우 일반적입니다. In this case, set up a [VPN](https://en.wikipedia.org/wiki/Virtual_private_network), [VPC](https://en.wikipedia.org/wiki/Virtual_private_cloud), [NAT](https://en.wikipedia.org/wiki/Network_address_translation), or another such solution to provide unified routing across the networks. Then start each node with `--advertise-addr` set to the address that is reachable from other networks and do not specify `--listen-addr`. This will tell other nodes to use the specific IP address advertised, but load balancers/clients will be able to use any address that routes to the node.<br><br><span class="version-tag">New in v2.1:</span> Also, if a node is reachable from other nodes in its network on a private or local address, set [`--locality-advertise-addr`](start-a-node.html#networking) to that address. This will tell nodes within the same network to prefer the private or local address to improve performance. Note that this feature requires that each node is started with the [`--locality`](start-a-node.html#locality) flag. 자세한 내용은, 이 [예시](start-a-node.html#start-a-multi-node-cluster-across-private-networks)를 참조하십시오.
+X | 이것은 네트워크가 다른 클라우드에 있을 경우 일반적입니다. 이 경우, [VPN](https://en.wikipedia.org/wiki/Virtual_private_network), [VPC](https://en.wikipedia.org/wiki/Virtual_private_cloud), [NAT](https : //en.wikipedia.org/wiki/Network_address_translation) 또는 네트워크에서 통합 전송을 제공하는 또 다른 솔루션을 설정하십시오. 그런 다음, `--advertise-addr`을 다른 네트워크에서 접근할 수 있는 주소로 설정된 각 노드를 시작하고, `--listen-addr`을 지정하지 마십시오. 이렇게 하면, 다른 노드가 광고된 특정 IP 주소를 사용하게 됩니다. 그러나 로드 밸런서/클라이언트는 노드로 전송되는 모든 주소를 사용할 수 있습니다. <br><br><span class="version-tag">New in v2.1:</span>또한, 개인 또는 로컬 주소에서 네트워크의 다른 노드로부터 노드에 도달 할 수 있으면, 해당 주소로 [`--locality-advertise-addr`](start-a-node.html#networking)을 설정하십시오. 이렇게 하면 성능을 향상시키기 위해 같은 네트워크 내의 노드에 개인 또는 로컬 주소를 선호하게 됩니다. 이 기능을 사용하려면, 각 노드가 [`--locality`](start-a-node.html#locality) 플래그로 시작되어야 합니다 자세한 내용은, 이 [예시](start-a-node.html#start-a-multi-node-cluster-across-private-networks)를 참조하십시오.
 
 ## 로드 밸런싱
 
@@ -153,10 +153,10 @@ X | 이것은 네트워크가 다른 클라우드에 있을 경우 일반적입�
 
 - **성능:** 로드 밸런서는 클라이언트 트래픽을 노드에 분산시킵니다. 이렇게 하면 모든 노드가 요청에 압도당하는 것을 방지하고 전체 클러스터 성능(초당 쿼리 수)을 향상시킬 수 있습니다.
 
-- **신뢰성:** 로드 밸런서는 클라이언트 상태를 단일 CockroachDB 노드의 상태와 분리합니다. To ensure that traffic is not directed to failed nodes or nodes that are not ready to receive requests, load balancers should use [CockroachDB's readiness health check](monitoring-and-alerting.html#health-ready-1).
-트래픽이 실패한 노드 또는 요청을 수신할 준비가 되지 않은 노드로 전달되지 않도록 하려면,로드 밸런서는 [CockroachDB 준비 상태 검사] (monitoring-and-alerting.html # health-ready-1)를 사용해야합니다.
+- **신뢰성:** 로드 밸런서는 클라이언트 상태를 단일 CockroachDB 노드의 상태와 분리합니다. 트래픽이 실패한 노드 또는 요청을 수신할 준비가 되지 않은 노드로 전달되지 않도록 하려면, 로드 밸런서는 [CockroachDB 준비 상태 검사](monitoring-and-alerting.html#health-ready-1)를 사용해야 합니다.
+
     {{site.data.alerts.callout_success}}
-    With a single load balancer, client connections are resilient to node failure, but the load balancer itself is a point of failure. It's therefore best to make load balancing resilient as well by using multiple load balancing instances, with a mechanism like floating IPs or DNS to select load balancers for clients.
+     단일 로드 밸런서의 경우, 클라이언트 연결은 노드 장애에 대해 복원력이 있지만, 로드 밸런서 자체는 실패 지점입니다. 따라서, 클라이언트에 대한 로드 밸런서를 선택하는 유동 IP 또는 DNS와 같은 메커니즘과 함께 여러 로드 밸런싱 인스턴스를 사용하여, 로드 밸런싱을 복원하는 것이 가장 좋습니다.
     {{site.data.alerts.end}}
 
 로드 밸런싱에 대한 지침은 배포 환경에 대한 튜토리얼을 참조하십시오:
@@ -182,7 +182,8 @@ X | 이것은 네트워크가 다른 클라우드에 있을 경우 일반적입�
 기본적으로 각 노드의 캐시 크기와 임시 SQL 메모리 크기는 각각 `128MiB`입니다. 이러한 기본값은 사용자가 단일 컴퓨터에서 여러 CockroachDB 노드를 실행할 가능성이 있는 개발 및 테스트를 용이하게 하기 위해 선택되었습니다. 그러나 호스트당 하나의 노드가 있는 프로덕션 클러스터를 실행할 때는, 이 크기들을 늘리는 것이 좋습니다.
 
 - 노드의 **캐시 크기**를 늘리면 노드의 읽기 성능이 향상됩니다.
-- Increasing a node's **SQL memory size** will increase the number of simultaneous client connections it allows (the `128MiB` default allows a maximum of 6200 simultaneous connections) as well as the node's capacity for in-memory processing of rows when using `ORDER BY`, `GROUP BY`, `DISTINCT`, joins, and window functions.
+- 노드의 **SQL 메모리 크기**를 늘리면, `ORDER BY`,`GROUP BY`,`DISTINCT`, 조인 및 창 함수를 사용할 때 행의 메모리 내 처리를 위한 노드의 용량뿐만 아니라 허용되는 동시 클라이언트 연결 수를 늘릴 수 있습니다 (`128MiB` 기본값은 최대 6200개의 동시 연결을 허용합니다).
+
 
 노드의 캐시 크기와 SQL 메모리 크기를 수동으로 늘리려면, [`--cache`](start-a-node.html#플래그)와 [`--max-sql-memory`](start- a-node.html#플래그)플래그를 사용하여 노드를 시작하십시오:
 
@@ -202,8 +203,8 @@ CockroachDB는 종종 기본적으로 사용할 수 있는 것보다 많은 수�
 각 CockroachDB 노드에 대하여:
 
 - **최소**에서 파일 설명자 제한은 1956 (스토어당 1700 네트워킹의 경우 +256)이어야 합니다. 한계가 이 임계 값보다 낮으면 노드가 시작되지 않습니다. 
-- 파일 설명자 제한을 무제한으로 설정하는 것이 **좋습니다**. otherwise, the recommended limit is at least 15000 (10000 per store plus 5000 for networking). This higher limit ensures performance and accommodates cluster growth.
-- When the file descriptors limit is not high enough to allocate the recommended amounts, CockroachDB allocates 10000 per store and the rest for networking; if this would result in networking getting less than 256, CockroachDB instead allocates 256 for networking and evenly splits the rest across stores.
+- 파일 설명자 제한을 무제한으로 설정하는 것이 **좋습니다**. 그렇지 않은 경우, 권장되는 제한은 최소 15000입니다 (상점당 10000 + 네트워킹용 5000). 이 상한선은 성능을 보장하고 클러스터 성장을 수용합니다.
+- 파일 설명자 제한이 권장 금액을 할당 할만큼 충분히 높지 않으면, CockroachDB는 저장소당 10000개를 할당하고 나머지는 네트워킹용으로 할당합니다. 이로 인해 네트워킹이 256보다 작아지는 경우, CockroachDB는 네트워킹을 위해 256을 할당하고 나머지는 상점간에 균등하게 나눕니다.
 
 ### 파일 설명자 제한 증가
 
