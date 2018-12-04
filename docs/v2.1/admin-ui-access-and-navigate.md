@@ -30,7 +30,7 @@ Admin UI에서 로그아웃하려면 왼쪽 탐색 모음 하단의 **Log Out** 
 
 ## Admin UI 탐색
 
-왼쪽 탐색 모음을 사용하면, [클러스터 개요 페이지](admin-ui-access-and-navigate.html), [클러스터 메트릭 대시 보드](admin-ui-overview.html), [데이터베이스 페이지](admin-ui-statements-page.html), [명령문 페이지](admin-ui-jobs-page.html), [작업 페이지] 및 [고급 디버깅 페이지](admin-ui-debug-pages.html)로 이동할 수 있습니다.
+왼쪽 탐색 모음을 사용하면, [클러스터 개요 페이지](admin-ui-access-and-navigate.html), [클러스터 메트릭 대시 보드](admin-ui-overview.html), [데이터베이스 페이지](admin-ui-statements-page.html), [명령문 페이지](admin-ui-jobs-page.html), [작업 페이지](admin-ui-jobs-page.html) 및 [고급 디버깅 페이지](admin-ui-debug-pages.html)로 이동할 수 있습니다.
 
 각 페이지의 기본 패널 디스플레이가 변경됩니다:
 
@@ -83,7 +83,7 @@ Admin UI에서 로그아웃하려면 왼쪽 탐색 모음 하단의 **Log Out** 
 사용할 수 없는 범위 | 클러스터에서 사용할 수 없는 범위의 수입니다. 0이 아닌 숫자는 불안정한 클러스터를 나타냅니다.
 초당 쿼리수 | 초당 실행된 SQL 쿼리 수입니다.
 P50 대기 시간 | 서비스 대기 시간의 50번째 백분위 수입니다. 서비스 대기 시간은 클러스터가 쿼리를 받고 쿼리 실행을 마치는 사이의 시간으로 계산됩니다. 이 시간에는 결과를 클라이언트에 반환하는 작업은 포함되지 않습니다.
-P99 Latency | 서비스 대기 시간의 99번째 백분위 수입니다.
+P99 대기 시간 | 서비스 대기 시간의 99번째 백분위 수입니다.
 
 {{site.data.alerts.callout_info}}
 {% include v2.1/misc/available-capacity-metric.md %}
@@ -91,7 +91,7 @@ P99 Latency | 서비스 대기 시간의 99번째 백분위 수입니다.
 
 ### 이벤트 패널
 
-**Cluster Metrics** 대시 보드에는 클러스터의 모든 노드에 대해 로그된 가장 최근의 10 개의 이벤트를 나열하는 **이벤트** 패널이 표시됩니다. 모든 이벤트 목록을 보려면, **이벤트** 패널에서 **View all events**를 클릭하십시오.
+**Cluster Metrics** 대시 보드에는 클러스터의 모든 노드에 대해 로그된 가장 최근의 10개의 이벤트를 나열하는 **이벤트** 패널이 표시됩니다. 모든 이벤트 목록을 보려면, **이벤트** 패널에서 **View all events**를 클릭하십시오.
 
 <img src="{{ 'images/v2.1/admin_ui_events.png' | relative_url }}" alt="CockroachDB Admin UI Events" style="border:1px solid #eee;max-width:100%" />
 
