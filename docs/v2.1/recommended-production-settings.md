@@ -282,8 +282,8 @@ $(document).ready(function(){
 
 <section id="macinstall" markdown="1">
 
-- [Yosemite and later](#yosemite-and-later)
-- [Older versions](#older-versions)
+- [요세미티와 그 이후](#yosemite-and-later)
+- [오래된 버전](#older-versions)
 
 #### 요세미티와 그 이후
 
