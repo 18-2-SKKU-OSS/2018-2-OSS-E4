@@ -16,21 +16,13 @@
 
 ### CockroachDB user documentation Translation (EN->KN) 
 
-### What is CockroachDB?
+### What is CockroachDB? <br>
 
- ![cockroach_db](https://user-images.githubusercontent.com/32799078/49074189-86b77480-f277-11e8-93dd-3a92effbe6ad.png)
+ ![cockroach_db](https://user-images.githubusercontent.com/32799078/49074189-86b77480-f277-11e8-93dd-3a92effbe6ad.png) <br>
  
-```
-Cockroach Labs은 “자가 복제로 살아남는 데이터베이스”라고 할 수 있는 오픈소스 데이터베이스 서비스다. 
-CockroachDB의 핵심은 다운타임을 줄이기 위해 최적화됐다고 할 수 있다. 
-웹사이트를 방문하거나 은행 계좌를 체크할 때, 혹은 선호하는 SNS 앱에 접속할 때마다 필요로 하는 정보를 데이터베이스를 기반으로 얻을 수 있는 것.
-
-앞서 잠깐 언급했듯 CockroachDB는 말 그대로 바퀴벌레처럼 스스로를 복제하고 정보를 확산한다. 
-따라서 홀로 표적이 되거나 죽는 법이 없다. 
-Cockroach Labs 측은 바퀴벌레의 이 같은 특징을 다중 활성 능력(Multi-Active Availability)이라고 부른다. 
-
+> Cockroach Labs은 “자가 복제로 살아남는 데이터베이스”라고 할 수 있는 오픈소스 데이터베이스 서비스다. CockroachDB의 핵심은 다운타임을 줄이기 위해 최적화됐다고 할 수 있다. 웹사이트를 방문하거나 은행 계좌를 체크할 때, 혹은 선호하는 SNS 앱에 접속할 때마다 필요로 하는 정보를 데이터베이스를 기반으로 얻을 수 있는 것이다. <br> <br>
+앞서 잠깐 언급했듯 CockroachDB는 말 그대로 바퀴벌레처럼 스스로를 복제하고 정보를 확산한다. 따라서 홀로 표적이 되거나 죽는 법이 없다. Cockroach Labs 측은 바퀴벌레의 이 같은 특징을 다중 활성 능력(Multi-Active Availability)이라고 부른다. <br> <br>
 출처: http://www.venturesquare.net/748833
-```
 
 CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters. <br>
 
