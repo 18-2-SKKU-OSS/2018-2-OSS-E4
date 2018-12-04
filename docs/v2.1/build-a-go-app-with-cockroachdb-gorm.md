@@ -53,7 +53,7 @@ $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-direc
 
 ## 4단계. Go 코드 실행하기
 
-다음 코드는 [GORM](http://gorm.io) ORM을 사용하여 Go-specific 개체들을 SQL operation에 매핑합니다. 특히 `db.AutoMigrate(&Account{})`는 계좌 모델을 바탕으로 'Account' 표를 생성하고, `db.Create(&Account{})`는 표에 행을 삽입하며, `db.Find(&accounts)`는 잔액을 프린트할 수 있도록 표에서 선택을 합니다.
+다음 코드는 [GORM](http://gorm.io) ORM을 사용하여 Go-specific 개체들을 SQL operation에 매핑합니다. 특히 `db.AutoMigrate(&Account{})`는 계좌 모델을 바탕으로 `accounts`표를 생성하고, `db.Create(&Account{})`는 표에 행을 삽입하며, `db.Find(&accounts)`는 잔액을 프린트할 수 있도록 표에서 선택을 합니다.
 
 코드를 복사하거나
 <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/gorm-basic-sample.go" download>직접 다운로드 받으시오</a>.
@@ -95,6 +95,59 @@ $ cockroach sql --certs-dir=certs -e 'SELECT id, balance FROM accounts' --databa
 (2 rows)
 ~~~
 
+</section>
+
+<section class="filter-content" markdown="1" data-scope="insecure">
+
+## 2단계. `maxroach` 사용자와 `bank` 데이터베이스 생성하기
+
+{% include {{page.version.version}}/app/insecure/create-maxroach-user-and-bank-database.md %}
+
+## 3단계. Go 코드 실행하기
+
+다음 코드는 [GORM](http://gorm.io) ORM을 사용하여 Go-specific 개체들을 SQL operations에 매핑합니다. 특히 `db.AutoMigrate(&Account{})`는 계좌 모델을 바탕으로 `accounts`표를 생성하고, `db.Create(&Account{})`는 표에 행을 삽입하며, `db.Find(&accounts)`는 잔액을 프린트할 수 있도록 표에서 선택을 합니다.
+
+코드를 복사하거나
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/insecure/gorm-basic-sample.go" download>직접 다운로드 받으시오</a>.
+
+{% include copy-clipboard.html %}
+~~~ go
+{% include {{ page.version.version }}/app/insecure/gorm-basic-sample.go %}
+~~~
+
+그리고 코드를 실행하시오:
+
+{% include copy-clipboard.html %}
+~~~ shell
+$ go run gorm-basic-sample.go
+~~~
+
+출력은 다음과 같아야 합니다:
+
+~~~ shell
+Initial balances:
+1 1000
+2 250
+~~~
+
+한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)을 시작:
+
+{% include copy-clipboard.html %}
+~~~ shell
+$ cockroach sql --insecure -e 'SELECT id, balance FROM accounts' --database=bank
+~~~
+
+~~~
++----+---------+
+| id | balance |
++----+---------+
+|  1 |    1000 |
+|  2 |     250 |
++----+---------+
+(2 rows)
+~~~
+
+</section>
 
 ## 더 보기
 
