@@ -5,21 +5,21 @@ toc: true
 redirect_from: orchetrate-cockroachdb-with-kubernetes-multi-region.html
 ---
 
-This page shows you how to orchestrate a secure CockroachDB deployment across three [Kubernetes](http://kubernetes.io/) clusters, each in a different geographic region, using the [StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) feature to manage the containers within each cluster and linking them together via DNS.
+이 페이지에서는 [StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) 기능을 사용하여 각 클러스터 내의 컨테이너를 관리하고 DNS를 통해 연결하여 서로 다른 지역에있는 3개의 [Kubernetes](http://kubernetes.io/) 클러스터 간에 안전한 CockroachDB 배포를 조정하는 방법을 보여줍니다.
 
-To deploy in a single Kubernetes cluster instead, see [Kubernetes Single-Cluster Deployment](orchestrate-cockroachdb-with-kubernetes.html). Also, for details about potential performance bottlenecks to be aware of when running CockroachDB in Kubernetes and guidance on how to optimize your deployment for better performance, see [CockroachDB Performance on Kubernetes](kubernetes-performance.html).
+단일 Kubernetes에 배포하려는 경우, [Kubernetes Single-Cluster Deployment](orchestrate-cockroachdb-with-kubernetes.html)를 참조하십시오. 또한 Kubernet에서 CockroachDB를 실행할 때 알아야 할 잠재적 성능 병목 현상에 대한 자세한 내용과 더 나은 성능을 위해 배포를 최적화하는 방법에 대한 지침은 [CockroachDB Performance on Kubernetes](kubernetes-performance.html)를 참조하십시오.
 
 ## Before you begin
 
-Before getting started, it's helpful to review some Kubernetes-specific terminology and current limitations.
+시작하기 전에, Kubernetes 관련 용어 및 제약을 알아봅시다:
 
-### Kubernetes terminology
+### Kubernetes 관련 용어
 
 Feature | Description
 --------|------------
 instance | A physical or virtual machine. In this tutorial, you'll run instances as part of three independent Kubernetes clusters, each in a different region.
-[pod](http://kubernetes.io/docs/user-guide/pods/) | A pod is a group of one of more Docker containers. In this tutorial, each pod will run on a separate instance and include one Docker container running a single CockroachDB node. You'll start with 3 pods in each region and grow to 4.
-[StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | A StatefulSet is a group of pods treated as stateful units, where each pod has distinguishable network identity and always binds back to the same persistent storage on restart. StatefulSets are considered stable as of Kubernetes version 1.9 after reaching beta in version 1.5.
+[pod](http://kubernetes.io/docs/user-guide/pods/) | 포드는 더커(Docker) 컨테이너 중 하나의 그룹이다. 이 튜토리얼에서 각 포드는 별도의 인스턴스에서 실행되며, 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 포드는 3 포드로 시작하여 4포드로 늘어납니다.
+[StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | StatefulSet은 상태 저장 장치로 취급되는 포드의 그룹이며, 각 포드는 구별할 수 있는 네트워크 ID를 가지며, 재시작 시 항상 동일한 영구 스토리지에 다시 바인딩됩니다. StatefulSets는 버전 1.5에서 베타 버전에 도달한 후 Kubernets 버전 1.9에서는 안정적인 것으로 간주됩니다.
 [persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | A persistent volume is a piece of networked storage (Persistent Disk on GCE, Elastic Block Store on AWS) mounted into a pod. The lifetime of a persistent volume is decoupled from the lifetime of the pod that's using it, ensuring that each CockroachDB node binds back to the same storage on restart.<br><br>This tutorial assumes that dynamic volume provisioning is available. When that is not the case, [persistent volume claims](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) need to be created manually.
 [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) | RBAC, or Role-Based Access Control, is the system Kubernetes uses to manage permissions within the cluster. In order to take an action (e.g., `get` or `create`) on an API resource (e.g., a `pod`), the client must have a `Role` that allows it to do so.
 [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) | A namespace provides a scope for resources and names within a Kubernetes cluster. Names of resources need to be unique within a namespace, but not across namespaces. Most Kubernetes client commands will use the `default` namespace by default, but can operate on resources in other namespaces as well if told to do so.
@@ -28,35 +28,38 @@ instance | A physical or virtual machine. In this tutorial, you'll run instances
 
 ### UX differences from running in a single cluster
 
-These instructions create a StatefulSet that runs CockroachDB in each of the Kubernetes clusters you provide to the configuration scripts. These StatefulSets can be scaled independently of each other by running `kubectl` commands against the appropriate cluster. These steps will also point each Kubernetes cluster's DNS server at the other clusters' DNS servers so that DNS lookups for certain zone-scoped suffixes (e.g., "*.us-west1-a.svc.cluster.local") can be deferred to the appropriate cluster's DNS server. However, in order to make this work, we create the StatefulSets in namespaces named after the zone in which the cluster is running. This means that in order to run a command against one of the pods, you have to run, e.g., `kubectl logs cockroachdb-0 --namespace=us-west1-a` instead of just `kubectl logs cockroachdb-0`. Alternatively, you can [configure your `kubectl` context to default to using that namespace for commands run against that cluster](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#setting-the-namespace-preference).
+이러한 지침은 구성 스크립트에 제공하는 각 Kubernets 클러스터에서 CockroachDB를 실행하는 StatefulSet을 생성합니다. 이러한 StatefulSets는 적절한 클러스터에 대해 `kubectl` 명령을 실행함으로써 서로 독립적으로 확장할 수 있습니다. 또한 이 단계는 다른 클러스터의 DNS 서버에서 각 Kubernetes 클러스터의 DNS 서버를 가리켜 특정 영역 범위 접미어(e.g., "*.us-west1-a.svc.cluster.local")에 대한 DNS 조회를 적절한 클러스터의 DNS 서버로 지연될 수 있도록 합니다. 그러나, 이 작업을 수행하기 위해, 클러스터가 실행 중인 영역의 이름이 지정된 네임스페이스에 StatefulSets를 생성하게 됩니다. 따라서 포드 중 하나에 대해 명령을 실행하려면, 예컨대, `kubectl logs cockroachdb-0` 대신 `kubectl logs cockroachdb-0 --namespace=us-west1-a`와 같이 실행해야합니다. 또는,`kubectl` 컨텍스트가 기본적으로 해당 네임 스페이스를 사용하여 해당 클러스터에 대해 명령을 실행하도록 구성 할 수 있습니다. [configure your `kubectl` context to default to using that namespace for commands run against that cluster](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#setting-the-namespace-preference).
 
-Note that the CockroachDB pods being in a non-default namespace means that if we didn't do anything about it then any client applications wanting to talk to CockroachDB from the default namespace would need to talk to a zone-scoped service name such as "cockroachdb-public.us-west1-a" rather than just the normal "cockroachdb-public" that they would use in a single-cluster setting. However, the setup script used by these instructions sets up an additional [`ExternalName` service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) in the default namespace such that the clients in the default namespace can simply talk to the "cockroachdb-public" address.
 
-Finally, if you haven't worked with multiple Kubernetes clusters often before, you may find yourself forgetting to think about which cluster you want to run a given command against, and thus getting confusing results to your commands. Remember that you will either have to run `kubectl use-context <context-name>` frequently to switch contexts between commands or you will have to append `--context=<context-name>` on most commands you run to ensure they are run on the correct cluster.
+CockroachDB 포드는 기본 네임스페이스가 아닌 네임스페이스에 있는 경우, 기본 네임스페이스에서 CockroachDB와 대화하려는 모든 클라이언트 애플리케이션은 단일 클러스터 설정에서 사용되는 일반적인 "cockroachdb-public"가 아니라 "cockroachdb-public.us-west1-a"과 같은 영역 범위 지정(zone-scoped) 서비스 이름과 대화해야 한다는 것을 의미한다는 점에 유의하십시오. 그러나 이 지침에 사용되는 설치 스크립트는 기본 네임스페이스에 추가 [`ExternalName` service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)을 설정하여 기본 네임스페이스에 있는 클라이언트가 "cockroachdb-public" 주소와 간단히 대화할 수 있도록 한다.
 
-### Limitations
 
-#### Kubernetes version
+마지막으로, 만약 사용자가 이전에 여러 개의 Kubernetes 클러스터로 작업한 경험이 없는 경우, 주어진 명령을 실행할 클러스터에 대해 생각하는 것을 잊어서 명령에 대해 혼동되는 결과를 가져올 수 있다. `kubectl use-context <context-name>`을 자주 실행하여 명령어 간 컨텍스트를 전환하거나, 올바른 클러스터에서 실행되도록 대부분의 명령어에 `--context=<context-name>`을 추가해야 한다는 점을 기억하십시오.
 
-Kubernetes 1.8 or higher is required.
+### 제약
 
-#### Exposing DNS servers
+#### Kubernetes 버전
 
-In the approach documented here, the DNS servers from each Kubernetes cluster are hooked together by exposing them via a load balanced IP address that is visible to the public Internet. This is because [Google Cloud Platform's Internal Load Balancers do not currently support clients in one region using a load balancer in another region](https://cloud.google.com/load-balancing/docs/internal/#deploying_internal_load_balancing_with_clients_across_vpn_or_interconnect).
+Kubernetes 1.8 이상
 
-None of the services in your Kubernetes cluster will be accessible publicly, but their names could leak out to a motivated attacker. If this is unacceptable, please let us know and we can demonstrate other options. [Your voice could also help convince Google to allow clients from one region to use an Internal Load Balancer in another](https://issuetracker.google.com/issues/111021512), eliminating the problem.
+#### DNS 노출
 
-## Step 1. Start Kubernetes clusters
+이 문서의 접근방식에서, 각 Kubernetes 클러스터의 DNS 서버는 공용 인터넷에서 볼 수 있는 로드 밸런싱된 IP 주소를 통해 이들을 노출시킴으로써 함께 연결된다. 이는 Google Cloud Platform의 내부 로드 밸런싱 장치가 현재 다른 region에 있는 로드 밸런싱 장치를 사용하는 클라이언트를 지원하지 않기 때문이다. [Google Cloud Platform's Internal Load Balancers do not currently support clients in one region using a load balancer in another region](https://cloud.google.com/load-balancing/docs/internal/#deploying_internal_load_balancing_with_clients_across_vpn_or_interconnect).
 
-Our multi-region deployment approached relies on pod IP addresses being routable across three distinct Kubernetes clusters and regions. The hosted Google Kubernetes Engine (GKE) service satisfies this requirement, so that is the environment featured here. If you want to run on another cloud or on-premises, use this [basic network test](https://github.com/cockroachdb/cockroach/tree/master/cloud/kubernetes/multiregion#pod-to-pod-connectivity) to see if it will work.
+Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지만, 그들의 이름은 동기화된 공격자에게 누설될 수 있습니다. 만약 당신이 이것을 용납할 수 없는 경우, 우리에게 알려준다면 다른 선택 사항들을 보여줄 수 있습니다. 
+[여기](https://issuetracker.google.com/issues/111021512)에서 내부 로드 밸런서를 사용할 수 있도록 Google을 설득하는 데 당신의 목소리를 낼 수 있습니다.
 
-1. Complete the **Before You Begin** steps described in the [Google Kubernetes Engine Quickstart](https://cloud.google.com/kubernetes-engine/docs/quickstart) documentation.
+## Step 1. Kubernetes 클러스터 시작하기
 
-    This includes installing `gcloud`, which is used to create and delete Kubernetes Engine clusters, and `kubectl`, which is the command-line tool used to manage Kubernetes from your workstation.
+접근한 다중 영역 구축은 3개의 서로 다른 Kubernetes 클러스터와 지역에 걸쳐 라우팅 가능한 포드 IP 주소에 의존합니다. 호스팅되는 Google Kubernetes Engine(GKE) 서비스는 이 요구 사항을 충족하므로 여기에 해당 환경이 설명됩니다. 다른 클라우드 또는 사내에서 실행하려면 이 [기본 네트워크 test](https://github.com/cockroachdb/cockroach/tree/master/cloud/kubernetes/multiregion#pod-to-pod-connectivity)를 사용하여 작동되는지 확인하십시오.
 
-    {{site.data.alerts.callout_success}}The documentation offers the choice of using Google's Cloud Shell product or using a local shell on your machine. Choose to use a local shell if you want to be able to view the CockroachDB Admin UI using the steps in this guide.{{site.data.alerts.end}}
+1. [Google Cubernetes Engine Quickstart](https://cloud.google.com/kubernetes-engine/docs/quickstart)에 설명된 **시작하기 전** 단계를 완료하십시오.
 
-2. From your local workstation, start the first Kubernetes cluster, specifying the [zone](https://cloud.google.com/compute/docs/regions-zones/) it should run in:
+여기에는 Kubernetes 엔진 클러스터를 만들고 삭제하는 데 사용되는 `gcloud` 설치와 사용자의 워크스테이션에서 Kubernet을 관리하는 데 사용되는 커맨드라인 도구인 `Kubectl` 설치가 포함됩니다.
+
+    {{site.data.alerts.callout_success}}이 설명서는 Google의 Cloud Shell 제품 사용 또는 사용자 컴퓨터의 로컬 셸 사용 옵션을 제공합니다. 이 가이드의 단계를 사용하여 CockroachDB 관리 UI를 보려면 로컬 셸을 선택하십시오.{{site.data.alerts.end}}
+
+2. 로컬 워크스테이션에서 실행해야 하는 [영역](https://cloud.google.com/compute/docs/regions-zones/)을 지정하여 첫 번째 Kubernet 클러스터를 시작하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -67,11 +70,11 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     Creating cluster cockroachdb1...done.
     ~~~
 
-    This creates GKE instances in the zone specified and joins them into a single Kubernetes cluster named `cockroachdb1`.
+    이는 지정된 영역에 GKE 인스턴스를 생성하고 이를 `cockroachdb1` 이라는 단일 Kubernetes 클러스터에 결합한다.
 
-    The process can take a few minutes, so do not move on to the next step until you see a `Creating cluster cockroachdb1...done` message and details about your cluster.
+    이 프로세스는 몇 분 정도 걸릴 수 있으므로 `Creating cluster cockroachdb1...done` 메시지와 클러스터에 대한 세부 정보가 나타날 때까지 다음 단계로 진행하지 마십시오.
 
-3. Start the second Kubernetes cluster, specifying the [zone](https://cloud.google.com/compute/docs/regions-zones/) it should run in:
+3. 실행해야 하는 [영역](https://cloud.google.com/compute/docs/regions-zones/)을 지정하여 두 번째 Kubernet 클러스터를 시작하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -82,7 +85,7 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     Creating cluster cockroachdb2...done.
     ~~~
 
-4. Start the third Kubernetes cluster, specifying the [zone](https://cloud.google.com/compute/docs/regions-zones/) it should run in:
+4. 실행해야 하는 [영역](https://cloud.google.com/compute/docs/regions-zones/)을 지정하여 세 번째 Kubernet 클러스터를 시작하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -93,7 +96,7 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     Creating cluster cockroachdb3...done.
     ~~~
 
-5. Get the `kubectl` "contexts" for your clusters:
+5. 클러스터에 대한 `kubectl` "컨텍스트(contexts)" 를 얻습니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -108,12 +111,13 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     ~~~
 
     {{site.data.alerts.callout_info}}
-    All of the `kubectl` commands in this tutorial use the `--context` flag to tell `kubectl` which Kubernetes cluster to talk to. Each Kubernetes cluster operates independently; you have to tell each of them what to do separately, and when you want to get the status of something in a particular cluster, you have to make it clear to `kubectl` which cluster you're interested in.
+    본 튜토리얼의 모든 `kubectl` 명령어는 `--context` 플래그를 사용하여 Kubernetes가 대화하고자 하는 `kubectl` 을 알려줍니다. 각 Kubernetes cluster는 독립적으로 운영되기 때문에 각 클러스터마다 개별적으로 무엇을 해야 하는지 지시하거나 특정 클러스터의 상태를 파악하려면 해당 클러스터의 `kubectl`을 명확히 해야 합니다.
 
-    The context with `*` in the `CURRENT` column indicates the cluster that `kubectl` will talk to by default if you do not specify the `--context` flag.
+    `CURRENT` 열에 있는 `*` 가 있는 컨텍스트는 `--context` 플래그를 지정하지 않으면 `kubectl`이 기본적으로 대화하는 클러스터를 나타냅니다.
     {{site.data.alerts.end}}
+    
 
-6. Get the email address associated with your Google Cloud account:
+6. Google 클라우드 계정과 연결된 이메일 주소 가져오기::
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -125,10 +129,10 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     ~~~
 
     {{site.data.alerts.callout_danger}}
-    This command returns your email address in all lowercase. However, in the next step, you must enter the address using the accurate capitalization. For example, if your address is YourName@example.com, you must use YourName@example.com and not yourname@example.com.
+    이 명령은 이메일 주소를 모두 소문자로 반환합니다. 그러나 다음 단계에서는 정확한 대문자를 사용하여 주소를 입력해야 합니다. 예를 들어, if 이메일 주소가 YourName@example.com 라면 yourname@example.com이 아닌 YourName@example.com으로 입력해야 합니다.
     {{site.data.alerts.end}}
 
-6. For each Kubernetes cluster, [create the RBAC roles](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#prerequisites_for_using_role-based_access_control) CockroachDB needs for running on GKE, using the email address and relevant "context" name from the previous steps:
+6. 각 Kubernetes 클러스터에 대하여  CockroachDB는 이전 단계에서 가져온 전자 메일 주소와 "context" 이름을 사용하여 GKE에서 실행하기 위해 CockroachDB가 필요로 하는 [RBAC 역할을 생성합니다](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#prerequisites_for_using_role-based_access_control).
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -145,9 +149,9 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     $ kubectl create clusterrolebinding $USER-cluster-admin-binding --clusterrole=cluster-admin --user=<your.google.cloud.email@example.org> --context=<context-name-of-kubernetes-cluster3>
     ~~~
 
-## Step 2. Start CockroachDB
+## Step 2. CockroachDB 시작하기
 
-1. Create a directory and download the required script and configuration files into it:
+1. 디렉터리를 생성하고 필요한 스크립트 및 구성 파일을 다운로드하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -165,7 +169,8 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/multiregion/{README.md,client-secure.yaml,cluster-init-secure.yaml,cockroachdb-statefulset-secure.yaml,dns-lb.yaml,example-app-secure.yaml,external-name-svc.yaml,setup.py,teardown.py}
     ~~~
 
-2. At the top of the `setup.py` script, fill in the `contexts` map with the zones of your clusters and their "context" names, for example:
+2. `setup.py` 스크립트의 맨 위에서부터, `contexts` 맵을 클러스터 영역 및 "context" 이름을 입력하여 채우십시오. 
+    예시:
 
     ~~~
     context = {
@@ -175,14 +180,15 @@ Our multi-region deployment approached relies on pod IP addresses being routable
     }
     ~~~
 
-    You retrieved the `kubectl` "contexts" in an earlier step. To get them again, run:
+    이전 단계에서 `kubectl` "contexts를 회수했습니다. 다시 가져오려면 다음을 실행하십시오.:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ kubectl config get-contexts
     ~~~
 
-3. In the `setup.py` script, fill in the `regions` map with the zones and corresponding regions of your clusters, for example:
+3. `setup.py` 스크립트의 맨 위에서부터, `regions` 맵을 클러스터 영역 및 해당 region을 입력하여 채우십시오.  
+   예시:
 
     ~~~
     $ regions = {
@@ -264,7 +270,7 @@ Our multi-region deployment approached relies on pod IP addresses being routable
 In each Kubernetes cluster, the StatefulSet configuration sets all CockroachDB nodes to write to `stderr`, so if you ever need access to a pod/node's logs to troubleshoot, use `kubectl logs <podname> --namespace=<cluster-namespace> --context=<cluster-context>` rather than checking the log on the persistent volume.
 {{site.data.alerts.end}}
 
-## Step 3. Use the built-in SQL client
+## Step 3. 빌트인 SQL 클라이언트 사용하기
 
 1. Use the `client-secure.yaml` file to launch a pod and keep it running indefinitely, specifying the context of the Kubernetes cluster to run it in:
 
@@ -356,7 +362,7 @@ In each Kubernetes cluster, the StatefulSet configuration sets all CockroachDB n
     $ kubectl delete pod cockroachdb-client-secure --context=<cluster-context>
     ~~~
 
-## Step 4. Access the Web UI
+## Step 4. 웹 UI 액세스 하기
 
 To access the cluster's [Web UI](admin-ui-overview.html):
 
@@ -379,7 +385,7 @@ To access the cluster's [Web UI](admin-ui-overview.html):
 
 3. In the UI, check the **Node List** to verify that all nodes are running, and then click the **Databases** tab on the left to verify that `bank` is listed.
 
-## Step 5. Simulate datacenter failure
+## Step 5. 데이터센터 장애 시뮬레이션 하기
 
 One of the major benefits of running a multi-region cluster is that an entire datacenter or region can go down without affecting the availability of the CockroachDB cluster as a whole.
 
@@ -446,9 +452,10 @@ Each of your Kubernetes clusters contains 3 nodes that pods can run on. To ensur
 
 ### Upgrade the cluster
 
-As new versions of CockroachDB are released, it's strongly recommended to upgrade to newer versions in order to pick up bug fixes, performance improvements, and new features. The [general CockroachDB upgrade documentation](upgrade-cockroach-version.html) provides best practices for how to prepare for and execute upgrades of CockroachDB clusters, but the mechanism of actually stopping and restarting processes in Kubernetes is somewhat special.
+CockroachDB의 새로운 버전이 출시됨에 따라 버그 수정, 성능 개선 및 새로운 기능을 얻기 위해 새로운 버전으로 업그레이드하는 것을 강력히 권장합니다. 일반 [CockroachDB 업그레이드 설명서](upgrade-cockroach-version.html)는 CockroachDB 클러스터의 업그레이드를 준비하고 실행하는 방법에 대한 모범 사례를 제공하지만, Kubernetes에서 실제로 프로세스를 중지하고 다시 시작하는 메커니즘은 다소 특별합니다.
 
-Kubernetes knows how to carry out a safe rolling upgrade process of the CockroachDB nodes. When you tell it to change the Docker image used in the CockroachDB StatefulSet, Kubernetes will go one-by-one, stopping a node, restarting it with the new image, and waiting for it to be ready to receive client requests before moving on to the next one. For more information, see [the Kubernetes documentation](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets).
+Kubernetes는 CockroachDB 노드의 안전한 롤링 업그레이드 프로세스를 수행하는 방법을 알고 있습니다. 사용자가 CockroachDB StatefulSet에 사용된 Docker 이미지를 변경하라고 하면 Kubernetes는 노드를 중지하고 새 이미지로 다시 시작하고 다음 이미지로 이동하기 전에 클라이언트 요청을 수신할 준비가 될 때까지 대기합니다. 자세한 내용은 [Kubernetes documentation](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets).을 참조하십시오.
+
 
 1. Decide how the upgrade will be finalized.
 
@@ -585,7 +592,7 @@ Kubernetes knows how to carry out a safe rolling upgrade process of the Cockroac
     Deleting cluster cockroachdb3...done.
     ~~~
 
-## See also
+## 더 알아보기
 
 - [Kubernetes Single-Cluster Deployment](orchestrate-cockroachdb-with-kubernetes.html)
 - [Kubernetes Performance Guide](kubernetes-performance.html)
