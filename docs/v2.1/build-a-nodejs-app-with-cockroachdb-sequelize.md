@@ -127,7 +127,7 @@ $ node sequelize-basic-sample.js
 2 250
 ~~~
 
-표와 열이 성공적으로 생성되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)를 다시 사용하시오:
+표와 행이 성공적으로 생성되었는지 확인하려면, [built-in SQL client](use-the-built-in-sql-client.html)를 다시 사용하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
