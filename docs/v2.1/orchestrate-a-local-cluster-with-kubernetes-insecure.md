@@ -25,7 +25,7 @@ toc: true
 
 ## Step 1. Kubernetes 시작하기
 
-1. Follow Kubernetes' to install `minikube`, the tool used to run Kubernetes locally, for your OS. This includes installing a hypervisor and `kubectl`, the command-line tool used to managed Kubernetes from your local workstation. Kubernetes의 [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/)에 따라 Kubernetes를 로컬에서 실행하는 데 사용되는 도구 인 minikube를 OS에 설치하십시오. 여기에는 로컬 워크 스테이션에서 Kubernetes를 관리하는 데 사용되는 command-line 도구인 hypervisor 및 'kubectl' 설치가 포함됩니다. 
+1. Kubernetes의 [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/)에 따라 Kubernetes를 로컬에서 실행하는 데 사용되는 도구 인 minikube를 OS에 설치하십시오. 여기에는 로컬 워크 스테이션에서 Kubernetes를 관리하는 데 사용되는 command-line 도구인 hypervisor 및 'kubectl' 설치가 포함됩니다. 
 
     {{site.data.alerts.callout_info}}<code>minikube</code> 버전 0.21.0 이상을 설치해야합니다. 이전 버전에는 CockroachDB StatefulSet 구성에 사용 된 <code>maxUnavailability</code> 필드 및 <code>PodDisruptionBudget</code> 리소스 유형을 지원하는 Kubernetes 서버가 포함되어 있지 않습니다.{{site.data.alerts.end}}
 
