@@ -38,7 +38,7 @@ $ npm install sequelize sequelize-cockroachdb
 
 {% include {{page.version.version}}/app/create-maxroach-user-and-bank-database.md %}
 
-## `maxroach` 사용자에 대한 인증서 생성하기
+## 3단계. `maxroach` 사용자에 대한 인증서 생성하기
 
 다음 명령을 실행하여 `maxroach` 사용자에 대한 인증서와 키를 생성하시오. 코드 샘플은 이 사용자로 실행됩니다.
 
