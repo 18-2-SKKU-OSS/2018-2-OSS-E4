@@ -139,17 +139,17 @@ $ $HOME/go/bin/ycsb -duration 20m -tolerate-errors -concurrency 10 -max-rate 100
 
 ## Step 6. 3개 노드에서 전체 데이터 밸런스 보기
 
-Now open the Admin UI at `http://localhost:8080` and click **Metrics** in the left-hand navigation bar. The **Overview** dashboard is displayed. Hover over the **SQL Queries** graph at the top. After a minute or so, you'll see that the load generator is executing approximately 95% reads and 5% writes across all nodes:
+`http://localhost:8080` 에서 관리 UI를 열고 왼쪽 탐색 모음(nevigation bar)에서 **Metrics** 를 클릭하십시오. **Overview** 대시보드가 표시될 것입니다. 맨 위에 있는 **SQL Queries** 그래프 위로 마우스를 가져가십시오. 1분 정도 지나면 로드 생성기가 모든 노드에서 약 95% 읽기 및 5% 쓰기 작업을 실행하고 있음을 볼 수 있습니다.
 
 <img src="{{ 'images/v2.1/admin_ui_sql_queries.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-Scroll down a bit and hover over the **Replicas per Node** graph. Because CockroachDB replicates each piece of data 3 times by default, the replica count on each of your 3 nodes should be identical:
+이제 약간 아래로 스크롤 하여 **Replicas per Node** 그래프 위로 마우스를 가져가십시오. CockroachDB는 기본적으로 각 데이터 조각을 3회 복제하므로 3개 노드의 복제본 수는 동일해야 합니다.
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_migration.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
 ## Step 7. "cloud 2"에 노드 3개 추가하기
 
-At this point, you're running three nodes on cloud 1. 현재 시점에서 클라우드 1은 3개의 노드를 실행하고 있습니다. 하지만 만약 다른 클라우드에서 리소스를 제공받는다면 어떨까요? 그럼 이제 새 클라우드 플랫폼에 노드를 3개 더 추가해 보겠습니다. 다시 한 번 강조하지만, [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 플래그를 사용하여 다음 3개 노드가 클라우드 2에서 실행 중임을 지정합니다.
+현재 시점에서 클라우드 1은 3개의 노드를 실행하고 있습니다. 하지만 만약 다른 클라우드에서 리소스를 제공받는다면 어떨까요? 그럼 이제 새 클라우드 플랫폼에 노드를 3개 더 추가해 보겠습니다. 다시 한 번 강조하지만, [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 플래그를 사용하여 다음 3개 노드가 클라우드 2에서 실행 중임을 지정합니다.
 
 새로운 터미널을 열어 클라우드 2에서 노드 4를 시작합니다.
 
