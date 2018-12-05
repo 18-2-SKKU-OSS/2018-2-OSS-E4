@@ -6,7 +6,7 @@ toc: true
 
 이 섹션의 다른 튜토리얼에서는 CockroachDB가 작업을 자동화하는 방법을 설명합니다. 이 기본 제공 자동화(automation) 기능 외에도 타사 조정 ( [orchestration](orchestration.html) ) 시스템을 사용하여 구축 및 확장, 전체 클러스터 관리에 이르기까지 훨씬 더 많은 작업을 간소화하고 자동화할 수 있습니다.
 
-이 페이지에서는 오픈 소스 Kubernetes 조정 시스템을 사용하여 간단한 데모를 보여줍니다. 몇 개의 구성 파일을 시작으로, 보안되지 않은 3-노드 로컬 클러스터를 빠르게 만들 수 있다. 클러스터에 대해 로드 생성기를 실행한 다음 노드 장애를 시뮬레이션하여 Kubernet이 수동 개입 없이 auto-restarts 를 수행하는 방법을 확인하십시오. 그런 다음 단일 명령으로 클러스터를 축소하고 클러스터를 종료합니다.
+이 페이지에서는 오픈 소스 Kubernetes 조정 시스템을 사용하여 간단한 데모를 보여줍니다. 몇 개의 구성 파일을 시작으로, 보안되지 않은 3-노드 로컬 클러스터를 빠르게 만들 수 있다. 클러스터에 대해 로드 생성기를 실행한 다음 노드 장애를 시뮬레이션하여 Kubernet이 수동 개입 없이 auto-restarts 를 수행하는 방법을 확인하십시오. 그런 다음 단일 명령으로 클러스터를 확장하고 클러스터를 종료합니다.
 
 {{site.data.alerts.callout_info}}프로덕션에서 물리적으로 분산된 클러스터를 조정하려면 <a href="orchestration.html">Orchestrated Deployment</a> 를 참조하십시오.{{site.data.alerts.end}}
 
@@ -18,9 +18,9 @@ toc: true
 특징 | 설명
 --------|------------
 [minikube](http://kubernetes.io/docs/getting-started-guides/minikube/) | 로컬 워크스테이션의 VM 내에서 Kubernetes 클러스터를 실행하는 데 사용할 도구
-[pod](http://kubernetes.io/docs/user-guide/pods/) | A pod is a group of one of more Docker containers. In this tutorial, all pods will run on your local workstation, each containing one Docker container running a single CockroachDB node. You'll start with 3 pods and grow to 4. 더커 (Docker) 컨테이너 중 하나의 그룹. 이 튜토리얼에서는 모든 포드가 로컬 워크스테이션에서 실행되며, 각 포드는 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 이 튜토리얼에서 포드는 3 포드로 시작하여 4포드로 늘어납니다.
-[StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | StatefulSet은 상태 저장 장치로 취급되는 포드의 그룹이며, 각 포드는 구별할 수 있는 네트워크 ID를 가지며, 재시작 시 항상 동일한 영구 스토리지에 다시 바인딩된다. StatefulSets는 버전 1.5에서 베타 버전에 도달한 후 Kubernets 버전 1.9에서는 안정적인 것으로 간주됩니다.
-[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | persistent volume 은 포드에 장착된 로컬 스토리지의 한 부분이다. persistent volume의 수명은 해당 볼륨을 사용하는 포드의 수명과 분리되어 각 CockroachDB 노드가 재시작 시 동일한 스토리지에 다시 바인딩되도록 보장한다.<br><br>'minikube'를 사용할 때 persistent volume은 외부 임시 디렉토리로, 수동으로 삭제하거나 전체 쿠베르네 클러스터를 삭제할 때까지 지속됩니다.
+[pod](http://kubernetes.io/docs/user-guide/pods/) | 더커(Docker) 컨테이너 중 하나의 그룹. 이 튜토리얼에서는 모든 포드가 로컬 워크스테이션에서 실행되며, 각 포드는 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 포드는 3 포드로 시작하여 4포드로 늘어납니다.
+[StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | StatefulSet은 상태 저장 장치로 취급되는 포드의 그룹이며, 각 포드는 구별할 수 있는 네트워크 ID를 가지며, 재시작 시 항상 동일한 영구 스토리지에 다시 바인딩됩니다. StatefulSets는 버전 1.5에서 베타 버전에 도달한 후 Kubernets 버전 1.9에서는 안정적인 것으로 간주됩니다.
+[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | persistent volume 은 포드에 장착된 로컬 스토리지의 한 부분입니다. persistent volume의 수명은 해당 볼륨을 사용하는 포드의 수명과 분리되어 각 CockroachDB 노드가 재시작 시 동일한 스토리지에 다시 바인딩되도록 보장한다.<br><br>'minikube'를 사용할 때 persistent volume은 외부 임시 디렉토리로, 수동으로 삭제하거나 전체 쿠베르네 클러스터를 삭제할 때까지 지속됩니다.
 [persistent volume claim](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) | 포드 (CockroachDB 노드 당 하나씩)가 생성되면 각 포드는 해당 노드의 내구성 스토리지를 "claim(청구)"하기 위해 persistent volume claim을 요청합니다.
 
 ## Step 1. Kubernetes 시작하기
@@ -45,7 +45,7 @@ toc: true
 
 {% include {{ page.version.version }}/orchestration/initialize-cluster-insecure.md %}
 
-## Step 4. Test the cluster
+## Step 4. 클러스터 테스트하기
 
 클러스터를 테스트하려면, 기본 제공 SQL 클라이언트를 사용하기위한 임시 포드를 실행 한 다음 배포 구성(deployment configuration) 파일을 사용하여 다른 포드의 클러스터에 대해 high-traffic load generator를 실행하십시오.
 
@@ -98,11 +98,11 @@ toc: true
 
 4. 왼쪽의 **Databases** 탭을 클릭하여 수동으로 생성한 `bank` 데이터베이스와 로드 생성기에 의해 생성된 `kv` 데이터베이스가 나열되어 있는지 확인하십시오.
 
-## Step 6. Simulate node failure
+## Step 6. 노드 장애 시뮬레이션 하기
 
 {% include {{ page.version.version }}/orchestration/kubernetes-simulate-failure.md %}
 
-## Step 7. Scale the cluster
+## Step 7. 클러스터 확장하기
 
 1. 다른 CockroachDB 노드에 대한 포드를 추가하려면 `kubectl scale` 명령어를 사용하십시오.
 
@@ -131,7 +131,7 @@ toc: true
     example-545f866f5-2gsrs   1/1       Running   0          25m
     ~~~
 
-## Step 8. Stop the cluster
+## Step 8. 클러스터 중지시키기
 
 - **클러스터를 다시 실행할 예정인 경우**, `minikube stop` 명령어를 사용하십시오. 이 경우 minikube 가상 머신은 종료되지만 생성된 모든 리소스는 보존됩니다.
     {% include copy-clipboard.html %}
