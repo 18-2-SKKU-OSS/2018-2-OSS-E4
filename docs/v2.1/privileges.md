@@ -4,46 +4,46 @@ summary: Privileges are granted to roles and users at the database and table lev
 toc: true
 ---
 
-In CockroachDB, privileges are granted to [roles](roles.html) and [users](create-and-manage-users.html) at the database and table levels. They are not yet supported for other granularities such as columns or rows.
+CockroachDB에서, 데이터베이스 및 테이블 레벨에서 [역할](roles.html) 및 [사용자](create-and-manage-users.html)에 권한이 부여됩니다. 그것들은 열이나 행과 같은 기타 세분화에 대해서는 아직 지원되지 않는다.
 
-When a user connects to a database, either via the [built-in SQL client](use-the-built-in-sql-client.html) or a [client driver](install-client-drivers.html), CockroachDB checks the user and role's privileges for each statement executed. If the user does not have sufficient privileges for a statement, CockroachDB gives an error.
+사용자가 [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html) 또는 [클라이언트 드라이버](install-client-drivers.html)를 통해 데이터베이스에 연결하면, CockroachDB는 실행된 각 명령문에 대한 사용자 및 역할의 권한을 확인합니다. 사용자에게 명령문에 대한 충분한 권한이 없는 경우, CockroachDB는 오류를 발생시킵니다.
 
-For the privileges required by specific statements, see the documentation for the respective [SQL statement](sql-statements.html).
+특정 명령문에 필요한 특권에 대해서는, 각각의 [SQL 명령문](sql-statements.html)에 대한 설명서를 참고하십시오. 
 
 
-## Supported privileges
+## 지원되는 권한
 
-For a full list of supported privileges, see the [`GRANT`](grant.html) documentation.
+지원되는 전체 권한 목록은 [`GRANT`](grant.html) 설명서를 보십시오.
 
-## Granting privileges
+## 권한 부여
 
-To grant privileges to a role or user, use the [`GRANT`](grant.html) statement, for example:
+역할이나 사용자에게 권한을 부여하려면, [`GRANT`](grant.html) 명령문을 사용하십시오. 예를 들면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > GRANT SELECT, INSERT ON bank.accounts TO maxroach;
 ~~~
 
-## Showing privileges
+## 권한 표시
 
-To show privileges granted to roles or users, use the [`SHOW GRANTS`](show-grants.html) statement, for example:
+역할이나 사용자에게 부여된 권한을 표시하려면, [`SHOW GRANTS`](show-grants.html) 명령문을 사용하십시오. 예를 들면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > SHOW GRANTS ON DATABASE bank FOR maxroach;
 ~~~
 
-## Revoking privileges
+## 권한 취소
 
-To revoke privileges from roles or users, use the [`REVOKE`](revoke.html) statement, for example:
+역할이나 사용자로부터 권한을 취소하려면, [`REVOKE`](revoke.html) 명령문을 사용하십시오. 예를 들면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > REVOKE INSERT ON bank.accounts FROM maxroach;
 ~~~
 
-## See also
+## 더 보기
 
-- [Manage Users](create-and-manage-users.html)
-- [Manage Roles](roles.html)
-- [SQL Statements](sql-statements.html)
+- [사용자 관리](create-and-manage-users.html)
+- [역할 관리](roles.html)
+- [SQL 명령문](sql-statements.html)
