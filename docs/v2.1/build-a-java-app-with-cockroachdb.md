@@ -56,8 +56,8 @@ $ openssl pkcs8 -topk8 -inform PEM -outform DER -in client.maxroach.key -out cli
 
 데이터베이스를 생성하고 암호화 키를 설정했으므로, 이 섹션에서는 다음을 수행합니다:
 
-- [표를 생성하고 열을 삽입하기](#basic1)
-- [한 묶음의 명령문을 트랜잭션으로 실행기](#txn1)
+- [표를 생성하고 행을 삽입하기](#basic1)
+- [한 묶음의 명령문을 트랜잭션으로 실행하기](#txn1)
 
 <a name="basic1"></a>
 
@@ -167,8 +167,8 @@ $ cockroach sql --certs-dir=certs --database=bank
 
 데이터베이스를 생성했으므로, 이 섹션에서는 다음을 수행합니다:
 
-- [표를 생성하고 열을 삽입하기](#basic2)
-- [한 묶음의 명령문을 트랜잭션으로 실행기](#txn2)
+- [표를 생성하고 행을 삽입하기](#basic2)
+- [한 묶음의 명령문을 트랜잭션으로 실행하기](#txn2)
 
 <a name="basic2"></a>
 
