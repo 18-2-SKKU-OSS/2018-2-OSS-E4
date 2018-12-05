@@ -110,7 +110,7 @@ toc: true
 $ sudo docker network create --driver overlay --attachable cockroachdb
 ~~~
 
-The `--attachable` option enables non-swarm containers running on Docker to access services on the network, which makes the service easier to use interactively.
+`--attachable` 옵션은 도커에서 실행되는 스웜이 아닌 컨테이너가 네트워크상의 서비스에 접근할 수 있게 해 서비스를 상호작용적으로 사용하기 쉽게 해준다.
 
 ## 단계 5. CockroachDB 클러스터 시작
 
