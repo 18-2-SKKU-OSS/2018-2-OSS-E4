@@ -216,7 +216,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
 
     다시, 이러한 명령은 시크릿 (`cockroachdb-1-crt` 과 `cockroachdb-1-key`) 에 이름을 할당하고 바퀴벌레가 생성한 인증서와 키 파일의 위치를 식별합니다.
     
-7.  `--overwrite` 플래그를 사용하여 첫 번째 노드에 대하여 생성된 파일을 대체하는 두 번째 노드에 대한 인증서와 키를 생성하십시오.:
+7.  `--overwrite` 플래그를 사용하여 첫 번째 노드에 대하여 생성된 파일을 대체하는 두 번째 노드에 대한 인증서와 키를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -251,7 +251,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     $ sudo docker secret create cockroachdb-2-key certs/node.key
     ~~~
 
-9. Create the certificate and key for the third node, again using the `--overwrite` flag to replace the files created for the second node:
+9. `--overwrite` 플래그를 사용하여 두 번째 노드에 대해 생성된 파일을 다시 사용하여 세 번째 노드에 대한 인증서와 키를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -296,7 +296,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     --ca-key=my-safe-directory/ca.key
     ~~~
 
-12. `root` 사용자의 인증서 및 키에 대한 도커 암호를 생성하십시오.
+12. `root` 사용자의 인증서 및 키에 대한 도커 암호를 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
