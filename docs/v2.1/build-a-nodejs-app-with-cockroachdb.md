@@ -225,6 +225,6 @@ $ cockroach sql --insecure --database=bank
 
 ## 더 보기
 
-[Node.js pg driver](https://www.npmjs.com/package/pg) 사용에 대해 자세히 알.
+[Node.js pg driver](https://www.npmjs.com/package/pg) 사용에 대해 자세히 알아보세요.
 
 {% include {{page.version.version}}/app/see-also-links.md %}
