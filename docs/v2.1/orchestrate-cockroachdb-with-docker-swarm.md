@@ -111,11 +111,11 @@ $ sudo docker network create --driver overlay --attachable cockroachdb
 
 +`--attachable` 옵션은 도커에서 실행되는 스웜이 아닌 컨테이너가 네트워크상의 서비스에 접근할 수 있게 해 서비스를 상호작용적으로 사용하기 쉽게 해줍니다.
 
-## Step 5. Create security resources
+## 단계 5. 보안 리소스 생성
 
 A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and client/node authentication and communication. In this step, you'll install CockroachDB on the instance running your manager node, use the [`cockroach cert`](create-security-certificates.html) command to generate certificate authority (CA), node, and client certificate and key pairs, and use the [`docker secret create`](https://docs.docker.com/engine/reference/commandline/secret_create/) command to assign these files to Docker [secrets](https://docs.docker.com/engine/swarm/secrets/) for use by your Docker services.
 
-1. On the instance running your manager node, install CockroachDB from our latest binary:
+1. 관리자 노드를 실행하는 인스턴스에서 최신 이진 파일을 사용하여 CockroachDB를 설치하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -136,7 +136,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     $ sudo mv cockroach /usr/local/bin
     ~~~
 
-2. Create a `certs` directory and a safe directory to keep your CA key:
+2. `certs` 디렉토리와 안전 디렉토리를 생성하여 CA 키를 보관하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -148,7 +148,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     $ mkdir my-safe-directory
     ~~~
 
-3. Create the CA certificate and key:
+3. CA 인증서 및 키 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -166,18 +166,18 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     ca.crt
     ~~~
 
-4. Create a Docker secret for the `ca.crt` file using the [`docker secret create`](https://docs.docker.com/engine/reference/commandline/secret_create/) command:
+4. [`docker secret create`](https://docs.docker.com/engine/reference/commandline/secret_create/) 명령을 사용하여 `ca.crt`를 위한 도커 시크릿을 생성합니다:
 
-    {{site.data.alerts.callout_danger}}Store the <code>ca.key</code> file somewhere safe and keep a backup; if you lose it, you will not be able to add new nodes or clients to your cluster.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_danger}} <code>ca.key</code> 파일을 어딘가에 안전하게 저장해두고 백업해둡니다; 손실된 경우 새 노드나 클라이언트를 클러스터에 추가할 수 없습니다.{{site.data.alerts.end}}
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ sudo docker secret create ca-crt certs/ca.crt
     ~~~
 
-    This command assigns a name to the secret (`ca-crt`) and identifies the location of the cockroach-generated CA certificate file. You can use a different secret name, if you like, but be sure to reference the correct name when starting the CockroachDB nodes in the next step.
+    이 명령은 시크릿 (`ca-crt`) 에 이름을 할당하고 cockroach가 생성한 CA 인증서 파일의 위치를 식별합니다. 원하는 경우 다른 비밀 이름을 사용할 수 있지만 다음 단계에서 CockroachDB 노드를 시작할 때는 올바른 이름을 참조해야 합니다.
 
-5. Create the certificate and key for the first node:
+5. 첫 번째 노드의 인증서 및 키 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -200,9 +200,9 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     node.key
     ~~~
 
-    This command issues the certificate/key pair to the service name you will use for the node later (`cockroachdb-1`) as well as to local addresses that will make it easier to run the built-in SQL shell and other CockroachDB client commands in the same container as the node.
+    이 명령은 나중에 노드에 사용할 서비스 이름 (`cockroachdb-1`) 과 노드와 동일한 컨테이너에서 내장 SQL 셸 및 기타 CockroachDB 클라이언트 명령을 더 쉽게 실행할 수 있는 인증서/키 쌍을 로컬 주소로 발급합니다.
 
-6. Create Docker secrets for the first node's certificate and key:
+6. 첫 번째 노드의 인증서 및 키에 대한 Docker 암호 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -214,9 +214,9 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     $ sudo docker secret create cockroachdb-1-key certs/node.key
     ~~~
 
-    Again, these commands assign names to the secrets (`cockroachdb-1-crt` and `cockroachdb-1-key`) and identify the location of the cockroach-generated certificate and key files.
-
-7. Create the certificate and key for the second node, using the `--overwrite` flag to replace the files created for the first node:
+    다시, 이러한 명령은 시크릿 (`cockroachdb-1-crt` 과 `cockroachdb-1-key`) 에 이름을 할당하고 바퀴벌레가 생성한 인증서와 키 파일의 위치를 식별합니다.
+    
+7.  `--overwrite` 플래그를 사용하여 첫 번째 노드에 대하여 생성된 파일을 대체하는 두 번째 노드에 대한 인증서와 키를 생성하십시오.:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -239,7 +239,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     node.key
     ~~~
 
-8. Create Docker secrets for the second node's certificate and key:
+8. 두 번째 노드의 인증서 및 키에 대한 도커 암호 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -274,7 +274,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     node.key
     ~~~
 
-10. Create Docker secrets for the third node's certificate and key:
+10. 세 번째 노드의 인증서 및 키에 대한 Docker 암호 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -286,7 +286,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     $ sudo docker secret create cockroachdb-3-key certs/node.key
     ~~~
 
-11. Create a client certificate and key for the `root` user:
+11. `root` 사용자에 대한 클라리언트 인증서 및 키 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -296,7 +296,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
     --ca-key=my-safe-directory/ca.key
     ~~~
 
-12. Create Docker secrets for the `root` user's certificate and key:
+12. `root` 사용자의 인증서 및 키에 대한 도커 암호를 생성하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -392,7 +392,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
      {{site.data.alerts.callout_info}} 인스턴스를 교체하거나 추가할 계획이라면, 로컬 디스크 대신 원격 스토리지를 사용하는 것이 좋습니다. 이를 위해, 선택한 볼륨 드라이버를 사용하여 각 CockroachDB 인스턴스에 대해 <a href="https://docs.docker.com/engine/reference/commandline/volume_create/">원격 볼륨을 생성</a> 하고, 만약 <a href="https://github.com/mcuadros/gce-docker">GCE 볼륨 드라이버</a>를 사용한다면, <code>volume-driver=local</code> 대신에 볼륨 드라이버를 분류합니다. e.g., <code>volume-driver=gce</code>
     - `--stop-grace-period`: 이 플래그는 CockroachDB가 적절하게 폐쇄할 수 있는 충분한 시간을 줄 수 있는 유예기간을 설정합니다.
     - `--publish`: 이 플래그는 관리 UI가 스웜 노드가 `8080`에서 실행되고 있는 어떤 인스턴스의 IP에 접근할 수 있게 합니다. 이 플래그는 첫 번째 노드의 서비스에서만 정의되지만, 스웜은 라우팅 메쉬를 사용하여 모든 스웜 노드에 이 포트를 노출한다는 점에 유의하십시오. 자세한 설명을 위해 [포트 게시](https://docs.docker.com/engine/swarm/services/#publish-ports) 를 참고하십시오.
-    - `--secret`: These flags identify the secrets to use in securing the node. They must reference the secret names defined in step 5. For the node and client certificate and key secrets, the `source` field identifies the relevant secret, and the `target` field defines the name to be used in `cockroach start` and `cockroach sql` flags. For the node and client key secrets, the `mode` field also sets the file permissions to `0600`; if this isn't set, Docker will assign a default file permission of `0444`, which will not work with CockroachDB's built-in SQL client.
+    - `--secret`: 이 깃발들은 노드 보안에 사용할 비밀들을 식별합니다. 그것들은 5단계에서 정의한 비밀 이름을 참조해야 합니다. 노드와 클라이언트 인증서, 핵심 기밀에 대해서는 `source` 필드가 관련 기밀을 식별하며, `target` 필드는 `cockroach start` 와 `cockroach sql` 플래그에 사용할 이름을 정의합니다. 노드와 클라이언트의 키 기밀에 대해서도 `mode` 필드는 파일 권한을 `0600` 으로 설정하고, 이 권한이 설정되어 있지 않으면 Docker는 CockroachDB의 기본 SQL 클라이언트에서는 작동하지 않는 `0444` 의 기본 파일 권한을 할당합니다.
     - `cockroachdb/cockroach:{{page.release_info.version}} start ...`: CockroachDB는 안전하지 않은 모드의 컨테이너에서 [노드 시작](start-a-node.html)을 명령하고, 다른 클러스터 구성원에게 서비스의 이름과 일치하는 영구 네트워크 주소를 사용하여 서로 커뮤니케이션하도록 지시 합니다.
 
 2. 세가지 서비스가 모두 생성되었는지 확인하십시오:
