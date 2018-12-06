@@ -366,7 +366,7 @@ secure: true
 
 {% include {{ page.version.version }}/orchestration/kubernetes-upgrade-cluster.md %}
 
-### Stop the cluster
+### 클러스터 종료
 
 CockroachDB 클러스터를 종료하려면 다음을 수행하십시오:
 
