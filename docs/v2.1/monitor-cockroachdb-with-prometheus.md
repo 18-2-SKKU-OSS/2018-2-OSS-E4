@@ -4,24 +4,24 @@ summary: Use Prometheus to monitor CockroachDB.
 toc: true
 ---
 
-CockroachDB generates detailed time series metrics for each node in a cluster. This page shows you how to pull these metrics into [Prometheus](https://prometheus.io/), an open source tool for storing, aggregating, and querying time series data. It also shows you how to connect [Grafana](https://grafana.com/) and [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/) to Prometheus for flexible data visualizations and notifications.
+클러스터의 각 노드에 대한 자세한 시계열 메트릭을 생성합니다. 이 페이지에서는 시계열 데이터를 저장, 집계 및 쿼리하는 오픈 소스 도구인 [프로메테우스](https://prometheus.io/)에 이러한 메트릭을 가져 오는 방법을 보여줍니다. 또한 유연한 데이터 시각화 및 알림을 위해, [그라파나](https://grafana.com/) 및 [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/)를 프로메테우스에 연결하는 방법을 보여줍니다.
 
-{{site.data.alerts.callout_success}}For details about other monitoring options, see <a href="monitoring-and-alerting.html">Monitoring and Alerting</a>. {{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}기타 모니터링 옵션에 대한 자세한 내용은, <a href="monitoring-and-alerting.html"> 모니터링 및 경고</a>를 참조하십시오.{{site.data.alerts.end}}
 
 
-## Before you begin
+## 시작하기 전에
 
-- Make sure you have already started a CockroachDB cluster, either [locally](start-a-local-cluster.html) or in a [production environment](manual-deployment.html).
+- [로컬](start-a-local-cluster.html) 또는 [프로덕션 환경](manual-deployment.html)에서 CockroachDB 클러스터를 이미 시작했는지 확인하십시오.
 
-- Note that all files used in this tutorial can be found in the [`monitoring`](https://github.com/cockroachdb/cockroach/tree/master/monitoring) directory of the CockroachDB repository.
+- 이 튜토리얼에서 사용된 모든 파일은 CockroachDB 저장소의 [`monitoring`](https://github.com/cockroachdb/cockroach/tree/master/monitoring) 디렉토리에 있습니다.
 
-## Step 1. Install Prometheus
+## 1단계. 프로메테우스 설치
 
-1. Download the [2.x Prometheus tarball](https://prometheus.io/download/) for your OS.
+1. 사용중인 OS용 [2.x 프로메테우스 타르볼](https://prometheus.io/download/)을 다운로드하십시오.
 
-2. Extract the binary and add it to your `PATH`. This makes it easy to start Prometheus from any shell.
+2. 바이너리를 추출하여 `PATH`에 추가하십시오. 따라서 모든 쉘에서 프로메테우스를 쉽게 시작할 수 있습니다.
 
-3. Make sure Prometheus installed successfully:
+3. 프로메테우스가 성공적으로 설치되었는지 확인하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -35,9 +35,9 @@ CockroachDB generates detailed time series metrics for each node in a cluster. T
       go version:       go1.10
     ~~~
 
-## Step 2. Configure Prometheus
+## 2단계. 프로메테우스 구성 
 
-1. Download the starter [Prometheus configuration file](https://github.com/cockroachdb/cockroach/blob/master/monitoring/prometheus.yml) for CockroachDB:
+1. CockroachDB의 스타터 [프로메테우스 구성 파일](https://github.com/cockroachdb/cockroach/blob/master/monitoring/prometheus.yml) 다운로드하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -45,21 +45,22 @@ CockroachDB generates detailed time series metrics for each node in a cluster. T
     -O prometheus.yml
     ~~~
 
-    When you examine the configuration file, you'll see that it is set up to scrape the time series metrics of a single, insecure local node every 10 seconds:
-    - `scrape_interval: 10s` defines the scrape interval.
-    - `metrics_path: '/_status/vars'` defines the Prometheus-specific CockroachDB endpoint for scraping time series metrics.
-    - `scheme: 'http'` specifies that the cluster being scraped is insecure.
-    - `targets: ['localhost:8080']` specifies the hostname and `http-port` of the Cockroach node to collect time series metrics on.
+    구성 파일을 검사하면, 10초마다 인시큐어 단일 로컬 노드의 시계열 메트릭을 스크래핑하도록 설정되었음을 알 수 있습니다:
+    
+    - `scrape_interval: 10s` 스크래핑 간격을 정의합니다. 
+    - `metrics_path: '/_status/vars'` 시계열 메트릭을 스크래핑하는 프로메테우스 관련 CockroachDB 엔드 포인트를 정의합니다.
+    - `scheme: 'http'` 스크래핑되는 클러스터가 인시큐어하다고 명시합니다.
+    - `targets: ['localhost:8080']` 시계열 메트릭을 수집할 Cockroach 노드의 호스트이름과 `http-port`를 명시합니다.
 
-2. Edit the configuration file to match your deployment scenario:
+2. 배포 시나리오에 맞게 구성 파일을 편집합니다:
 
-    Scenario | Config Change
+    시나리오 | 구성 변경
     ---------|--------------
-    Multi-node local cluster | Expand the `targets` field to include `'localhost:<http-port>'` for each additional node.
-    Production cluster | Change the `targets` field to include `'<hostname>:<http-port>'` for each node in the cluster. Also, be sure your network configuration allows TCP communication on the specified ports.
-    Secure cluster | Uncomment `scheme: 'https'` and comment out `scheme: 'http'`.
+    다중 노드 로컬 클러스터 | 각 추가 노드에 대해, ``localhost:<http-port>'`를 포함하도록 `targets` 필드를 확장하십시오.
+    프로덕션 클러스터 | 클러스터의 각 노드에 대해, `'<hostname>:<http-port>'`를 포함하도록 `targets` 필드를 변경하십시오. 또한, 네트워크 구성이 지정된 포트에서 TCP 통신을 허용하는지 확인하십시오.
+    시큐어 클러스터 | `scheme: 'https'`를 주석 처리하고 `scheme: 'http'`를 주석 처리하십시오.
 
-4. Create a `rules` directory and download the [aggregation rules](https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/aggregation.rules.yml) and [alerting rules](https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml) for CockroachDB into it:
+4. `rules` 디렉토리를 생성하고 CockroachDB를 위한 [어그레게이션 규칙](https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/aggregation.rules.yml)과 [경고 규칙](https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml)을 다운로드하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -81,9 +82,9 @@ CockroachDB generates detailed time series metrics for each node in a cluster. T
     $ wget -P rules https://raw.githubusercontent.com/cockroachdb/cockroach/master/monitoring/rules/alerts.rules.yml
     ~~~
 
-## Step 3. Start Prometheus
+## 3단계. 프로메테우스 시작
 
-1. Start the Prometheus server, with the `--config.file` flag pointing to the configuration file:
+1. 구성 파일을 가리키는 `--config.file` 플래그로 프로메테우스 서버를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -100,19 +101,19 @@ CockroachDB generates detailed time series metrics for each node in a cluster. T
     INFO[0000] Starting target manager...                    source=targetmanager.go:63
     ~~~
 
-2. Point your browser to `http://<hostname of machine running prometheus>:9090`, where you can use the Prometheus UI to query, aggregate, and graph CockroachDB time series metrics.
-  - Prometheus auto-completes CockroachDB time series metrics for you, but if you want to see a full listing, with descriptions, point your browser to `http://<hostname of a CockroachDB node>:8080/_status/vars`.
-  - For more details on using the Prometheus UI, see their [official documentation](https://prometheus.io/docs/introduction/getting_started/).
+2. 프로메테우스 UI를 사용하여 CockroachDB 시계열 메트릭을 쿼리, 집계 및 그래프로 표시할 수 있는 `http://<hostname of machine running prometheus>:9090`를 브라우저로 지정하십시오.  
+  - Prometheus는 자동으로 CockroachDB 시계열 메트릭을 완성하지만, 설명이 포함된 전체 목록을 보려면 `http://<hostname of a CockroachDB node>:8080/_status/vars`를 브라우저로 지정하십시오.
+  - 프로메테우스 UI 사용에 대한 자세한 내용은, [공식 문서](https://prometheus.io/docs/introduction/getting_started/)를 보십시오. 
 
-## Step 4. Send notifications with Alertmanager
+## 4단계. Alertmanager를 사용하여 알림 보내기
 
-Active monitoring helps you spot problems early, but it is also essential to send notifications when there are events that require investigation or intervention. In step 2, you already downloaded CockroachDB's starter [alerting rules](https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml). Now, download, configure, and start [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/).
+액티브 모니터링은 문제를 일찍 발견하는 데 도움이 되지만, 조사 또는 개입이 필요한 이벤트가 있을 때 알림을 보내는 것이 필수적입니다. 2단계에서, CockroachDB의 스타터 [경고 규칙](https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml)을 이미 다운로드했습니다. 이제, [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/)를 다운로드, 구성 및 시작하십시오.
 
-1. Download the [latest Alertmanager tarball](https://prometheus.io/download/#alertmanager) for your OS.
+1. 사용중인 OS에 맞는 [최신 Alertmanager 타르볼](https://prometheus.io/download/#alertmanager)을 다운로드하십시오.
 
-2. Extract the binary and add it to your `PATH`. This makes it easy to start Alertmanager from any shell.
+2. 바이너리를 추출하여 `PATH`에 추가하십시오. 이렇게 하면 모든 쉘에서 Alertmanager를 쉽게 시작할 수 있습니다.
 
-3. Make sure Alertmanager installed successfully:
+3. Alertmanager가 성공적으로 설치되었는지 확인하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -126,36 +127,37 @@ Active monitoring helps you spot problems early, but it is also essential to sen
       go version:       go1.10
     ~~~
 
-4. [Edit the Alertmanager configuration file](https://prometheus.io/docs/alerting/configuration/) that came with the binary, `simple.yml`, to specify the desired receivers for notifications.
+4. 바이너리 `simple.yml`과 함께 제공되는 [Alertmanager 구성 파일을 편집](https://prometheus.io/docs/alerting/configuration/)하여 알림에 대하여 원하는 수신자를 지정합니다.
 
-5. Start the Alertmanager server, with the `--config.file` flag pointing to the configuration file:
+5. 구성 파일을 가리키는 `--config.file` 플래그로 Alertmanager 서버를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ alertmanager --config.file=simple.yml
     ~~~
 
-6. Point your browser to `http://<hostname of machine running alertmanager>:9093`, where you can use the Alertmanager UI to define rules for [silencing alerts](https://prometheus.io/docs/alerting/alertmanager/#silences).
+6. Alertmanager UI를 사용하여 [경보 해지](https://prometheus.io/docs/alerting/alertmanager/#silences)에 대한 규칙을 정의할 수 있는 `http://<hostname of machine running alertmanager>:9093`를 브라우저를 지정하십시오. 
 
-## Step 5. Visualize metrics in Grafana
 
-Although Prometheus lets you graph metrics, [Grafana](https://grafana.com/) is a much more powerful visualization tool that integrates with Prometheus easily.
+## 5단계. 그라파나의 메트릭 시각화
 
-1. [Install and start Grafana for your OS](https://grafana.com/grafana/download).
+프로메테우스는 그래프 메트릭을 제공하지만, [그라파나](https://grafana.com/)는 프로메테우스와 쉽게 통합되는 훨씬 강력한 시각화 도구입니다.
 
-2. Point your browser to `http://<hostname of machine running grafana>:3000` and log into the Grafana UI with the default username/password, `admin/admin`, or create your own account.
+1. [OS에 그라파나를 설치 및 시작](https://grafana.com/grafana/download)하십시오.
 
-3. [Add Prometheus as a datasource](http://docs.grafana.org/datasources/prometheus/), and configure the datasource as follows:
+2. `http://<hostname of machine running grafana>:3000`를 브라우저로 지정하고, 그라파나 UI에 기본 사용자이름/암호인 `admin/admin`으로 로그인하거나 자신의 계정을 생성합니다. 
 
-    Field | Definition
+3. [프로메테우스를 데이터 소스로 추가](http://docs.grafana.org/datasources/prometheus/)하고, 다음과 같이 데이터 소스를 구성하십시오:
+
+    필드 | 정의
     ------|-----------
-    Name | Prometheus
-    Default | True
-    Type | Prometheus
+    이름 | 프로메테우스
+    기본 | 트루
+    타입 | 프로메테우스
     Url | `http://<hostname of machine running prometheus>:9090`
-    Access | Direct
+    접근 | 다이렉트
 
-4. Download the starter [Grafana dashboards](https://github.com/cockroachdb/cockroach/tree/master/monitoring/grafana-dashboards) for CockroachDB:
+4. CockroachDB의 스타터 [대시 보드](https://github.com/cockroachdb/cockroach/tree/master/monitoring/grafana-dashboards)를 다운로드하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -181,8 +183,8 @@ Although Prometheus lets you graph metrics, [Grafana](https://grafana.com/) is a
     $ wget https://raw.githubusercontent.com/cockroachdb/cockroach/master/monitoring/grafana-dashboards/replicas.json
     ~~~
 
-5. [Add the dashboards to Grafana](http://docs.grafana.org/reference/export_import/#importing-a-dashboard).
+5. [그라파나에 대시 보드 추가](http://docs.grafana.org/reference/export_import/#importing-a-dashboard).
 
-## See also
+## 더 보기
 
-- [Monitoring and Alerting](monitoring-and-alerting.html)
+- [모니터링 및 경고](monitoring-and-alerting.html)
