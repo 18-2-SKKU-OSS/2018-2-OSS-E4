@@ -227,6 +227,6 @@ $ cockroach sql --insecure --database=bank
 
 ## 다음은?
 
-[Python psycopg2 driver](http://initd.org/psycopg/docs/) 사용법에 대해 자세히 읽어보십시오.
+[Python psycopg2 driver](http://initd.org/psycopg/docs/) 사용법에 대해 자세히 읽어보세요.
 
 {% include {{page.version.version}}/app/see-also-links.md %}
