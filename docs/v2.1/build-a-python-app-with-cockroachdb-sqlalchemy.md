@@ -24,7 +24,7 @@ SQLAlchemy을 CockroachDB와 함께 보다 현실적으로 사용하려면, [`ex
 
 {{site.data.alerts.callout_danger}}
 
-**CockroachDB를 2.0 에서 2.1 업그레이드?** 2.0 클러스터에서 SQLAlchemy를 사용한 경우 CockroachDB 2.1로 업그레이드하기 전에 [어댑터를 최신 버전으로 업그레이드](https://github.com/cockroachdb/cockroachdb-python)해야 합니다.
+**CockroachDB 2.0 을 2.1로 업그레이드?** 2.0 클러스터에서 SQLAlchemy를 사용한 경우 CockroachDB 2.1로 업그레이드하기 전에 [어댑터를 최신 버전으로 업그레이드](https://github.com/cockroachdb/cockroachdb-python)해야 합니다.
 
 {{site.data.alerts.end}}
 
