@@ -7,76 +7,76 @@ build_for: [standard, managed]
 
 {% include {{page.version.version}}/misc/beta-warning.md %}
 
-This page has instructions for migrating data from Postgres to CockroachDB using [`IMPORT`][import]'s support for reading [`pg_dump`][pgdump] files.
+이 페이지는 [`IMPORT`][import]의 [`pg_dump`][pgdump] 파일 읽기 지원을 사용하여 Postgres에서 CockroachDB로 데이터를 마이그레이션하는 방법을 설명합니다.
 
-The examples below pull real data from [Amazon S3](https://aws.amazon.com/s3/).  They use the [employees data set](https://github.com/datacharmer/test_db) that is also used in the [MySQL docs](https://dev.mysql.com/doc/employee/en/).  The data was imported to Postgres using [pgloader][pgloader], and then modified for use here as explained below.
+아래의 예는 [Amazon S3](https://aws.amazon.com/s3/)의 실제 데이터를 가져옵니다.  그것들은 [MySQL docs](https://dev.mysql.com/doc/employee/en/) 에서도 사용되는 [임플로이 데이터 세트](https://github.com/datacharmer/test_db) 을 사용합니다.  [pgloader][pgloader] 를 사용하여 데이터를 Postgres로 가져온 후 아래에서 설명하는대로 여기에서 사용하도록 수정했습니다.
 
-## Step 1. Dump the Postgres database
+## 단계 1. Postgres 데이터베이스 덤프
 
-There are several ways to dump data from Postgres to be imported into CockroachDB:
+Postgres의 데이터를 CockroachDB로 가져 오기 위한 몇 가지 방법이 있습니다:
 
 - [Dump the entire database](#dump-the-entire-database)
 - [Dump one table at a time](#dump-one-table-at-a-time)
 
-The import will fail if the dump file contains functions or type definitions.  In addition to calling [`pg_dump`][pgdump] as shown below, you may need to edit the dump file to remove functions and data types.
+덤프 파일에 함수 또는 유형 정의가 있으면 임포트를 실패합니다.  아래와 같이 [`pg_dump`][pgdump] 를 호출하는 것 외에도 함수와 데이터 유형을 제거하기 위해 덤프 파일을 편집해야 할 수도 있습니다ㅏ.
 
-Also, note that CockroachDB's [`IMPORT`][import] does not support automatically importing data from Postgres' non-public [schemas][pgschema].  As a workaround, you can edit the dump file to change the table and schema names in the `CREATE TABLE` statements.
+또한 CockroachDB 의 [`IMPORT`][import] 는 Postgres의 비공개 [schemas][pgschema] 에서 자동으로 데이터를 가져 오는 것을 지원하지 않습니다.  이 문제를 해결하기 위해 덤프 파일을 편집하여 `CREATE TABLE` 문에서 테이블과 스키마 이름을 변경할 수 있습니다.
 
-### Dump the entire database
+### 전체 데이터베이스 덤프하기
 
-Most users will want to import their entire Postgres database all at once, as shown below in [Import a full database dump](#import-a-full-database-dump).
+대부분의 사용자는 아래 [전체 데이터베이스 덤프 가져 오기](#import-a-full-database-dump) 에 표시된 것처럼 전체 Postgres 데이터베이스를 한꺼번에 가져 오기를 원할 것입니다.
 
-To dump the entire database, run the [`pg_dump`][pgdump] command shown below.
+전체 데이터베이스를 덤프하려면, [`pg_dump`][pgdump]  명령을 실행하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ pg_dump employees > /tmp/employees-full.sql
 ~~~
 
-For this data set, the Postgres dump file required the following edits, which have already been performed on the files used in the examples below:
+이 데이터 세트의 경우 Postgres 덤프 파일에는 아래 예제에서 사용 된 파일에 대해 이미 수행 된 편집이 필요합니다:
 
 - The type of the `employees.gender` column in the `CREATE TABLE` statement had to be changed from `employees.employees_gender` to [`STRING`](string.html) since Postgres represented the employee's gender using a [`CREATE TYPE`](https://www.postgresql.org/docs/10/static/sql-createtype.html) statement that is not supported by CockroachDB.
 
-- A `CREATE TYPE employee ...` statement needed to be removed.
+- `CREATE TYPE employee ...` 명령은 삭제되어야 합니다.
 
-If you only want to import one table from a database dump, see [Import a table from a full database dump](#import-a-table-from-a-full-database-dump) below.
+데이터베이스 덤프에서 하나의 테이블 만 가져 오려면 아래의 [전체 데이터베이스 덤프에서 테이블 가져 오기](#import-a-table-from-a-full-database-dump) 를 참조하십시오.
 
-### Dump one table at a time
+### 한 번에 하나의 테이블 덤프
 
-To dump the `employees` table from a Postgres database also named `employees`, run the [`pg_dump`][pgdump] command shown below.  You can import this table using the instructions in [Import a table from a table dump](#import-a-table-from-a-table-dump) below.
+`employees` 라는 이름의 Postgres 데이터베이스에서 `employees` 테이블을 덤프하려면, 아래의 [`pg_dump`][pgdump] 명령을 실행하십시오.  아래의 [테이블 덤프에서 테이블 가져 오기](#import-a-table-from-a-table-dump) 의 지침에 따라이 테이블을 가져올 수 있습니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ pg_dump -t employees  employees > /tmp/employees.sql
 ~~~
 
-For this data set, the Postgres dump file required the following edits, which have already been performed on the files used in the examples below.
+이 데이터 세트의 경우, Postgres 덤프 파일은 아래 예제에서 사용 된 파일에서 이미 수행 된 다음 편집을 필요로 합니다.
 
 - The type of the `employees.gender` column in the `CREATE TABLE` statement had to be changed from `employees.employees_gender` to [`STRING`](string.html) since Postgres represented the employee's gender using a [`CREATE TYPE`](https://www.postgresql.org/docs/10/static/sql-createtype.html) statement that is not supported by CockroachDB.
 
-## Step 2. Host the files where the cluster can access them
+## 단계 2. 클러스터가 액세스 할 수있는 파일 호스트
 
-Each node in the CockroachDB cluster needs to have access to the files being imported.  There are several ways for the cluster to access the data; for a complete list of the types of storage [`IMPORT`][import] can pull from, see [Import File URLs](import.html#import-file-urls).
+CockroachDB 클러스터의 각 노드는 가져 오는 파일에 액세스 할 수 있어야합니다.  클러스터가 데이터에 액세스하는 데는 여러 가지 방법이 있습니다;  [`IMPORT`][import] 에서 가져올 수있는 저장 유형의 전체 목록은 [Import File URLs](import.html#import-file-urls) 을 참조하십시오..
 
 {{site.data.alerts.callout_success}}
-We strongly recommend using cloud storage such as Amazon S3 or Google Cloud to host the data files you want to import.
+가져 오려는 데이터 파일을 호스팅하려면 Amazon S3 또는 Google Cloud와 같은 클라우드 저장소를 사용하는 것이 좋습니다.
 {{site.data.alerts.end}}
 
-## Step 3. Import the Postgres dump file
+## 단계 3. Postgres 덤프 파일 가져 오기
 
-You can choose from several variants of the [`IMPORT`][import] statement, depending on whether you want to import a full database or a single table:
+전체 데이터베이스 또는 단일 테이블을 가져올 것인지에 따라 [`IMPORT`][import] 문의 여러 변형 중에서 선택할 수 있습니다:
 
-- [Import a full database dump](#import-a-full-database-dump)
-- [Import a table from a full database dump](#import-a-table-from-a-full-database-dump)
-- [Import a table from a table dump](#import-a-table-from-a-table-dump)
+- [전체 데이터베이스 덤프 가져 오기](#import-a-full-database-dump)
+- [전체 데이터베이스 덤프에서 테이블 가져 오기](#import-a-table-from-a-full-database-dump)
+- [테이블 덤프에서 테이블 가져 오기](#import-a-table-from-a-table-dump)
 
-Note that all of the [`IMPORT`][import] statements in this section pull real data from [Amazon S3](https://aws.amazon.com/s3/) and will kick off background import jobs that you can monitor with [`SHOW JOBS`](show-jobs.html).
+이 섹션의 [`IMPORT`][import] 구문은 [Amazon S3](https://aws.amazon.com/s3/) 에서 실제 데이터를 가져 와서 [`SHOW JOBS`](show-jobs.html) 와 함께 모니터 할 수있는 백그라운드 가져 오기 작업을 시작합니다ㅏ.
 
-### Import a full database dump
+### 전체 데이터베이스 덤프 가져 오기
 
-This example assumes you [dumped the entire database](#dump-the-entire-database).
+이 예제에서는 [데이터베이스 전체를 덤프](#dump-the-entire-database) 했다고 가정합니다.
 
-The [`IMPORT`][import] statement below reads the data and [DDL](https://en.wikipedia.org/wiki/Data_definition_language) statements (including existing foreign key relationships) from the full database dump file.
+아래의 [`IMPORT`][import] 문은 전체 데이터베이스 덤프 파일에서 데이터 및 [DDL](https://en.wikipedia.org/wiki/Data_definition_language) 문 (기존 외래 키 관계 포함)을 읽습니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -90,11 +90,11 @@ The [`IMPORT`][import] statement below reads the data and [DDL](https://en.wikip
 (1 row)
 ~~~
 
-### Import a table from a full database dump
+### 전체 데이터베이스 덤프에서 테이블 가져 오기
 
-This example assumes you [dumped the entire database](#dump-the-entire-database).
+이 예제는 [데이터베이스 전체를 덤프](#dump-the-entire-database) 라고 가정합니다.
 
-[`IMPORT`][import] can import one table's data from a full database dump.  It reads the data and applies any `CREATE TABLE` statements from the file.
+[`IMPORT`][import] 는 전체 데이터베이스 덤프에서 하나의 테이블의 데이터를 가져올 수 있습니다. 그것은 데이터를 읽고 파일에서 모든 `CREATE TABLE` 문을 적용합니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -110,7 +110,7 @@ This example assumes you [dumped the entire database](#dump-the-entire-database)
 (1 row)
 ~~~
 
-### Import a table from a table dump
+### 테이블 덤프에서 테이블 가져 오기
 
 The examples below assume you [dumped one table](#dump-one-table-at-a-time).
 
@@ -145,14 +145,14 @@ If you need to specify the table's columns for some reason, you can use an [`IMP
   PGDUMP DATA ('https://s3-us-west-1.amazonaws.com/cockroachdb-movr/datasets/employees-db/pg_dump/employees.sql.gz');
 ~~~
 
-## Configuration Options
+## 구성 옵션
 
 The following options are available to `IMPORT ... PGDUMP`:
 
 + [Max row size](#max-row-size)
 + [Skip foreign keys](#skip-foreign-keys)
 
-### Max row size
+### 최대 행 크기
 
 The `max_row_size` option is used to override limits on line size.  **Default: 0.5MB**.  This setting may need to be tweaked if your Postgres dump file has extremely long lines, for example as part of a `COPY` statement.
 
@@ -171,7 +171,7 @@ Example usage:
   PGDUMP DATA ('s3://your-external-storage/employees.sql?AWS_ACCESS_KEY_ID=123&AWS_SECRET_ACCESS_KEY=456') WITH max_row_size = '5MB';
 ~~~
 
-### Skip foreign keys
+### 외국어 키 건너 뛰기
 
 By default, [`IMPORT ... PGDUMP`][import] supports foreign keys.  **Default: false**.  Add the `skip_foreign_keys` option to speed up data import by ignoring foreign key constraints in the dump file's DDL.  It will also enable you to import individual tables that would otherwise fail due to dependencies on other tables.
 
@@ -191,7 +191,7 @@ Example usage:
 
 [Foreign key constraints](foreign-key.html) can be added by using [`ALTER TABLE ... ADD CONSTRAINT`](add-constraint.html) commands after importing the data.
 
-## See also
+## 또 다른 참고문헌
 
 - [`IMPORT`][import]
 - [Migrate from CSV][csv]
@@ -215,7 +215,7 @@ Example usage:
 
 <!-- Notes
 
-These instructions were prepared with the following versions:
+이 지침은 다음 버전으로 준비되었습니다:
 
 - Postgres 10.5
 
