@@ -15,7 +15,7 @@ toc: true
 
 ### 1단계. 3개의 Google Cloud Platform GCE 인스턴스 생성
 
-1. CockroachDB 노드에 대한 [Create 3 인스턴스를 생성](https://cloud.google.com/compute/docs/instances/create-start-instance)하십시오. 각 인스턴스를 생성하는 동안:
+1. CockroachDB 노드에 대한 [3 인스턴스를 생성](https://cloud.google.com/compute/docs/instances/create-start-instance)하십시오. 각 인스턴스를 생성하는 동안:
     - `n1-highcpu-16` 머신 타입을 사용하십시오.
 
         우리의 TPC-C 벤치마킹에서는, `n1-highcpu-16` 머신을 사용합니다. 현재, 높은 트래픽 시나리오에서 이것이 (혹은 vCPU 수가 많은 머신들) CockroachDB에 가장 적합한 구성이라고 생각합니다.
@@ -35,9 +35,9 @@ toc: true
 
 ### 2단계. 3-노드 클러스터 시작
 
-1. 첫 번째 `n1-highcpu-16` 인스턴스로의 SSH.
+1. SSH를 첫 번째 `n1-highcpu-16` 인스턴스로 변경.
 
-2. Linux용 [CockroachDB 아카이브](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz)를 다운로드하고, 바이너리를 추출한 후, `PATH`에 복사하십시오:
+2. Linux용 [CockroachDB 아카이브](https://binaries.cockroachdb.com/cockroach-{{page.release_info.version}}.linux-amd64.tgz)를 다운로드하고, 바이너리를 추출한 후, `PATH`에 복사하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
