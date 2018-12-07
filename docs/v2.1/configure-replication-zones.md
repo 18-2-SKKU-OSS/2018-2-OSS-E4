@@ -5,36 +5,37 @@ keywords: ttl, time to live, availability zone
 toc: true
 ---
 
-Replication zones give you the power to control what data goes where in your CockroachDB cluster.  Specifically, they are used to control the number and location of replicas for data belonging to the following objects:
+복제 영역을 통해 CockroachDB 클러스터에서 어떤 데이터가 이동하는지 제어할 수 있습니다. 특히, 다음 객체에 속한 데이터의 복제본 수와 위치를 제어하는 데 사용됩니다:
 
-- Databases
-- Tables
-- Rows ([enterprise-only](enterprise-licensing.html))
-- Indexes ([enterprise-only](enterprise-licensing.html))
-- All data in the cluster, including internal system data ([via the default replication zone](#view-the-default-replication-zone))
+- 데이터베이스
+- 테이블
+- 행 ([엔터프라이즈 전용](enterprise-licensing.html))
+- 인덱스 ([엔터프라이즈-전용](enterprise-licensing.html))
+- 내부 시스템 데이터를 포함한 클러스터의 모든 데이터 ([기본 복제 영역을 통한](#view-the-default-replication-zone))
 
-For each of the above objects you can control:
+위의 각 개체에 대해 다음을 제어 할 수 있습니다:
 
-- How many copies of each range to spread through the cluster.
-- Which constraints are applied to which data, e.g., "table X's data can only be stored in the German datacenters".
-- The maximum size of ranges (how big ranges get before they are split).
-- How long old data is kept before being garbage collected.
+- 클러스터를 통해 확산되는 각 범위의 복사본 수.
+- 어떤 제약조건이 어떤 데이터에 적용되는가, (예 : "테이블 X의 데이터는 독일 데이터 센터에만 저장 가능하다").
+- 범위의 최대 크기 (큰 범위가 분할되기 전에 얻는 방법).
+- 폐기물을 수집하기 전에 얼마나 오래 데이터를 보관하는가. 
 - <span class="version-tag">New in v2.1:</span> Where you would like the leaseholders for certain ranges to be located, e.g., "for ranges that are already constrained to have at least one replica in `region=us-west`, also try to put their leaseholders in `region=us-west`".
 
-This page explains how replication zones work and how to use the [`CONFIGURE ZONE`](configure-zone.html) statement to manage them.
+이 페이지에서는 복제 영역의 작동 방식과 [`CONFIGURE ZONE`](configure-zone.html) 명령문을 사용하여 관리하는 방법에 대해 설명합니다.
 
 {{site.data.alerts.callout_info}}
-Currently, only members of the `admin` role can configure replication zones. By default, the `root` user belongs to the `admin` role.
+현재, `admin` 역할의 구성원만 복제 영역을 구성할 수 있습니다. 기본적으로, `root` 사용자는 `admin` 역할을 담당합니다.
 {{site.data.alerts.end}}
 
 ## 개요
 
-Every [range](architecture/overview.html#glossary) in the cluster is part of a replication zone.  Each range's zone configuration is taken into account as ranges are rebalanced across the cluster to ensure that any constraints are honored.
+클러스터의 모든 [범위](architecture/overview.html#glossary)는 복제 영역의 일부입니다. 각 범위의 영역 구성은 모든 제약 조건이 준수되도록 범위가 클러스터에서 재조정될 때 고려된다. 
+
 
 클러스터가 시작되면, 두 가지 범주의 복제 영역이 있습니다:
 
-1. Pre-configured replication zones that apply to internal system data.
-2. A single default replication zone that applies to the rest of the cluster.
+1. 내부 시스템 데이터에 적용되는 미리 구성된 복제 영역.
+2. 나머지 클러스터에 적용되는 단일 기본 복제 영역.
 
 You can adjust these pre-configured zones as well as add zones for individual databases, tables, rows, and secondary indexes as needed.  Note that adding zones for rows and secondary indexes is [enterprise-only](enterprise-licensing.html).
 
@@ -42,34 +43,33 @@ For example, you might rely on the [default zone](#view-the-default-replication-
 
 ## 복제 영역 수준
 
-There are five replication zone levels for [**table data**](architecture/distribution-layer.html#table-data) in a cluster, listed from least to most granular:
+클러스터에 [**테이블 데이터**](architecture/distribution-layer.html#table-data)에 대한 5개의 복제 영역 수준이 있으며, 최소에서 가장 세분화된 수준까지 나열됩니다:
 
-Level | Description
+수준 | 설명
 ------|------------
-Cluster | CockroachDB comes with a pre-configured `.default` replication zone that applies to all table data in the cluster not constrained by a database, table, or row-specific replication zone. This zone can be adjusted but not removed. See [View the Default Replication Zone](#view-the-default-replication-zone) and [Edit the Default Replication Zone](#edit-the-default-replication-zone) for more details.
+클러스터 | CockroachDB comes with a pre-configured `.default` replication zone that applies to all table data in the cluster not constrained by a database, table, or row-specific replication zone. This zone can be adjusted but not removed. See [View the Default Replication Zone](#view-the-default-replication-zone) and [Edit the Default Replication Zone](#edit-the-default-replication-zone) for more details.
 Database | You can add replication zones for specific databases. See [Create a Replication Zone for a Database](#create-a-replication-zone-for-a-database) for more details.
-Table | You can add replication zones for specific tables. See [Create a Replication Zone for a Table](#create-a-replication-zone-for-a-table).
-Index ([Enterprise-only](enterprise-licensing.html)) | The [secondary indexes](indexes.html) on a table will automatically use the replication zone for the table. However, with an enterprise license, you can add distinct replication zones for secondary indexes. See [Create a Replication Zone for a Secondary Index](#create-a-replication-zone-for-a-secondary-index) for more details.
+테이블 | You can add replication zones for specific tables. See [Create a Replication Zone for a Table](#create-a-replication-zone-for-a-table).
+인덱스 ([Enterprise-only](enterprise-licensing.html)) | The [secondary indexes](indexes.html) on a table will automatically use the replication zone for the table. However, with an enterprise license, you can add distinct replication zones for secondary indexes. See [Create a Replication Zone for a Secondary Index](#create-a-replication-zone-for-a-secondary-index) for more details.
 Row ([Enterprise-only](enterprise-licensing.html)) | You can add replication zones for specific rows in a table or secondary index by [defining table partitions](partitioning.html). See [Create a Replication Zone for a Table Partition](#create-a-replication-zone-for-a-table-or-secondary-index-partition) for more details.
 
 ### 시스템 데이터
 
-In addition, CockroachDB stores internal [**system data**](architecture/distribution-layer.html#monolithic-sorted-map-structure) in what are called system ranges. There are two replication zone levels for this internal system data, listed from least to most granular:
-
-Level | Description
+또한, CockroachDB는 시스템 범위라고 불리는 내부 [**시스템 데이터**](architecture/distribution-layer.html#monolithic-sorted-map-structure)를 저장합니다. There are two replication zone levels for this internal system data, listed from least to most granular: 이 내부 시스템 데이터에 대한 복제 영역 레벨은 최소값에서 가장 세부적인 수준까지
+수준 | 설명
 ------|------------
-Cluster | The `.default` replication zone mentioned above also applies to all system ranges not constrained by a more specific replication zone.
-System Range | CockroachDB comes with pre-configured replication zones for the "meta" and "liveness" system ranges. If necessary, you can add replication zones for the "timeseries" range and other "system" ranges as well. See [Create a Replication Zone for a System Range](#create-a-replication-zone-for-a-system-range) for more details.<br><br>CockroachDB also comes with a pre-configured replication zone for one internal table, `system.jobs`, which stores metadata about long-running jobs such as schema changes and backups. Historical queries are never run against this table and the rows in it are updated frequently, so the pre-configured zone gives this table a lower-than-default `ttlseconds`.
+클러스터 | The `.default` replication zone mentioned above also applies to all system ranges not constrained by a more specific replication zone.
+시스템 범위 | CockroachDB comes with pre-configured replication zones for the "meta" and "liveness" system ranges. If necessary, you can add replication zones for the "timeseries" range and other "system" ranges as well. See [Create a Replication Zone for a System Range](#create-a-replication-zone-for-a-system-range) for more details.<br><br>CockroachDB also comes with a pre-configured replication zone for one internal table, `system.jobs`, which stores metadata about long-running jobs such as schema changes and backups. Historical queries are never run against this table and the rows in it are updated frequently, so the pre-configured zone gives this table a lower-than-default `ttlseconds`.
 
 ### 우선 순위
 
-When replicating data, whether table or system, CockroachDB always uses the most granular replication zone available. For example, for a piece of user data:
+테이블 또는 시스템에 관계없이, 데이터를 복제할 때, CockroachDB는 항상 가장 세부적인 복제 영역을 사용합니다. 예를 들어, 사용자 데이터 조각의 경우:
 
-1. If there's a replication zone for the row, CockroachDB uses it.
-2. If there's no applicable row replication zone and the row is from a secondary index, CockroachDB uses the secondary index replication zone.
-3. If the row isn't from a secondary index or there is no applicable secondary index replication zone, CockroachDB uses the table replication zone.
-4. If there's no applicable table replication zone, CockroachDB uses the database replication zone.
-5. If there's no applicable database replication zone, CockroachDB uses the `.default` cluster-wide replication zone.
+1. 행에 대한 복제 영역이 있으면, CockroachDB가 그것을 사용합니다.
+2. 적용 가능한 행 복제 영역이 없고 행이 보조 인덱스의 것이면, CockroachDB는 보조 인덱스 복제 영역을 사용합니다.
+3. 행이 보조 인덱스에 있지 않거나 적용 가능한 보조 인덱스 복제 영역이 없는 경,우 CockroachDB는 테이블 복제 영역을 사용합니다.
+4. 적용 가능한 테이블 복제 영역이 없으면, CockroachDB는 데이터베이스 복제 영역을 사용합니다.
+5. 해당 데이터베이스 복제 영역이 없을 경우, CockroachDB는 `.default` 클러스터 전체 복제 영역을 사용합니다. 
 
 {{site.data.alerts.callout_danger}}
 {% include {{page.version.version}}/known-limitations/system-range-replication.md %}
@@ -77,11 +77,11 @@ When replicating data, whether table or system, CockroachDB always uses the most
 
 ## 복제 영역 관리
 
-Use the [`CONFIGURE ZONE`](configure-zone.html) statement to [add](#create-a-replication-zone-for-a-system-range), [modify](#edit-the-default-replication-zone), [reset](#reset-a-replication-zone), and [remove](#remove-a-replication-zone) replication zones.
+복제 영역을 [추가](#create-a-replication-zone-for-a-system-range), [수정](#edit-the-default-replication-zone), [재설정](#reset-a-replication-zone) 및 [제거](#remove-a-replication-zone)하려면 [`CONFIGURE ZONE`](configure-zone.html) 명령문을 사용하십시오.
 
 ### 복제 영역 변수
 
-Use the [`ALTER ... CONFIGURE ZONE`](configure-zone.html) [statement](sql-statements.html) to set a replication zone:
+복제 영역을 설정하려면, [`ALTER ... CONFIGURE ZONE`] [명령문](sql-statements.html)을 사용하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -92,15 +92,17 @@ Use the [`ALTER ... CONFIGURE ZONE`](configure-zone.html) [statement](sql-statem
 
 ### 복제 제약 조건
 
-The location of replicas, both when they are first added and when they are rebalanced to maintain cluster equilibrium, is based on the interplay between descriptive attributes assigned to nodes and constraints set in zone configurations.
+복제본의 위치는 처음 추가 될 때와 클러스터 균형을 유지하기 위해 재조정될 때, 노드에 지정된 설명 속성과 영역 구성에 설정된 제약 조건 사이의 상호 작용을 기반으로 합니다.
 
-{{site.data.alerts.callout_success}}For demonstrations of how to set node attributes and replication constraints in different scenarios, see <a href="#scenario-based-examples">Scenario-based Examples</a> below.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}다양한 시나리오에서 노드 속성 및 복제 제약 조건을 설정하는 방법에 대한 설명은 아래의 <a href="#scenario-based-examples">시나리오-기반 예제</a>를 참조하십시오.{{site.data.alerts.end}}
+
+
 
 #### 노드에 할당된 설명 속성
 
-When starting a node with the [`cockroach start`](start-a-node.html) command, you can assign the following types of descriptive attributes:
+[`cockroach start`] 명령으로 노드를 시작할 때, 다음과 같은 유형의 설명 속성을 할당할 수 있습니다:
 
-Attribute Type | Description
+속성 타입 | 설명
 ---------------|------------
 **Node Locality** | Using the `--locality` flag, you can assign arbitrary key-value pairs that describe the locality of the node. Locality might include country, region, datacenter, rack, etc. The key-value pairs should be ordered from most inclusive to least inclusive (e.g., country before datacenter before rack), and the keys and the order of key-value pairs must be the same on all nodes. It's typically better to include more pairs than fewer. For example:<br><br>`--locality=region=east,datacenter=us-east-1`<br>`--locality=region=east,datacenter=us-east-2`<br>`--locality=region=west,datacenter=us-west-1`<br><br>CockroachDB attempts to spread replicas evenly across the cluster based on locality, with the order determining the priority. However, locality can be used to influence the location of data replicas in various ways using replication zones.<br><br>When there is high latency between nodes, CockroachDB also uses locality to move range leases closer to the current workload, reducing network round trips and improving read performance. See [Follow-the-workload](demo-follow-the-workload.html) for more details.
 **Node Capability** | Using the `--attrs` flag, you can specify node capability, which might include specialized hardware or number of cores, for example:<br><br>`--attrs=ram:64gb`
@@ -108,19 +110,20 @@ Attribute Type | Description
 
 #### 제약 조건의 유형
 
-The node-level and store-level descriptive attributes mentioned above can be used as the following types of constraints in replication zones to influence the location of replicas. However, note the following general guidance:
+The node-level and store-level descriptive attributes mentioned above can be used as the following types of constraints in replication zones to influence the location of replicas. 그러나, 다음 일반 지침에 유의하십시오:
 
-- When locality is the only consideration for replication, it's recommended to set locality on nodes without specifying any constraints in zone configurations. In the absence of constraints, CockroachDB attempts to spread replicas evenly across the cluster based on locality.
-- Required and prohibited constraints are useful in special situations where, for example, data must or must not be stored in a specific country or on a specific type of machine.
+- 지역성이 복제에 대한 유일한 고려 사항인 경우, 영역 구성에서 제약 조건을 지정하지 않고 노드에 지역성을 설정하는 것이 좋습니다. 제약 조건이 없는 경우, CockroachDB는 지역성에 따라 클러스터 전체에 복제본을 고르게 분산하려고 시도합니다.
+- 필수 및 금지 제약 조건은, 예를 들어 데이터를 특정 국가 또는 특정 유형의 기계에 저장해야 하거나 저장하지 않아야하는 특수 상황에서 유용합니다.
 
-Constraint Type | Description | Syntax
+속성 타입 | 설명 | 구문
 ----------------|-------------|-------
-**Required** | When placing replicas, the cluster will consider only nodes/stores with matching attributes or localities. When there are no matching nodes/stores, new replicas will not be added. | `+ssd`
-**Prohibited** | When placing replicas, the cluster will ignore nodes/stores with matching attributes or localities. When there are no alternate nodes/stores, new replicas will not be added. | `-ssd`
+**요구됨** | When placing replicas, the cluster will consider only nodes/stores with matching attributes or localities. When there are no matching nodes/stores, new replicas will not be added. | `+ssd`
+**금지됨** | When placing replicas, the cluster will ignore nodes/stores with matching attributes or localities. When there are no alternate nodes/stores, new replicas will not be added. | `-ssd`
 
 #### 제약 조건의 범위
 
 Constraints can be specified such that they apply to all replicas in a zone or such that different constraints apply to different replicas, meaning you can effectively pick the exact location of each replica.
+
 
 Constraint Scope | Description | Syntax
 -----------------|-------------|-------
@@ -129,11 +132,11 @@ Constraint Scope | Description | Syntax
 
 ### 노드/복제본 권장 사항
 
-See [Cluster Topography](recommended-production-settings.html#cluster-topology) recommendations for production deployments.
+프로덕션 배포를 위한 [클러스터 토폴로지](recommended-production-settings.html#cluster-topology) 권장 사항을 참조하십시오.
 
 ## 복제 영역 보기
 
-Use the [`SHOW ZONE CONFIGURATIONS`](#view-all-replication-zones) statement to view details about existing replication zones.
+[`SHOW ZONE CONFIGURATIONS`] 명령문을 사용하면 기존 복제 영역에 대한 세부 정보를 볼 수 있습니다.
 
 ## 기본 예제
 
@@ -410,14 +413,14 @@ $ cockroach init --insecure --host=<any node hostname>
     > CREATE DATABASE app2_db;
     ~~~
 
-7. 어플리케이션 2에서 사용되는 데이터베이스의 복제 영역 구성하십시오:
+7. 어플리케이션 2에서 사용되는 데이터베이스의 복제 영역을 구성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > ALTER DATABASE app2_db CONFIGURE ZONE USING constraints = '[+datacenter=us-2]';
     ~~~
 
-8. 복제 영역:
+8. 복제 영역을 보십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -564,14 +567,14 @@ $ cockroach init --insecure --host=<any node hostname>
     $ cockroach sql --insecure
     ~~~
 
-3. 기본 복제 영역 구성:
+3. 기본 복제 영역을 구성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > ALTER RANGE default CONFIGURE ZONE USING num_replicas = 5;
     ~~~
 
-4. 복제 영역 보기:
+4. 복제 영역을 보십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
