@@ -13,6 +13,7 @@ toc: true
 - 인덱스 ([엔터프라이즈-전용](enterprise-licensing.html))
 - 내부 시스템 데이터를 포함한 클러스터의 모든 데이터 ([기본 복제 영역을 통한](#view-the-default-replication-zone))
 
+
 위의 각 개체에 대해 다음을 제어 할 수 있습니다:
 
 - 클러스터를 통해 확산되는 각 범위의 복사본 수.
@@ -107,7 +108,7 @@ toc: true
 
 속성 타입 | 설명
 ---------------|------------
-**노드 지역성** | `--locality` 플래그를 사용하여, 노드의 지역성을 설명하는 임의의 키-값 쌍을 할당할 수 있습니다. 지역은 국가, 지역, 데이터 센터, 랙 등을 포함할 수 있습니다. 키-값 쌍은 가장 포괄적인 항목부터 가장 포괄적이 아닌 항목까지 정렬해야 합니다, (예 : 랙 이전의 데이터 센터 이전 국가) 키와 키-값 쌍의 순서는 모든 노드에서 동일해야 합니다. 일반적으로 적은 수의 쌍을 포함하는 것이 좋습니다. 예를 들어:<br><br>`--locality=region=east,datacenter=us-east-1`<br>`--locality=region=east,datacenter=us-east-2`<br>`--locality=region=west,datacenter=us-west-1`<br><br>CockroachDB는 우선 순위를 결정하는 순서로 지역에 따라 클러스터 전체에 고르게 복제본을 전파하려고 시도합니다. 그러나, 복제 영역을 사용하는 다양한 방법으로 데이터 복제본 위치에 영향을 미치는 데 지역성을 사용할 수 있다.<br><br>노드 간 대기 시간이 길면, CockroachDB는 지역성을 사용하여 현재 워크로드에 가까운 레인지 리스를 이동시켜 네트워크 왕복을 줄이고 읽기 성능을 향상시킵니다. 자세한 내용은 [Follow-the-workload](demo-follow-the-workload.html)를 참조하십시오.
+**노드 지역성** | `--locality` 플래그를 사용하여, 노드의 지역성을 설명하는 임의의 키-값 쌍을 할당할 수 있습니다. 지역은 국가, 지역, 데이터 센터, 랙 등을 포함할 수 있습니다. 키-값 쌍은 가장 포괄적인 항목부터 가장 포괄적이 아닌 항목까지 정렬해야 합니다, (예 : 랙 이전의 데이터 센터 이전 국가) 키와 키-값 쌍의 순서는 모든 노드에서 동일해야 합니다. 일반적으로 적은 수의 쌍을 포함하는 것이 좋습니다. 예를 들어:<br><br>`--locality=region=east,datacenter=us-east-1`<br>`--locality=region=east,datacenter=us-east-2`<br>`--locality=region=west,datacenter=us-west-1`<br><br>CockroachDB는 우선 순위를 결정하는 순서로 지역에 따라 클러스터 전체에 고르게 복제본을 전파하려고 시도합니다. 그러나, 복제 영역을 사용하는 다양한 방법으로 데이터 복제본 위치에 영향을 미치는 데 지역성을 사용할 수 있다.<br><br>노드 간 대기 시간이 길면, CockroachDB는 지역성을 사용하여 현재 워크로드에 가까운 레인지 리스를 이동시켜 네트워크 왕복을 줄이고 읽기 성능을 향상시킵니다. 자세한 내용은 [팔로우 워크로드](demo-follow-the-workload.html)를 참조하십시오.
 **노드 용량** | `--attrs` 플래그를 사용하여, 특수 하드웨어나 코어 수를 포함하는 노드 용량을 지정할 수 있습니다, 예를 들어:<br><br>`--attrs=ram:64gb`
 **스토어 타입/용량** | `--store` 플래그의 `attrs` 필드를 사용하여, 디스크 타입이나 용량을 지정할 수 있습니다, 예를 :<br><br>`--store=path=/mnt/ssd01,attrs=ssd`<br>`--store=path=/mnt/hda1,attrs=hdd:7200rpm`
 
