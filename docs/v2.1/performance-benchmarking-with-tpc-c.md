@@ -11,9 +11,9 @@ This page walks you through [TPC-C](http://www.tpc.org/tpcc/) performance benchm
 
 These two points on the spectrum show how CockroachDB scales from modest-sized production workloads to larger-scale deployments. This demonstrates how CockroachDB achieves high OLTP performance of over 128,000 tpmC on a TPC-C dataset over 2TB in size.
 
-## Benchmark a small cluster
+## 작은 클러스터 벤치마크
 
-### Step 1. Create 3 Google Cloud Platform GCE instances
+### 1단계. 3개의 Google Cloud Platform GCE 인스턴스 생성
 
 1. [Create 3 instances](https://cloud.google.com/compute/docs/instances/create-start-instance) for your CockroachDB nodes. While creating each instance:  
     - Use the `n1-highcpu-16` machine type.
@@ -33,7 +33,7 @@ These two points on the spectrum show how CockroachDB scales from modest-sized p
 This configuration is intended for performance benchmarking only. For production deployments, there are other important considerations, such as ensuring that data is balanced across at least three availability zones for resiliency. See the [Production Checklist](recommended-production-settings.html) for more details.
 {{site.data.alerts.end}}
 
-### Step 2. Start a 3-node cluster
+### 2단계. 3-노드 클러스터 시작
 
 1. SSH to the first `n1-highcpu-16` instance.
 
@@ -76,7 +76,7 @@ This configuration is intended for performance benchmarking only. For production
 
     Each node then prints helpful details to the [standard output](start-a-node.html#standard-output), such as the CockroachDB version, the URL for the Web UI, and the SQL URL for clients.
 
-### Step 3. Load data for the benchmark
+### 3단계. 벤치 마크를 위한 데이터 로드
 
 CockroachDB offers a pre-built `workload` binary for Linux that includes several load generators for simulating client traffic against your cluster. This step features CockroachDB's version of the TPC-C workload.
 
@@ -113,7 +113,7 @@ CockroachDB offers a pre-built `workload` binary for Linux that includes several
 
      Open the [Admin UI](admin-ui-access-and-navigate.html) by pointing a browser to the address in the `admin` field in the standard output of any node on startup. Follow along with the process on the **Admin UI > Jobs** table.
 
-### Step 4. Run the benchmark
+### 4단계. 벤치마크 실행
 
 Still on the fourth instance, run `workload` for five minutes against the other 3 instances:
 
@@ -128,7 +128,7 @@ $ ./workload.LATEST run tpcc \
 "postgres://root@<node1 address>?sslmode=disable postgres://root@<node2 address>?sslmode=disable postgres://root@<node3 address>?sslmode=disable"
 ~~~
 
-### Step 5. Interpret the results
+### 5단계. 결과 해석
 
 Once the `workload` has finished running, you should see a final output line:
 
@@ -141,15 +141,15 @@ You will also see some audit checks and latency statistics for each individual q
 
 The [TPC-C specification](http://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf) has p90 latency requirements in the order of seconds, but as you see here, CockroachDB far surpasses that requirement with p90 latencies in the hundreds of milliseconds.
 
-## Benchmark a large cluster
+## 대규모 클러스터 벤치 마크
 
 The methodology for reproducing CockroachDB's 30-node, 10,000 warehouse TPC-C result is similar to that for the [3-node, 1,000 warehouse example](#benchmark-a-small-cluster). The only difference (besides the larger node count and dataset) is that you will use CockroachDB's [partitioning](partitioning.html) feature to ensure replicas for any given section of data are located on the same nodes that will be queried by the load generator for that section of data. Partitioning helps distribute the workload evenly across the cluster.
 
-### Before you start
+### 시작하기 전에
 
 Benchmarking a large cluster uses [partitioning](partitioning.html). You must have a valid enterprise license to use partitioning features. For details about requesting and setting a trial or full enterprise license, see [Enterprise Licensing](enterprise-licensing.html).
 
-### Step 1. Create 30 Google Cloud Platform GCE instances
+### 1단계. 30개의 Google Cloud Platform GCE 인스턴스 생성
 
 1. [Create 30 instances](https://cloud.google.com/compute/docs/instances/create-start-instance) for your CockroachDB nodes. While creating each instance:  
     - Use the `n1-highcpu-16` machine type.
@@ -169,7 +169,7 @@ Benchmarking a large cluster uses [partitioning](partitioning.html). You must ha
 This configuration is intended for performance benchmarking only. For production deployments, there are other important considerations, such as ensuring that data is balanced across at least three availability zones for resiliency. See the [Production Checklist](recommended-production-settings.html) for more details.
 {{site.data.alerts.end}}
 
-### Step 2. Start a 30-node cluster
+### 2단계. 30-노드 클러스터 시작
 
 1. SSH to the first `n1-highcpu-16` instance.
 
@@ -215,7 +215,7 @@ This configuration is intended for performance benchmarking only. For production
 
     Each node then prints helpful details to the [standard output](start-a-node.html#standard-output), such as the CockroachDB version, the URL for the Web UI, and the SQL URL for clients.
 
-### Step 3. Add an enterprise license
+### 3단계. 엔터프라이즈 라이센스 추가
 
 For this benchmark, you will use partitioning, which is an enterprise feature. For details about requesting and setting a trial or full enterprise license, see [Enterprise Licensing](enterprise-licensing.html).
 
@@ -237,7 +237,7 @@ To add an enterprise license to your cluster once it is started, [use the built-
 
 3. Exit the interactive shell, using `\q` or `ctrl-d`.
 
-### Step 4. Load data for the benchmark
+### 4단계. 벤치마크를 위한 데이터 로드
 
 CockroachDB offers a pre-built `workload` binary for Linux that includes several load generators for simulating client traffic against your cluster. This step features CockroachDB's version of the [TPC-C](http://www.tpc.org/tpcc/) workload.
 
@@ -274,7 +274,7 @@ CockroachDB offers a pre-built `workload` binary for Linux that includes several
 
      Open the [Admin UI](admin-ui-access-and-navigate.html) by pointing a browser to the address in the `admin` field in the standard output of any node on startup.
 
-### Step 5. Increase the snapshot rate
+### 5단계. 스냅샷 비율 증가
 
 To [increase the snapshot rate](cluster-settings.html), which helps speed up this large-scale data movement:
 
@@ -294,7 +294,7 @@ To [increase the snapshot rate](cluster-settings.html), which helps speed up thi
 
 3. Exit the interactive shell, using `\q` or `ctrl-d`.
 
-### Step 6. Partition the database
+### 6단계. 데이터베이스 파티션
 
 Next, [partition your database](partitioning.html) to divide all of the TPC-C tables and indexes into ten partitions, one per rack, and then use [zone configurations](configure-replication-zones.html) to pin those partitions to a particular rack.
 
@@ -321,7 +321,7 @@ Next, [partition your database](partitioning.html) to divide all of the TPC-C ta
 
     Once the Replication Queue gets to `0` for all actions and stays there, the cluster should be finished rebalancing and is ready for testing.
 
-### Step 7. Run the benchmark
+### 7단계. 벤치마크 실행
 
 Still on the 31st instance, run `workload` for five minutes against the other 30 instances:
 
@@ -335,7 +335,7 @@ $ ulimit -n 10000 && ./workload.LATEST run tpcc \
 "postgres://root@<node1 address>?sslmode=disable postgres://root@<node2 address>?sslmode=disable postgres://root@<node3 address>?sslmode=disable [...space separated list]"
 ~~~
 
-### Step 8. Interpret the results
+### 8단계. 결과 해석
 
 Once the `workload` has finished running, you should see a final output line similar to the output in [Benchmark a small cluster](#benchmark-a-small-cluster). The `tpmC` should be about 10x higher, reflecting the increase in the number of warehouses:
 
@@ -367,61 +367,62 @@ Add license:
 - `roachprod sql lauren-tpcc:1`
 - Set CLUSTER SETTING enterprise.license = '<secret>'
 
-Run sample workload and RESTORE TPC-C data: `roachprod run lauren-tpcc:4 "wget https://edge-binaries.cockroachdb.com/cockroach/workload.LATEST && chmod a+x workload.LATEST"`
+샘플 워크로드 및 RESTORE TPC-C 데이터 실행: `roachprod run lauren-tpcc:4 "wget https://edge-binaries.cockroachdb.com/cockroach/workload.LATEST && chmod a+x workload.LATEST"`
 
-Tell workload to load dataset to cluster: `roachprod run lauren-tpcc:4 "./workload.LATEST fixtures load tpcc {pgurl:1} --warehouses=1000"` (this will take about an hour)
+데이터세트를 클러스터에 로드하도록 워크로드를 알립니다: `roachprod run lauren-tpcc:4 "./workload.LATEST fixtures load tpcc {pgurl:1} --warehouses=1000"` (약 1시간 소요)
 
-Check on progress by navigating to the Admin UI > Jobs dashboard: `roachprod adminurl lauren-tpcc:1`
+Admin UI> 작업 대시 보드로 이동하여 진행 상황을 확인하십시오: `roachprod adminurl lauren-tpcc:1`
 
 Once RESTORE is complete, run the benchmark: `roachprod run lauren-tpcc:4 "./workload.LATEST run tpcc --ramp=30s --warehouses=1000 --duration=300s --split --scatter {pgurl:1-3}"`
 
-Once the workload has finished running, you should see a final output line:
+워크로드가 끝나면, 최종 출력 줄이 표시됩니다:
 
 ~~~ shell
 _elapsed_______tpmC____efc__avg(ms)__p50(ms)__p90(ms)__p95(ms)__p99(ms)_pMax(ms)
   298.8s    13149.8 102.3%    108.4    100.7    176.2    201.3    285.2    604.0
 ~~~
 
-## Roachprod directions for performance benchmarking on a large cluster
+## 대규모 클러스터에서 성능 벤치마킹을 위한 Roachprod의 지침
 
-Use roachprod to create cluster: `roachprod create lauren-tpcc --gce-machine-type "n1-highcpu-16" --local-ssd --nodes 31`
+roachprod를 사용하여 클러스터를 생성합니다: `roachprod create lauren-tpcc --gce-machine-type "n1-highcpu-16" --local-ssd --nodes 31`
 
-Note: Since partitioning will take ~12hrs, you should extend your test cluster's lifetime (if you're using roachprod): `roachprod extend lauren-tpcc --lifetime=30h`
+주의: 파티셔닝에 12시간이 걸리므로, 테스트 클러스터의 수명을 연장하십시오 (roachprod를 사용하는 경우): `roachprod extend lauren-tpcc --lifetime=30h`
 
-Download latest version of CockroachDB:
+
+최신 버전의 CockroachDB 다운로드:
 
 - `roachprod run lauren-tpcc 'wget https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz'`
 
 - `roachprod run lauren-tpcc "curl https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz | tar -xvz; mv cockroach-v2.0.4.linux-amd64/cockroach cockroach"`
 
-Configure SSD to be more performant: `roachprod run lauren-tpcc -- 'sudo umount /mnt/data1; sudo mount -o discard,defaults,nobarrier /dev/disk/by-id/google-local-ssd-0 /mnt/data1/; mount | grep /mnt/data1'`
+SSD를 보다 효율적으로 구성: `roachprod run lauren-tpcc -- 'sudo umount /mnt/data1; sudo mount -o discard,defaults,nobarrier /dev/disk/by-id/google-local-ssd-0 /mnt/data1/; mount | grep /mnt/data1'`
 
-Start the 30 nodes: `roachprod start lauren-tpcc:1-30 --racks 10`
+30 노드를 시작: `roachprod start lauren-tpcc:1-30 --racks 10`
 
-Add license:
+라이센스 추가:
 
 - `roachprod sql lauren-tpcc:1 -- -e "SET CLUSTER SETTING enterprise.license = '<secret>';"`
 
-Run sample workload and RESTORE TPC-C data: `roachprod run lauren-tpcc:31 "wget https://edge-binaries.cockroachdb.com/cockroach/workload.LATEST && chmod a+x workload.LATEST"`
+샘플 워크로드 및 RESTORE TPC-C 데이터 실행: `roachprod run lauren-tpcc:31 "wget https://edge-binaries.cockroachdb.com/cockroach/workload.LATEST && chmod a+x workload.LATEST"`
 
-Tell workload to load dataset to cluster: `roachprod run lauren-tpcc:31 "./workload.LATEST fixtures load tpcc {pgurl:1} --warehouses=10000"` (this will take about an hour)
+데이터세트를 클러스터에 로드하도록 워크로드을 알립니다: `roachprod run lauren-tpcc:31 "./workload.LATEST fixtures load tpcc {pgurl:1} --warehouses=10000"` (this will take about an hour)
 
-Check on progress by navigating to the Admin UI > Jobs dashboard: `roachprod adminurl lauren-tpcc:1`
+Admin UI > 작업 대시보드로 이동하여 진행 상황을 확인하십시오: `roachprod adminurl lauren-tpcc:1`
 
-Once RESTORE is complete, set the snapshot cluster setting: `roachprod sql lauren-tpcc:1 -- -e "SET CLUSTER SETTING kv.snapshot_rebalance.max_rate='64MiB';"`
+RESTORE가 완료되면, 스냅샷 클러스터 설정을 다음과 같이 설정하십시오: `roachprod sql lauren-tpcc:1 -- -e "SET CLUSTER SETTING kv.snapshot_rebalance.max_rate='64MiB';"`
 
-Partition the database: `roachprod ssh lauren-tpcc:31 "ulimit -n 10000 && ./workload.LATEST run tpcc --partitions=10 --split --scatter --warehouses=10000 --duration=1s {pgurl:1-30}"`
+데이터베이스 파티션: `roachprod ssh lauren-tpcc:31 "ulimit -n 10000 && ./workload.LATEST run tpcc --partitions=10 --split --scatter --warehouses=10000 --duration=1s {pgurl:1-30}"`
 
-This will take ~12hrs. Once the Replication Queue (Admin UI) gets to `0` and stays there, the cluster should be finished rebalancing and is ready for testing.
+이것은 ~12hrs 걸릴 것입니다. 일단 Replication Queue (Admin UI)가 `0`이 되어 거기에 머무르면, 클러스터는 재조정을 마쳐야하고 테스트 준비가 됩니다.
 
-To check that each range is correctly partitioned, use `SHOW testing_ranges FROM TABLE tpcc.new_order;` This will show you a table with the `RANGE ID` and `REPLICAS`. Once the `REPLICAS` column sorts itself (e.g., Range 1,2,3 Range 4,5,6 etc.), partitioning is done.
+각 범위가 올바르게 분할되어 있는지 확인하려면, `SHOW testing_ranges FROM TABLE tpcc.new_order;`를 사용합니다. 이것은 `RANGE ID` 와 `REPLICAS` 테이블을 보여줍니다. `REPLICAS` 열 자체가 정렬되면 (예 : 범위 1,2,3 범위 4,5,6 등), 분할이 완료됩니다.
 
-Run the benchmark: `roachprod run lauren-tpcc:31 "ulimit -n 10000 && ./workload.LATEST run tpcc --ramp=30s --warehouses=10000 --duration=300s --split --scatter {pgurl:1-30}"`
+벤치 마크를 실행: `roachprod run lauren-tpcc:31 "ulimit -n 10000 && ./workload.LATEST run tpcc --ramp=30s --warehouses=10000 --duration=300s --split --scatter {pgurl:1-30}"`
 
-Once the workload has finished running, you should see a final output line.-->
+워크로드가 끝나면, 최종 출력 라인을 볼 수 있습니다.-->
 
-## See also
+## 더 보기
 
-- [Benchmarking CockroachDB 2.0: A Performance Report](https://www.cockroachlabs.com/guides/cockroachdb-performance/)
-- [SQL Performance Best Practices](performance-best-practices-overview.html)
-- [Deploy CockroachDB on Digital Ocean](deploy-cockroachdb-on-digital-ocean.html)
+- [CockroachDB 2.0 벤치마킹: 성능 보고서](https://www.cockroachlabs.com/guides/cockroachdb-performance/)
+- [SQL 성능 우수 사례](performance-best-practices-overview.html)
+- [Digital Ocean에 CockroachDB 배포](deploy-cockroachdb-on-digital-ocean.html)
