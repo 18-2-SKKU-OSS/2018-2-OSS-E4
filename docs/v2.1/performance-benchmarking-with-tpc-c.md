@@ -80,7 +80,7 @@ toc: true
 
 CockroachDB는 클러스터에 대한 클라이언트 트래픽을 시뮬레이션하기 위한 여러 로드 생성기가 포함된 미리 빌드된 Linux용 `workload` 바이너리를 제공합니다. 이 단계에는 CockroachDB의 TPC-C 워크로드 버전이 있습니다.
 
-1. SSH to the fourth instance (the one not running a CockroachDB node), download `workload`, and make it executable:
+1. SSH를 네 번째 인스턴스 (CockroachDB 노드를 실행하지 않는 인스턴스)로 변경하고, `workload`를 다운로드하여, 실행 가능하게 만듭니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -137,13 +137,13 @@ _elapsed_______tpmC____efc__avg(ms)__p50(ms)__p90(ms)__p95(ms)__p99(ms)_pMax(ms)
   298.9s    13154.0 102.3%     75.1     71.3    113.2    130.0    184.5    436.2
 ~~~
 
-또한 각 개별 쿼리에 대한 감사 확인 및 지연 시간 통계도 볼 수 있다. 이런 경우, 검사 중 일부는 불충분한 데이터로 인해 `SKIPPED` 되었음을 나타낼 수 있습니다. 좀 더 포괄적인 테스트를 위해, 더 긴 기간 (예 : 2시간) 동안 `workload`을 실행하십시오. The `tpmC` (new order transactions/minute) number is the headline number and `efc` ("efficiency") tells you how close CockroachDB gets to theoretical maximum `tpmC`.
+또한 각 개별 쿼리에 대한 감사 확인 및 지연 시간 통계도 볼 수 있다. 이런 경우, 검사 중 일부는 불충분한 데이터로 인해 `SKIPPED` 되었음을 나타낼 수 있습니다. 좀 더 포괄적인 테스트를 위해, 더 긴 기간 (예 : 2시간) 동안 `workload`을 실행하십시오. `tpmC` (새로운 주문 거래/분) 번호는 헤드 라인 번호이고 `efc` ("효율성")은 CockroachDB가 이론상 최대 `tpmC`에 얼마나 근접하는지 알려줍니다.
 
-The [TPC-C specification](http://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf) has p90 latency requirements in the order of seconds, but as you see here, CockroachDB far surpasses that requirement with p90 latencies in the hundreds of milliseconds.
+[TPC-C 사양](http://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf)은 p90 대기 시간 요구 사항을 초 단위로 처리하지만, 여기에서 볼 수 있듯이, CockroachDB는 수백 밀리 초 내에 p90 대기 시간을 초과하여 요구 사항을 훨씬 능가합니다.
 
 ## 대규모 클러스터 벤치 마크
 
-The methodology for reproducing CockroachDB's 30-node, 10,000 warehouse TPC-C result is similar to that for the [3-node, 1,000 warehouse example](#benchmark-a-small-cluster). The only difference (besides the larger node count and dataset) is that you will use CockroachDB's [partitioning](partitioning.html) feature to ensure replicas for any given section of data are located on the same nodes that will be queried by the load generator for that section of data. 파티셔닝은 워크로드를 클러스터 전체에 골고루 분산시키는 데 도움이 됩니다.
+CockroachDB의 30개 노드, 10,000개의 창고 TPC-C 결과를 재현하는 방법론은 [3-노드, 1,000개의 창고 예제](#benchmark-a-small-cluster)와 비슷합니다. (더 큰 노드 수 및 데이터 세트 외에도) CockroachDB의 [파티셔닝](partitioning.html) 기능을 사용하여 특정 데이터 섹션에 대한 복제본이 해당 데이터 섹션에 대해 로드 생성기가 쿼리할 동일한 노드에 위치하도록 하는 것이 유일한 차이점이다. 파티셔닝은 워크로드를 클러스터 전체에 골고루 분산시키는 데 도움이 됩니다.
 
 ### 시작하기 전에
 
@@ -155,7 +155,7 @@ The methodology for reproducing CockroachDB's 30-node, 10,000 warehouse TPC-C re
 1. CockroachDB 노드에 대한 [30 인스턴스를 생성](https://cloud.google.com/compute/docs/instances/create-start-instance)하십시오. 각 인스턴스를 생성하는 동안:
     - `n1-highcpu-16` 머신 타입을 사용하십시오.
 
-        우리의 TPC-C 벤치마킹에서는, `n1-highcpu-16` 머신을 사용합니다. Currently, we believe this (or higher vCPU count machines) is the best configuration for CockroachDB under high traffic scenarios.
+        우리의 TPC-C 벤치마킹에서는, `n1-highcpu-16` 머신을 사용합니다. 현재, 높은 트래픽 시나리오에서 이것이 (혹은 vCPU 수가 많은 머신들) CockroachDB에 가장 적합한 구성이라고 생각합니다.
     - [로컬 SSD를 생성 및 마운트](https://cloud.google.com/compute/docs/disks/local-ssd#create_local_ssd)하십시오. 
 
         각 가상 컴퓨터에 단일 로컬 SSD를 연결합니다. 로컬 SSD는 각 VM에 연결된 지연 시간이 적은 디스크이므로, 성능을 최대화합니다. 이 구성은 베어 메탈 배포가 가장 유사한 것처럼 보이기 때문에, 하나의 물리적 디스크에 각각 직접 연결된 머신으로 이루어집니다. 네트워크 연결 블록 저장소는 사용하지 않는 것이 좋습니다.
@@ -172,7 +172,7 @@ The methodology for reproducing CockroachDB's 30-node, 10,000 warehouse TPC-C re
 
 ### 2단계. 30-노드 클러스터 시작
 
-1. SSH to the first `n1-highcpu-16` instance.
+1. SSH를 첫 번째 `n1-highcpu-16` 인스턴스로 변경.
 
 2. Linux용 [CockroachDB 아카이브]를 다운로드하고, 바이너리를 추출한 후, `PATH`에 복사하십시오:
 
@@ -222,7 +222,7 @@ The methodology for reproducing CockroachDB's 30-node, 10,000 warehouse TPC-C re
 
 엔터프라이즈 라이센스를 시작한 후에 클러스터에 엔터프라이즈 라이센스를 추가하려면, [빌트인 SQL 클라이언트 사용](use-the-built-in-sql-client.html)을 다음과 같이 하십시오:
 
-1. SSH to the 31st instance (the one not running a CockroachDB node) and launch the built-in SQL client:
+1. SSH를 31번째 인스턴스 (CockroachDB 노드를 실행하지 않는 인스턴스)로 변경하고 빌트인 SQL 클라이언트를 시작합니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -240,9 +240,9 @@ The methodology for reproducing CockroachDB's 30-node, 10,000 warehouse TPC-C re
 
 ### 4단계. 벤치마크를 위한 데이터 로드
 
-CockroachDB offers a pre-built `workload` binary for Linux that includes several load generators for simulating client traffic against your cluster. 이 단계에서는 CockroachDB의 [TPC-C](http://www.tpc.org/tpcc/) 워크로드 버전이 제공됩니다.
+CockroachDB는 클러스터에 대한 클라이언트 트래픽을 시뮬레이션하기 위한 여러 로드 생성기가 포함된 미리 빌드된 Linux용 `workload` 바이너리를 제공합니다. 이 단계에는 CockroachDB의 TPC-C 워크로드 버전이 있습니다.
 
-1. Still on the 31st instance (the one not running a CockroachDB node), download `workload`, and make it executable:
+1. 여전히 31번째 인스턴스 (CockroachDB 노드를 실행하지 않는 인스턴스)에서, `workload`를 다운로드하고, 실행 가능하게 만듭니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -256,7 +256,7 @@ CockroachDB offers a pre-built `workload` binary for Linux that includes several
     $ cp -i workload.LATEST /usr/local/bin/workload
     ~~~
 
-3. Start the TPC-C workload, pointing it at the [connection string of a node](connection-parameters.html#connect-using-a-url) and including any connection parameters:
+3. TPC-C 워크로드를 시작하여, [노드의 연결 문자열](connection-parameters.html#connect-using-a-url)에서 가리키고 연결 매개 변수를 포함하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -268,12 +268,12 @@ CockroachDB offers a pre-built `workload` binary for Linux that includes several
     이 명령은 클러스터에 대해 TPC-C 워크로드를 실행합니다. 이 작업에는 약 1시간이 걸리고 10,000 개의 "창고" 데이터를 로드합니다.
 
     {{site.data.alerts.callout_success}}
-    For more `tpcc` options, use `workload run tpcc --help`. For details about other load generators included in `workload`, use `workload run --help`.
+    더 많은 `tpcc` 옵션을 보려면, `workload run tpcc --help`를 사용하십시오. `workload`에 포함된 다른 로드 생성기에 대한 자세한 내용은, `workload run --help`를 사용하십시오.
     {{site.data.alerts.end}}
 
 4. 로드 생성기의 진행 상황을 모니터링하려면, **Admin UI > Jobs** 테이블의 프로세스를 따르십시오.
 
-     Open the [Admin UI](admin-ui-access-and-navigate.html) by pointing a browser to the address in the `admin` field in the standard output of any node on startup.
+     시작시 임의 노드의 표준 출력에서 `admin` 필드의 주소를 브라우저로 지정하여 [Admin UI](admin-ui-access-and-navigate.html)를 엽니다.
 
 ### 5단계. 스냅샷 비율 높이기
 
@@ -297,7 +297,7 @@ CockroachDB offers a pre-built `workload` binary for Linux that includes several
 
 ### 6단계. 데이터베이스 파티션
 
-Next, [partition your database](partitioning.html) to divide all of the TPC-C tables and indexes into ten partitions, one per rack, and then use [zone configurations](configure-replication-zones.html) to pin those partitions to a particular rack.
+다음으로 [데이터베이스를 파티션](partitioning.html)하여 모든 TPC-C 테이블과 인덱스를 랙당 하나씩 10 개의 파티션으로 나눈 다음, [영역 구성](configure-replication-zones.html)을 사용하여 그 파티션들을 특정 랙에 고정하십시오.
 
 1. 31번째 인스턴스에서, 파티셔닝을 시작합니다:
 
@@ -316,11 +316,11 @@ Next, [partition your database](partitioning.html) to divide all of the TPC-C ta
 
     데이터 파티셔닝에는 최소 12시간이 걸립니다. TPC-C-10K 용으로 복제된 2TB 이상의 모든 데이터를 올바른 위치로 이동해야 하므로 이 작업이 오래 걸립니다.
 
-2. To watch the progress, follow along with the process on the **Admin UI > Metrics > Queues > Replication Queue** graph. Change the timeframe to **Last 10 Min** to view a more granular graph.
+2. 진행 상황을 확인하려면, **Admin UI > Metrics > Queues > Replication Queue** 그래프의 프로세스를 따르십시오. 보다 세분화된 그래프를 보려면 기간을 **Last 10 Min**으로 변경하십시오.
 
-    Open the [Admin UI](admin-ui-access-and-navigate.html) by pointing a browser to the address in the `admin` field in the standard output of any node on startup.
+    시작시 임의 노드의 표준 출력에서 `admin` 필드의 주소를 브라우저로 지정하여 [Admin UI](admin-ui-access-and-navigate.html)를 엽니다.
 
-    Once the Replication Queue gets to `0` for all actions and stays there, the cluster should be finished rebalancing and is ready for testing.
+    모든 작업에 대해 복제 큐가 '0'으로 설정되면, 클러스터가 재조정을 완료하고 테스트 준비가 완료되어야 합니다.
 
 ### 7단계. 벤치마크 실행
 
@@ -338,16 +338,16 @@ $ ulimit -n 10000 && ./workload.LATEST run tpcc \
 
 ### 8단계. 결과 해석
 
-Once the `workload` has finished running, you should see a final output line similar to the output in [Benchmark a small cluster](#benchmark-a-small-cluster). `tpmC`는 창고의 수가 증가함에 따라 약 10배 더 높아야합니다:
+`workload`가 실행을 마친 후에는, [작은 클러스터 벤치마크](#benchmark-a-small-cluster)의 결과와 비슷한 최종 출력 라인을 보게 될 것입니다. `tpmC`는 창고의 수가 증가함에 따라 약 10배 더 높아야합니다:
 
 ~~~ shell
 _elapsed_______tpmC____efc__avg(ms)__p50(ms)__p90(ms)__p95(ms)__p99(ms)_pMax(ms)
   291.6s   131109.8 102.0%    115.3     88.1    184.5    268.4    637.5   4295.0
 ~~~
 
-You will also see some audit checks and latency statistics for each individual query. For this run, some of those checks might indicate that they were `SKIPPED` due to insufficient data. For a more comprehensive test, run `workload` for a longer duration (e.g., two hours). The `tpmC` (new order transactions/minute) number is the headline number and `efc` ("efficiency") tells you how close CockroachDB gets to theoretical maximum `tpmC`.
+또한 각 개별 쿼리에 대한 감사 확인 및 지연 시간 통계도 볼 수 있다. 이런 경우, 검사 중 일부는 불충분한 데이터로 인해 `SKIPPED` 되었음을 나타낼 수 있습니다. 좀 더 포괄적인 테스트를 위해, 더 긴 기간 (예 : 2시간) 동안 `workload`을 실행하십시오. `tpmC` (새로운 주문 거래/분) 번호는 헤드 라인 번호이고 `efc` ("효율성")은 CockroachDB가 이론상 최대 `tpmC`에 얼마나 근접하는지 알려줍니다.
 
-The [TPC-C specification](http://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf) has p90 latency requirements in the order of seconds, but as you see here, CockroachDB far surpasses that requirement with p90 latencies in the hundreds of milliseconds.
+[TPC-C 사양](http://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf)은 p90 대기 시간 요구 사항을 초 단위로 처리하지만, 여기에서 볼 수 있듯이, CockroachDB는 수백 밀리 초 내에 p90 대기 시간을 초과하여 요구 사항을 훨씬 능가합니다.
 
 <!-- ## Roachprod directions for performance benchmarking a small cluster
 
