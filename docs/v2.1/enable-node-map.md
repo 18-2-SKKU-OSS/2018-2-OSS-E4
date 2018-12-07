@@ -4,30 +4,31 @@ summary: Learn how to enable the node map in the Admin UI.
 toc: true
 ---
 
-The **Node Map** visualizes the geographical configuration of a multi-regional cluster by plotting the node localities on a world map. The **Node Map** also provides real-time cluster metrics, with the ability to drill down to individual nodes to monitor and troubleshoot the cluster health and performance.
+**노드 맵**은 세계지도에 노드 지역을 플로팅하여 다중 지역 클러스터의 지리적 구성을 시각화합니다. 또한 **노드 맵**은 클러스터 상태와 성능을 모니터링하고 문제 해결을 위해 개별 노드로 드릴다운할 수 있는 기능을 통해 실시간 클러스터 메트릭스를 제공합니다. 
 
-This page walks you through the process of setting up and enabling the **Node Map**.
+이 페이지는 **노드 맵**을 설정하고 활성화하는 과정을 안내합니다.
 
-{{site.data.alerts.callout_info}}The <b>Node Map</b> is an <a href="enterprise-licensing.html">enterprise-only</a> feature. However, you can <a href="https://www.cockroachlabs.com/pricing/request-a-license/">request a trial license</a>  to try it out. {{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}<b>노드 맵</b>은 <a href="enterprise-licensing.html"> 엔터프라이즈 전용 </a> 기능입니다. 그러나, <a href="https://www.cockroachlabs.com/pricing/request-a-license/"> 평가판 라이센스를 요청</a>하여 시험 사용해 볼 수 있습니다. {{site.data.alerts.end}}
 
 <img src="{{ 'images/v2.1/admin-ui-node-map.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Set up and enable the Node Map
+## 노드 맵 설정 및 활성화
 
-To enable the **Node Map**, you need to start the cluster with the correct `--locality` flags and assign the latitudes and longitudes for each locality.
+**노드 맵**을  가능하게 하려면, 올바른`--locality` 플래그로 클러스터를 시작하고 각 지역에 대한 위도와 경도를 지정해야 합니다.
 
-{{site.data.alerts.callout_info}}The <b>Node Map</b> will not be displayed until <i>all</i> nodes are started with the correct <code>--locality</code> flags and all localities are assigned the corresponding latitudes and longitudes. {{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}<b>노드 맵</b>은 올바른 <code>--지역성</code> 플래그로 시작하고 모든 지역에는 해당하는 위도와 경도가 할당될 때까지 표시되지 않는다. {{site.data.alerts.end}}
 
-Consider a scenario of a four-node geo-distributed cluster with the following configuration:
 
-|  Node | Region | Datacenter |
+다음과 같은 구성의 4 노드 지리적-분산 클러스터 시나리오를 고려하십시오:
+
+|  노드 | 지역 | 데이터센터 |
 |  ------ | ------ | ------ |
-|  Node1 | us-east-1 | us-east-1a |
-|  Node2 | us-east-1 | us-east-1b |
-|  Node3 | us-west-1 | us-west-1a |
-|  Node4 | eu-west-1 | eu-west-1a |
+|  노드1 | us-east-1 | us-east-1a |
+|  노드2 | us-east-1 | us-east-1b |
+|  노드3 | us-west-1 | us-west-1a |
+|  노드4 | eu-west-1 | eu-west-1a |
 
-### Step 1. Ensure the CockroachDB Version is 2.0 or higher
+### 1단계. CockroachDB 버전이 2.0 이상인지 확인하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -45,13 +46,13 @@ Build SHA-1:  367ad4f673b33694df06caaa2d7fc63afaaf3053
 Build Type:   release
 ~~~
 
-If any node is running an earlier version, [upgrade it to CockroachDB v2.0](upgrade-cockroach-version.html).
+어떤 노드가 이전 버전을 실행중인 경우, [CockroachDB v2.0으로 업그레이드](upgrade-cockroach-version.html)하십시오. 
 
-### Step 2. Start the nodes with the correct `--locality` flags
+### 2단계. 올바른 `--locality` 플래그로 노드를 시작하십시오.
 
-To start a new cluster with the correct `--locality` flags:
+올바른 `--locality` 플래그로 새로운 클러스터를 시작하려면:
 
-Start Node 1:
+노드 1 시작:
 
 {% include copy-clipboard.html %}
 ~~~
@@ -64,7 +65,7 @@ $ cockroach start \
 --join=<node1 address>,<node2 address>,<node3 address>,<node4 address>
 ~~~
 
-Start Node 2:
+노드 2 시작:
 
 {% include copy-clipboard.html %}
 ~~~
@@ -77,7 +78,7 @@ $ cockroach start \
 --join=<node1 address>,<node2 address>,<node3 address>,<node4 address>
 ~~~
 
-Start Node 3:
+노드 3 시작:
 
 {% include copy-clipboard.html %}
 ~~~
@@ -90,7 +91,7 @@ $ cockroach start \
 --join=<node1 address>,<node2 address>,<node3 address>,<node4 address>
 ~~~
 
-Start Node 4:
+노드 4 시작:
 
 {% include copy-clipboard.html %}
 ~~~
@@ -103,33 +104,33 @@ $ cockroach start \
 --join=<node1 address>,<node2 address>,<node3 address>,<node4 address>
 ~~~
 
-Use the [`cockroach init`](initialize-a-cluster.html) command to perform a one-time initialization of the cluster:
+[`cockroach init`](initialize-a-cluster.html) 명령을 사용하여 클러스터의 일회 초기화를 수행하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach init --insecure --host=<address of any node>
 ~~~
 
-[Access the Admin UI](admin-ui-access-and-navigate.html#access-the-admin-ui). The following page is displayed:
+[Admin UI에 접근](admin-ui-access-and-navigate.html#access-the-admin-ui)합니다. 다음 페이지가 표시됩니다:
 
 <img src="{{ 'images/v2.1/admin-ui-node-map-before-license.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-### Step 3. [Set the enterprise license](enterprise-licensing.html) and refresh the Admin UI
+### 3단계. [엔터프라이즈 라이센스 설정](enterprise-licensing.html) 및 Admin UI 새로 고침
 
-The following page should be displayed:
+다음 페이지가 표시되어야 합니다:
 
 <img src="{{ 'images/v2.1/admin-ui-node-map-after-license.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-### Step 4. Set the latitudes and longitudes for the localities
+### 4단계. 지역에 대한 위도와 경도 설정
 
-Launch the built-in SQL client:
+빌트인 SQL 클라이언트 시작:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --insecure --host=<address of any node>
 ~~~
 
-Insert the approximate latitudes and longitudes of each region into the `system.locations` table:
+각 영역의 대략적인 위도와 경도를 `system.locations` 테이블에 삽입하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -139,69 +140,70 @@ Insert the approximate latitudes and longitudes of each region into the `system.
   ('region', 'eu-west-1', 53.142367, -7.692054);
 ~~~
 
-{{site.data.alerts.callout_info}}The <b>Node Map</b> will not be displayed until all regions are assigned the corresponding latitudes and longitudes. {{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}<b>노드 맵</b>은 모든 지역에 해당 위도와 경도가 할당될 때까지 표시되지 않습니다. {{site.data.alerts.end}}
 
-For the latitudes and longitudes of AWS, Azure, and Google Cloud regions, see [Location Coordinates for Reference](#location-coordinates-for-reference).
 
-### Step 5. View the Node Map
+AWS, Azure 및 Google Cloud 지역의 위도와 경도에 대해서는, [참조용 위치 좌표](#location-coordinates-for-reference)를 보십시오. 
 
-[Open the **Overview page**](admin-ui-access-and-navigate.html) and select **Node Map** from the **View** drop-down menu. The **Node Map** will be displayed:
+### 5단계. 노드 맵 보기
+
+[ **개요 페이지**를 엽니다](admin-ui-access-and-navigate.html) 그리고 **View** 드롭다운 메뉴에서 **Node Map**를 선택하십시오. **노드 맵**이 표시됩니다:
 
 <img src="{{ 'images/v2.1/admin-ui-node-map-complete.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-### Step 6. Navigate the Node Map
+### 6단계. 노드 맵 탐색
 
-Let's say you want to navigate to Node 2, which is in datacenter `us-east-1a` in the `us-east-1` region:
+`us-east-1` 지역의 `us-east-1a` 데이터 센터에 있는 노드 2로 이동한다고 가정해 봅시다:
 
-1. Click on the map component marked as **region=us-east-1** on the **Node Map**. The datacenter view is displayed.
-2. Click on the datacenter component marked as **datacenter=us-east-1a**. The individual node components are displayed.
-3. To navigate back to the cluster view, either click on **Cluster** in the bread-crumb trail at the top of the **Node Map**, or click **Up to region=us-east-1** and then click **Up to Cluster** in the lower left-hand side of the **Node Map**.
+1. **노드 맵**에서 **region=us-east-1**로 표시된 맵 구성 요소를 클릭하십시오. 데이터 센터 보기가 표시됩니다.
+2. **datacenter=us-east-1a**로 표시된 데이터 센터 구성 요소를 클릭하십시오. 개별 노드 구성 요소가 표시됩니다.
+3. 클러스터 뷰로 돌아가려면, **노드 맵** 상단의 빵 부스러기 흔적에서 **클러스터**를 클릭하거나, **Up to region=us-east-1**을 클릭하고 그런 다음 **노드 맵**의 왼쪽 하단에있는 **클러스터까지**를 클릭하십시오.
 
 <img src="{{ 'images/v2.1/admin-ui-node-map-navigation.gif' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Troubleshoot the Node Map
+## 노드 맵 문제 해결
 
-### Node Map not displayed
+### 노드 맵이 표시되지 않음
 
-The **Node Map** will not be displayed until all nodes have localities and are assigned the corresponding latitudes and longitudes. To verify if you have assigned localities as well as latitude and longitudes assigned to all nodes, navigate to the Localities debug page (`https://<address of any node>:8080/#/reports/localities`) in the Admin UI.
+**노드 맵**은 모든 노드에 지역이 있고 해당 위도와 경도가 할당 될 때까지 표시되지 않습니다. 모든 노드에 할당된 위도와 경도는 물론 지역을 할당했는지 확인하려면, Admin UI에서 지역성 디버그 페이지 (`https://<address of any node>:8080/#/reports/localities`)로 이동하십시오 
 
-The Localities debug page displays the following:
+지역성 디버그 페이지는 다음을 표시합니다:
 
-- Localities configuration that you set up while starting the nodes with the `--locality` flags.
-- Nodes corresponding to each locality.
-- Latitude and longitude coordinates for each locality/node.
+- `--locality` 플래그를 사용하여 노드를 시작하는 동안 설정한 지역성 구성.
+- 각 지역에 해당하는 노드.
+- 각 지역/노드에 대한 위도와 경도 좌표
 
-On the page, ensure that every node has a locality as well as latitude/longitude coordinates assigned to them.
+페이지에서, 모든 노드에 위도/경도 좌표뿐만 아니라 지역이 할당되어 있는지 확인하십시오.
 
-### Node Map not displayed for all locality levels
+### 모든 지역 수준에 노드 맵이 표시되지 않음
 
-The **Node Map** is displayed only for the locality levels that have latitude/longitude coordinates assigned to them:
+**노드 맵**은 위도/경도 좌표가 할당된 지역 수준에서만 표시됩니다:
 
-- If you assign the latitude/longitude coordinates at the region level, the **Node Map** shows the regions on the world map. However, when you drill down to the datacenter and further to the individual nodes, the world map disappears and the datacenters/nodes are plotted in a circular layout.  
-- If you assign the latitude/longitude coordinates at the datacenter level, the **Node Map** shows the regions with single datacenters at the same location assigned to the datacenter, while regions with multiple datacenters are shown at the center of the datacenter coordinates in the region. When you drill down to the datacenter levels, the **Node Map** shows the datacenter at their assigned coordinates. Further drilling down to individual nodes shows the nodes in a circular layout.
+- 지역 레벨에서 위도/경도 좌표를 할당하면, **노드 맵**은 세계 지도상의 지역을 보여줍니다. 그러나, 데이터 센터로 드릴 다운하고 개별 노드로 더 이동하면, 세계 지도가 사라지고 데이터 센터/노드는 원형 레이아웃으로 표시된다.
+- 데이터 센터 수준에서 위도/경도 좌표를 할당하는 경우, **노드 맵**에는 데이터 센터에 할당된 동일한 위치에 단일 데이터 센터가 있는 영역이 표시되고, 여러 데이터 센터를 가진 영역은 해당 지역의 데이터 센터 좌표 중앙에 표시된다. 데이터 센터 수준까지 드릴 다운하면, **노드 맵**에 할당된 좌표의 데이터 센터가 표시됩니다. 개별 노드로 추가 드릴 다운하면 노드가 원형 레이아웃으로 표시됩니다.
 
-[Assign latitude/longitude coordinates](#step-4-set-the-latitudes-and-longitudes-for-the-localities) at the locality level that you want to view on the **Node Map**.
+**노드 맵**에서 보려는 지역 수준의 [위도/경도 좌표를 지정](#step-4-set-the-latitudes-and-longitudes-for-the-localities)합니다.
 
-## Known limitations
+## 알려진 제한 사항
 
-### Unable to assign latitude/longitude coordinates to localities
+### 지역에 위도/경도 좌표를 할당할 수 없음
 
 {% include {{ page.version.version }}/known-limitations/node-map.md %}
 
-### **Capacity Used** value displayed is more than configured Capacity
+### **사용된 용량** 구성된 용량을 초과함
 
 {% include v2.1/misc/available-capacity-metric.md %}
 
-## Location coordinates for reference
+## 참조용 위치 좌표
 
-### AWS locations
+### AWS 로케이션
 
 {% include {{ page.version.version }}/misc/aws-locations.md %}
 
-### Azure locations
+### Azure 로케이션
 
 {% include {{ page.version.version }}/misc/azure-locations.md %}
 
-### Google Cloud locations
+### 구글 클라우드 로케이션
 
 {% include {{ page.version.version }}/misc/gce-locations.md %}
