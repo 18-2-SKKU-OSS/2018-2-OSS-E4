@@ -27,11 +27,11 @@ This page explains how replication zones work and how to use the [`CONFIGURE ZON
 Currently, only members of the `admin` role can configure replication zones. By default, the `root` user belongs to the `admin` role.
 {{site.data.alerts.end}}
 
-## Overview
+## 개요
 
 Every [range](architecture/overview.html#glossary) in the cluster is part of a replication zone.  Each range's zone configuration is taken into account as ranges are rebalanced across the cluster to ensure that any constraints are honored.
 
-When a cluster starts, there are two categories of replication zone:
+클러스터가 시작되면, 두 가지 범주의 복제 영역이 있습니다:
 
 1. Pre-configured replication zones that apply to internal system data.
 2. A single default replication zone that applies to the rest of the cluster.
@@ -40,7 +40,7 @@ You can adjust these pre-configured zones as well as add zones for individual da
 
 For example, you might rely on the [default zone](#view-the-default-replication-zone) to spread most of a cluster's data across all of your datacenters, but [create a custom replication zone for a specific database](#create-a-replication-zone-for-a-database) to make sure its data is only stored in certain datacenters and/or geographies.
 
-## Replication zone levels
+## 복제 영역 수준
 
 There are five replication zone levels for [**table data**](architecture/distribution-layer.html#table-data) in a cluster, listed from least to most granular:
 
@@ -52,7 +52,7 @@ Table | You can add replication zones for specific tables. See [Create a Replica
 Index ([Enterprise-only](enterprise-licensing.html)) | The [secondary indexes](indexes.html) on a table will automatically use the replication zone for the table. However, with an enterprise license, you can add distinct replication zones for secondary indexes. See [Create a Replication Zone for a Secondary Index](#create-a-replication-zone-for-a-secondary-index) for more details.
 Row ([Enterprise-only](enterprise-licensing.html)) | You can add replication zones for specific rows in a table or secondary index by [defining table partitions](partitioning.html). See [Create a Replication Zone for a Table Partition](#create-a-replication-zone-for-a-table-or-secondary-index-partition) for more details.
 
-### For system data
+### 시스템 데이터
 
 In addition, CockroachDB stores internal [**system data**](architecture/distribution-layer.html#monolithic-sorted-map-structure) in what are called system ranges. There are two replication zone levels for this internal system data, listed from least to most granular:
 
@@ -61,7 +61,7 @@ Level | Description
 Cluster | The `.default` replication zone mentioned above also applies to all system ranges not constrained by a more specific replication zone.
 System Range | CockroachDB comes with pre-configured replication zones for the "meta" and "liveness" system ranges. If necessary, you can add replication zones for the "timeseries" range and other "system" ranges as well. See [Create a Replication Zone for a System Range](#create-a-replication-zone-for-a-system-range) for more details.<br><br>CockroachDB also comes with a pre-configured replication zone for one internal table, `system.jobs`, which stores metadata about long-running jobs such as schema changes and backups. Historical queries are never run against this table and the rows in it are updated frequently, so the pre-configured zone gives this table a lower-than-default `ttlseconds`.
 
-### Level priorities
+### 우선 순위
 
 When replicating data, whether table or system, CockroachDB always uses the most granular replication zone available. For example, for a piece of user data:
 
@@ -75,11 +75,11 @@ When replicating data, whether table or system, CockroachDB always uses the most
 {% include {{page.version.version}}/known-limitations/system-range-replication.md %}
 {{site.data.alerts.end}}
 
-## Manage replication zones
+## 복제 영역 관리
 
 Use the [`CONFIGURE ZONE`](configure-zone.html) statement to [add](#create-a-replication-zone-for-a-system-range), [modify](#edit-the-default-replication-zone), [reset](#reset-a-replication-zone), and [remove](#remove-a-replication-zone) replication zones.
 
-### Replication zone variables
+### 복제 영역 변수
 
 Use the [`ALTER ... CONFIGURE ZONE`](configure-zone.html) [statement](sql-statements.html) to set a replication zone:
 
@@ -90,13 +90,13 @@ Use the [`ALTER ... CONFIGURE ZONE`](configure-zone.html) [statement](sql-statem
 
 {% include v2.1/zone-configs/variables.md %}
 
-### Replication constraints
+### 복제 제약 조건
 
 The location of replicas, both when they are first added and when they are rebalanced to maintain cluster equilibrium, is based on the interplay between descriptive attributes assigned to nodes and constraints set in zone configurations.
 
 {{site.data.alerts.callout_success}}For demonstrations of how to set node attributes and replication constraints in different scenarios, see <a href="#scenario-based-examples">Scenario-based Examples</a> below.{{site.data.alerts.end}}
 
-#### Descriptive attributes assigned to nodes
+#### 노드에 할당된 설명 속성
 
 When starting a node with the [`cockroach start`](start-a-node.html) command, you can assign the following types of descriptive attributes:
 
@@ -106,7 +106,7 @@ Attribute Type | Description
 **Node Capability** | Using the `--attrs` flag, you can specify node capability, which might include specialized hardware or number of cores, for example:<br><br>`--attrs=ram:64gb`
 **Store Type/Capability** | Using the `attrs` field of the `--store` flag, you can specify disk type or capability, for example:<br><br>`--store=path=/mnt/ssd01,attrs=ssd`<br>`--store=path=/mnt/hda1,attrs=hdd:7200rpm`
 
-#### Types of constraints
+#### 제약 조건의 유형
 
 The node-level and store-level descriptive attributes mentioned above can be used as the following types of constraints in replication zones to influence the location of replicas. However, note the following general guidance:
 
@@ -118,7 +118,7 @@ Constraint Type | Description | Syntax
 **Required** | When placing replicas, the cluster will consider only nodes/stores with matching attributes or localities. When there are no matching nodes/stores, new replicas will not be added. | `+ssd`
 **Prohibited** | When placing replicas, the cluster will ignore nodes/stores with matching attributes or localities. When there are no alternate nodes/stores, new replicas will not be added. | `-ssd`
 
-#### Scope of constraints
+#### 제약 조건의 범위
 
 Constraints can be specified such that they apply to all replicas in a zone or such that different constraints apply to different replicas, meaning you can effectively pick the exact location of each replica.
 
@@ -127,98 +127,98 @@ Constraint Scope | Description | Syntax
 **All Replicas** | Constraints specified using JSON array syntax apply to all replicas in every range that's part of the replication zone. | `constraints = '[+ssd, -region=west]'`
 **Per-Replica** | Multiple lists of constraints can be provided in a JSON object, mapping each list of constraints to an integer number of replicas in each range that the constraints should apply to.<br><br>The total number of replicas constrained cannot be greater than the total number of replicas for the zone (`num_replicas`). However, if the total number of replicas constrained is less than the total number of replicas for the zone, the non-constrained replicas will be allowed on any nodes/stores. | `constraints: '{+ssd,-region=west: 2, +region=east: 1}'`
 
-### Node/replica recommendations
+### 노드/복제본 권장 사항
 
 See [Cluster Topography](recommended-production-settings.html#cluster-topology) recommendations for production deployments.
 
-## View replication zones
+## 복제 영역 보기
 
 Use the [`SHOW ZONE CONFIGURATIONS`](#view-all-replication-zones) statement to view details about existing replication zones.
 
-## Basic examples
+## 기본 예제
 
-These examples focus on the basic approach and syntax for working with zone configuration. For examples demonstrating how to use constraints, see [Scenario-based examples](#scenario-based-examples).
+이 예제는 영역 구성 작업을 위한 기본 접근법 및 구문에 중점을 둡니다. 제약 조건을 사용하는 방법을 보여주는 예제는, [시나리오 기반 예제](#scenario-based-examples)를 참조하십시오.
 
-For more examples, see [`CONFIGURE ZONE`](configure-zone.html) and [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html) 및 [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html)을 참조하십시오.
 
-### View all replication zones
+### 모든 복제 영역 보기
 
 {% include v2.1/zone-configs/view-all-replication-zones.md %}
 
-For more information, see [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### View the default replication zone
+### 기본 복제 영역 보기
 
 {% include v2.1/zone-configs/view-the-default-replication-zone.md %}
 
-For more information, see [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Edit the default replication zone
+### 기본 복제 영역 편집
 
 {% include v2.1/zone-configs/edit-the-default-replication-zone.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Create a replication zone for a system range
+### 시스템 범위에 대한 복제 영역 생성
 
 {% include v2.1/zone-configs/create-a-replication-zone-for-a-system-range.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Create a replication zone for a database
+### 데이터베이스의 복제 영역 생성
 
 {% include v2.1/zone-configs/create-a-replication-zone-for-a-database.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Create a replication zone for a table
+### 테이블의 복제 영역 생성
 
 {% include v2.1/zone-configs/create-a-replication-zone-for-a-table.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Create a replication zone for a secondary index
+### 보조 인덱스에 대한 복제 영역 생성
 
 {% include v2.1/zone-configs/create-a-replication-zone-for-a-secondary-index.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Create a replication zone for a table or secondary index partition
+### 테이블 또는 보조 인덱스 파티션에 대한 복제 영역 생성
 
 {% include v2.1/zone-configs/create-a-replication-zone-for-a-table-partition.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Reset a replication zone
+### 복제 영역 재설정
 
 {% include v2.1/zone-configs/reset-a-replication-zone.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Remove a replication zone
+### 복제 영역 제거
 
 {% include v2.1/zone-configs/remove-a-replication-zone.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-### Constrain leaseholders to specific datacenters
+### 특정 데이터 센터로 리스 홀더 제한
 
 {% include v2.1/zone-configs/constrain-leaseholders-to-specific-datacenters.md %}
 
-For more information, see [`CONFIGURE ZONE`](configure-zone.html).
+자세한 내용은, [`CONFIGURE ZONE`](configure-zone.html)을 참조하십시오.
 
-## Scenario-based examples
+## 시나리오 기반 예제
 
-### Even replication across datacenters
+### 데이터 센터 전반의 복제
 
-**Scenario:**
+**시나리오:**
 
-- You have 6 nodes across 3 datacenters, 2 nodes in each datacenter.
-- You want data replicated 3 times, with replicas balanced evenly across all three datacenters.
+- 3개의 데이터 센터에 6개의 노드가 있고, 각 데이터 센터에 2개의 노드가 있습니다.
+- 3개의 데이터 센터 전체에 균등하게 균형 잡힌 복제본을 사용하여 데이터를 3번 복제해야합니다.
 
-**Approach:**
+**접근:**
 
-Start each node with its datacenter location specified in the `--locality` flag:
+`--locality` 플래그로 지정된 데이터 센터 위치로 각 노드를 시작하십시오:
 
 ~~~ shell
 # Start the two nodes in datacenter 1:
@@ -243,18 +243,18 @@ $ cockroach start --insecure --advertise-addr=<node6 hostname> --locality=datace
 $ cockroach init --insecure --host=<any node hostname>
 ~~~
 
-There's no need to make zone configuration changes; by default, the cluster is configured to replicate data three times, and even without explicit constraints, the cluster will aim to diversify replicas across node localities.
+영역 구성을 변경할 필요가 없습니다. 기본적으로, 클러스터는 데이터를 세 번 복제하도록 구성되며, 명시적 제약 조건 없이도, 클러스터는 노드 지역에 걸쳐 복제본을 다양화할 것을 목표로 합니다.
 
-### Per-replica constraints to specific datacenters
+### 특정 데이터 센터에 대한 복제 당 제약조건
 
-**Scenario:**
+**시나리오:**
 
-- You have 5 nodes across 5 datacenters in 3 regions, 1 node in each datacenter.
-- You want data replicated 3 times, with a quorum of replicas for a database holding West Coast data centered on the West Coast and a database for nation-wide data replicated across the entire country.
+- 3개의 지역에 5개의 데이터 센터에 5개의 노드가 있고, 각 데이터 센터에 1개의 노드가 있습니다.
+- West Coast 중심의 West Coast 데이터를 보유한 데이터베이스에 대한 복제본 쿼럼과 전체 국가에 복제된 전국 데이터에 대한 데이터베이스를 사용하여 데이터를 3번 복제하려고 합니다.
 
-**Approach:**
+**접근:**
 
-1. Start each node with its region and datacenter location specified in the `--locality` flag:
+1. `--locality` 플래그로 지정된 지역과 데이터 센터 위치로 각 노드를 시작하십시오:
 
     ~~~ shell
     # Start the four nodes:
@@ -273,21 +273,21 @@ There's no need to make zone configuration changes; by default, the cluster is c
     $ cockroach init --insecure --host=<any node hostname>
     ~~~
 
-2. On any node, open the [built-in SQL client](use-the-built-in-sql-client.html):
+2. 모든 노드에서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 여십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-3. Create the database for the West Coast application:
+3. West Coast 어플리케이션에 대한 데이터베이스를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > CREATE DATABASE west_app_db;
     ~~~
 
-4. Configure a replication zone for the database:
+4. 데이터베이스의 복제 영역을 구성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -298,7 +298,7 @@ There's no need to make zone configuration changes; by default, the cluster is c
     CONFIGURE ZONE 1
     ~~~
 
-5. View the replication zone:
+5. 복제 영역을 보십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -322,18 +322,18 @@ There's no need to make zone configuration changes; by default, the cluster is c
 
 6. No configuration is needed for the nation-wide database. The cluster is configured to replicate data 3 times and spread them as widely as possible by default. Because the first key-value pair specified in each node's locality is considered the most significant part of each node's locality, spreading data as widely as possible means putting one replica in each of the three different regions.
 
-### Multiple applications writing to different databases
+### 다른 데이터베이스에 작성하는 여러 어플리케이션
 
-**Scenario:**
+**시나리오:**
 
-- You have 2 independent applications connected to the same CockroachDB cluster, each application using a distinct database.
-- You have 6 nodes across 2 datacenters, 3 nodes in each datacenter.
-- You want the data for application 1 to be replicated 5 times, with replicas evenly balanced across both datacenters.
-- You want the data for application 2 to be replicated 3 times, with all replicas in a single datacenter.
+- 서로 다른 데이터베이스를 사용하는 동일한 CockroachDB 클러스터에 연결된 2개의 독립 어플리케이션이 있습니다.
+- 2개의 데이터 센터에 6개의 노드가 있고, 각 데이터 센터에 3개의 노드가 있습니다.
+- 어플리케이션 1의 데이터를 5번 복제하고, 복제본을 두 데이터 센터에서 균형있게 유지하려고 합니다.
+- 어플리케이션 2의 데이터를 단일 데이터 센터의 모든 복제본과 함께 3번 복제하려고 합니다.
 
-**Approach:**
+**접근:**
 
-1. Start each node with its datacenter location specified in the `--locality` flag:
+1. `--locality` 플래그로 지정된 데이터 센터 위치로 각 노드를 시작하십시오:
 
     ~~~ shell
     # Start the three nodes in datacenter 1:
@@ -356,21 +356,21 @@ There's no need to make zone configuration changes; by default, the cluster is c
     $ cockroach init --insecure --host=<any node hostname>
     ~~~
 
-2. On any node, open the [built-in SQL client](use-the-built-in-sql-client.html):
+2. 모든 노드에서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 여십시오. 
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-3. Create the database for application 1:
+3. 어플리케이션 1의 데이터베이스 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > CREATE DATABASE app1_db;
     ~~~
 
-4. Configure a replication zone for the database used by application 1:
+4. 어플리케이션 1에서 사용되는 데이터베이스의 복제 영역 구성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -381,7 +381,7 @@ There's no need to make zone configuration changes; by default, the cluster is c
     CONFIGURE ZONE 1
     ~~~
 
-5. View the replication zone:
+5. 복제 영역 보십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -401,23 +401,23 @@ There's no need to make zone configuration changes; by default, the cluster is c
     (1 row)
     ~~~
 
-    Nothing else is necessary for application 1's data. Since all nodes specify their datacenter locality, the cluster will aim to balance the data in the database used by application 1 between datacenters 1 and 2.
+    어플리케이션 1의 데이터에는 다른 것이 필요하지 않습니다. 모든 노드가 데이터 센터 지역을 지정하기 때문에, 클러스터는 데이터 센터 1과 2 사이에서 어플리케이션 1이 사용하는 데이터베이스의 데이터의 균형을 유지하려고합니다.
 
-6. Still in the SQL client, create a database for application 2:
+6. 여전히 SQL 클라이언트에서, 어플리케이션 2에 대한 데이터베이스를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > CREATE DATABASE app2_db;
     ~~~
 
-7. Configure a replication zone for the database used by application 2:
+7. 어플리케이션 2에서 사용되는 데이터베이스의 복제 영역 구성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > ALTER DATABASE app2_db CONFIGURE ZONE USING constraints = '[+datacenter=us-2]';
     ~~~
 
-8. View the replication zone:
+8. 복제 영역:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -437,19 +437,20 @@ There's no need to make zone configuration changes; by default, the cluster is c
     (1 row)
     ~~~
 
-    The required constraint will force application 2's data to be replicated only within the `us-2` datacenter.
+    필수 제약 조건은 어플리케이션 2의 데이터가 `us-2` 데이터 센터 내에서만 복제되도록 합니다.
 
-### Stricter replication for a table and its secondary indexes
+### 테이블 및 보조 인덱스에 대한 더욱 엄격한 복제
 
-**Scenario:**
+**시나리오:**
 
-- You have 7 nodes, 5 with SSD drives and 2 with HDD drives.
-- You want data replicated 3 times by default.
+- 노드 7개, SSD 드라이브 5개, HDD 드라이브 2개가 있습니다.
+- 기본적으로 데이터를 3번 복제하려고합니다.
 - Speed and availability are important for a specific table and its indexes, which are queried very frequently, however, so you want the data in the table and secondary indexes to be replicated 5 times, preferably on nodes with SSD drives.
 
-**Approach:**
 
-1. Start each node with `ssd` or `hdd` specified as store attributes:
+**접근:**
+
+1. 저장소 속성으로 지정된 `ssd` 또는 `hdd`로 각 노드를 시작하십시오:
 
     ~~~ shell
     # Start the 5 nodes with SSD storage:
@@ -474,14 +475,14 @@ There's no need to make zone configuration changes; by default, the cluster is c
     $ cockroach init --insecure --host=<any node hostname>
     ~~~
 
-2. On any node, open the [built-in SQL client](use-the-built-in-sql-client.html):
+2. 모든 노드에서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 여십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-3. Create a database and table:
+3. 데이터베이스 및 테이블 생성:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -493,14 +494,14 @@ There's no need to make zone configuration changes; by default, the cluster is c
     > CREATE TABLE db.important_table;
     ~~~
 
-4. Configure a replication zone for the table that must be replicated more strictly:
+4. 보다 엄격하게 복제해야 하는 테이블의 복제 영역을 구성:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > ALTER TABLE db.important_table CONFIGURE ZONE USING num_replicas = 5, constraints = '[+ssd]'
     ~~~
 
-5. View the replication zone:
+5. 복제 영역 보기:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -520,20 +521,20 @@ There's no need to make zone configuration changes; by default, the cluster is c
     (1 row)
     ~~~
 
-    The secondary indexes on the table will use the table's replication zone, so all data for the table will be replicated 5 times, and the required constraint will place the data on nodes with `ssd` drives.
+    테이블의 보조 인덱스는 테이블의 복제 영역을 사용하므로, 테이블의 모든 데이터가 5번 복제되고, 필수 제약 조건은 `ssd` 드라이브가 있는 노드에 데이터를 배치합니다.
 
-### Tweaking the replication of system ranges
+### 시스템 범위의 복제 조정
 
-**Scenario:**
+**시나리오:**
 
-- You have nodes spread across 7 datacenters.
-- You want data replicated 5 times by default.
-- For better performance, you want a copy of the meta ranges in all of the datacenters.
-- To save disk space, you only want the internal timeseries data replicated 3 times by default.
+- 7개의 데이터 센터에 노드가 분산되어 있습니다.
+- 기본적으로 데이터를 5번 복제하려고 합니다.
+- 성능 향상을 위해, 모든 데이터 센터에서 메타 범위의 복사본을 원합니다.
+- 디스크 공간을 절약하기 위해, 기본적으로 내부 시계열 데이터가 3번만 복제되기를 원합니다.
 
-**Approach:**
+**접근:**
 
-1. Start each node with a different locality attribute:
+1. 각 노드를 다른 지역 속성으로 시작하십시오:
 
     ~~~ shell
     # Start the nodes:
@@ -556,21 +557,21 @@ There's no need to make zone configuration changes; by default, the cluster is c
     $ cockroach init --insecure --host=<any node hostname>
     ~~~
 
-2. On any node, open the [built-in SQL client](use-the-built-in-sql-client.html):
+2. 모든 노드에서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)을 여십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-3. Configure the default replication zone:
+3. 기본 복제 영역 구성:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > ALTER RANGE default CONFIGURE ZONE USING num_replicas = 5;
     ~~~
 
-4. View the replication zone:
+4. 복제 영역 보기:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -588,10 +589,10 @@ There's no need to make zone configuration changes; by default, the cluster is c
                 |     lease_preferences = '[]'
     (1 row)
     ~~~
+    
+    클러스터의 모든 데이터는 SQL 데이터와 내부 시스템 데이터를 포함하여 5번 복제됩니다.
 
-    All data in the cluster will be replicated 5 times, including both SQL data and the internal system data.
-
-5. Configure the `.meta` replication zone:
+5. `.meta` 복제 영역을 구성하십시오 :
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -611,9 +612,9 @@ There's no need to make zone configuration changes; by default, the cluster is c
     (1 row)
     ~~~
 
-    The `.meta` addressing ranges will be replicated such that one copy is in all 7 datacenters, while all other data will be replicated 5 times.
+    `.meta` 주소 지정 범위는 하나의 복사본이 모든 7개의 데이터 센터에 복제되고, 다른 모든 데이터는 5번 복제됩니다. 
 
-6. Configure the `.timeseries` replication zone:
+6. `.timeseries` 복제 영역을 구성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -633,11 +634,11 @@ There's no need to make zone configuration changes; by default, the cluster is c
     (1 row)
     ~~~
 
-    The timeseries data will only be replicated 3 times without affecting the configuration of all other data.
+    시계열 데이터는 다른 모든 데이터의 구성에 영향을 미치지 않고 3번만 복제됩니다.
 
-## See also
+## 더 보기
 
-- [`SHOW ZONE CONFIGURATIONS`](show-zone-configurations.html)
-- [`CONFIGURE ZONE`](configure-zone.html)
-- [SQL Statements](sql-statements.html)
-- [Table Partitioning](partitioning.html)
+- [`영역 구성 표시`](show-zone-configurations.html)
+- [`복제 영역`](configure-zone.html)
+- [SQL 명령문](sql-statements.html)
+- [테이블 파티셔닝](partitioning.html)
