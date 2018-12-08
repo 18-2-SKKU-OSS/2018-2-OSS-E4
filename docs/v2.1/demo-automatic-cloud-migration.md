@@ -68,7 +68,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-## Step 3. 클러스터 초기화하기
+## 3단계. 클러스터 초기화하기
 
 새로운 터미널에서, [`cockroach init`](initialize-a-cluster.html) 명령어를 사용하여 클러스터를 초기화합니다.
 
@@ -124,7 +124,7 @@ listen psql
 $ haproxy -f haproxy.cfg
 ~~~
 
-## 5단계. load generator 시작하기
+## 5단계. 로드 생성기 시작하기
 
 이제 클러스터 앞에서 로드 밸런서(load balancer)가 실행되고 있습니다. 앞서 설치한 YCSB 로드 생성기(load generator)를 사용하여 혼합된 읽기/쓰기 워크로드를 각각 수행하는 여러 개의 클라이언트 연결을 시뮬레이션합니다.
 
@@ -147,7 +147,7 @@ $ $HOME/go/bin/ycsb -duration 20m -tolerate-errors -concurrency 10 -max-rate 100
 
 <img src="{{ 'images/v2.1/admin_ui_replicas_migration.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 7. "cloud 2"에 노드 3개 추가하기
+## 7단계. "cloud 2"에 노드 3개 추가하기
 
 현재 시점에서 클라우드 1은 3개의 노드를 실행하고 있습니다. 하지만 만약 다른 클라우드에서 리소스를 제공받는다면 어떨까요? 그럼 이제 새 클라우드 플랫폼에 노드를 3개 더 추가해 보겠습니다. 다시 한 번 강조하지만, [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 플래그를 사용하여 다음 3개 노드가 클라우드 2에서 실행 중임을 지정합니다.
 
@@ -193,7 +193,7 @@ $ cockroach start \
 --join=localhost:26257,localhost:26258,localhost:26259
 ~~~
 
-## Step 8. 6개 노드에서 전체 데이터 밸런스 보기
+## 8단계. 6개 노드에서 전체 데이터 밸런스 보기
 
 관리(Admin) UI의 **Overview** 대시보드로 돌아가, **Replicas per Node** (노드 당 복제본) 그래프로 다시 이동합니다. [`--locality`](configure-replication-zones.html#descriptive-attributes-assigned-to-nodes) 를 사용하여 노드가 2개의 클라우드에서 실행되고 있음을 지정했기 때문에, CockroachDB가 두 개의 클라우드 간 복제본의 균형을 자동으로 재조정하여 각 노드에 거의 동일한 수의 복제본이 나타나는 것을 확인할 수 있다.
 
@@ -201,7 +201,7 @@ $ cockroach start \
 
 관리 UI가 호버에서 노드당 복제본 수를 정확하게 표시하는 데 몇 분 정도 걸립니다. 따라서 위의 스크린샷의 새 노드가 0개의 복제본을 표시하는 것입니다. 그러나 그래프의 선은 정확하며, **Summary** 영역의 **View node list** 를 클릭하여 정확한 노드당 복제본 수를 확인할 수 있습니다.
 
-## Step 9. 모든 데이터를 "cloud 2"로 이송하기
+## 9단계. 모든 데이터를 "cloud 2"로 이송하기
 
 따라서 클러스터가 두 개의 클라우드 간에 복제되는 것입니다. 그런데 이후 사용자가 클라우드 2에 만족하여 모든 것을 해당 클라우드 공급업체로 전환하기로 결정했다고 가정해 보겠습니다. 실시간 클라이언트 트래픽을 중단하지 않고 그 작업을 수행할 수 있을까요? 답은 그렇다, 입니다. 단일 명령을 실행하여 모든 복제본이 `--locality=cloud=2` 를 만족하는 노드에 있어야 하는 [엄격한 제한](configure-replication-zones.html#replication-constraints)을 추가하는 간단한 과정을 통해 모든 데이터를 클라우드 2로 이송할 수 있습니다.
 
@@ -212,7 +212,7 @@ $ cockroach start \
 $ cockroach sql --execute="ALTER RANGE default CONFIGURE ZONE USING constraints='[+cloud=2]';" --insecure --host=localhost:26257
 ~~~
 
-## Step 10. 데이터 이송 확인하기
+## 10단계. 데이터 이송 확인하기
 
 관리(Admin) UI의 **Overview** 대시보드로 돌아가, **Replicas per Node** (노드 당 복제본) 그래프로 다시 이동합니다. 노드 4, 5, 6에서는 복제본 수가 2배로 늘어나고 노드 1, 2, 3에서는 0으로 떨어지는 것을 확인할 수 있습니다.
 
@@ -220,7 +220,7 @@ $ cockroach sql --execute="ALTER RANGE default CONFIGURE ZONE USING constraints=
 
 이는 모든 데이터가 클라우드 1에서 클라우드 2로 이송되었음을 의미합니다. 실제 클라우드 간 이송 시나리오에서는 로드 밸런서를 업데이트하여 클라우드 2의 노드를 가리킨 다음 클라우드 1의 노드를 중지합니다. 하지만 이 로컬 시뮬레이션에서는 그런 작업이 필요하지 않습니다.
 
-## Step 11. 클러스터 정지시키기
+## 11단계. 클러스터 정지시키기
 
  모든 작업을 완료했다면, YCSB 에 해당하는 터미널로 전환한 후 **CTRL-C** 를 눌러 YCSB를 중지합니다. HAProxy 및 각 CockroachDB 노드에 대해 동일한 작업을 수행합니다.
 
