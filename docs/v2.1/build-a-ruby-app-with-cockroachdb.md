@@ -44,7 +44,7 @@ $ cockroach cert create-client maxroach --certs-dir=certs --ca-key=my-safe-direc
 
 ## 4단계. Ruby 코드 실행하기
 
-이제 데이터베이스와 사용자가 있으므로 코드를 실행하여 표를 만들고 행을 삽입한 다음, 코드를 실행하여 원자성 [transaction](transactions.html)으로 값을 읽고 업데이트합니다.
+이제 데이터베이스와 사용자가 있으므로 코드를 실행하여 표를 만들고 행을 삽입한 다음, 코드를 실행하여 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
 
 ### 기초적인 명령문
 
