@@ -131,7 +131,7 @@ $ cockroach start \
     > GRANT system_ops TO maxroach;
     ~~~
 
-7. `system_ops` 역할에 방금 추가한 권한을 테스트하려면, `\q` 또는 `ctrl-d`를 사용하여 대화형 쉘을 종료한 다음, 쉘을 다시 `maxroach` 사용자로 엽니 다 (누가 `system_ops` 역할의 구성원인지):
+7. `system_ops` 역할에 방금 추가한 권한을 테스트하려면, `\q` 또는 `ctrl-d`를 사용하여 대화형 쉘을 종료한 다음, 쉘을 다시 `maxroach` 사용자로 엽니다 (누가 `system_ops` 역할의 구성원인지):
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -232,7 +232,7 @@ $ cockroach start \
     +------------+--------+-----------+-------+------------+
     ~~~
 
-    {{site.data.alerts.callout_info}}역할이나 사용자의 권한은 모두 삭제되기 전에 되어야 합니다.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_info}}역할이나 사용자의 권한은 모두 삭제되기 전에 취소되어야 합니다.{{site.data.alerts.end}}
 
     {% include copy-clipboard.html %}
     ~~~ sql
