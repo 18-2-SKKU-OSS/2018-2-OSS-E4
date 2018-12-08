@@ -16,63 +16,58 @@ Rest에서의 암호화는 로컬 디스크에 있는 노드의 데이터를 투
 
 ## 개요
 
-Encryption at Rest allows encryption of all files on disk using [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) in [counter mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Counter_(CTR)), with all key
-sizes allowed.
+
+Rest에서의 암호화는 모든 키 크기가 허용되는 [카운터 모드](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Counter_(CTR))의 [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)를 사용하여 디스크에 있는 모든 파일을 암호화할 수 있다.
 
 암호화는 [저장소 계층](architecture/storage-layer.html)에서 수행되고 저장소별로 구성됩니다.
 내용에 관계없이 상점에서 사용하는 모든 파일은 원하는 알고리즘으로 암호화됩니다.
 
 임의의 순환 스케쥴을 허용하고 키의 보안을 보장하기 위해, 두 개의 키 계층을 사용합니다:
 
-+ **키 저장**은 사용자에 의해 파일로 제공합니다. 이들은 데이터 키 목록을 암호화하는 데 사용됩니다 (아래 참조). 이것을 **키 암호화 키**라고 합니다: its only purpose is to encrypt other keys. Store keys are never persisted by CockroachDB. Since very little data is encrypted using this key, it can have a very long lifetime without risk of reuse.
++ **키 저장**은 사용자에 의해 파일로 제공합니다. 이들은 데이터 키 목록을 암호화하는 데 사용됩니다 (아래 참조). 이것을 **키 암호화 키**라고 합니다: 유일한 목적은 다른 키를 암호화하는 것입니다. 저장소 키는 CockroachDB에 의해 절대 유지되지 않습니다. 이 키를 사용하여 암호화된 데이터는 매우 적기 때문에, 재사용 위험없이 매우 긴 수명을 유지할 수 있습니다.
 
 + **데이터 키**는 CockroachDB에 의해 자동 생성됩니다. 이들은 디스크의 모든 파일을 암호화하는 데 사용됩니다.  이것을 **데이터 암호화 키**라고 합니다. 데이터 키는 저장소 키를 사용하여 암호화된 키 레지스트리 파일에 유지됩니다. 키의 재사용을 피하기 위해 수명이 짧습니다.
 
-Store keys are specified at node startup by passing a path to a locally readable file. The file must contain 32 bytes (the key ID) followed by the key (16, 24, or 32 bytes). The size of the key dictates the version of AES to use (AES-128, AES-192, or AES-256). For an example showing how to create a store key, see [Generating key files](#generating-key-files) below.
+저장소 키는 노드가 시작할 때 로컬로 읽을 수 있는 파일에 경로를 전달하여 지정합니다. 파일에는 32 바이트 (키 ID)와 그 뒤에 키 (16, 24 또는 32 바이트)가 있어야 합니다. 키 크기에 따라 사용할 AES 버전 (AES-128, AES-192 또는 AES-256)이 결정됩니다. 저장소 키를 만드는 방법을 보여주는 예제는 아래의 [키 파일 생성](#generating-key-files)을 참조하십시오.
 
-Also during node startup, CockroachDB uses a data key with the same length as the store key. If encryption has just been enabled,
-the key size has changed, or the data key is too old (default lifetime is one week), CockroachDB generates a new data key.
+또한 노드 시작 중에, CockroachDB는 저장소 키와 동일한 길이의 데이터 키를 사용합니다. 암호화가 활성화되었거나, 키 크기가 변경되었거나, 데이터 키가 너무 오래되면 (기본 수명은 1주), CockroachDB는 새로운 데이터 키를 생성합니다.
 
 저장소에서 생성된 새 파일은 현재-활성 데이터 키를 사용합니다. 모든 데이터 키 (활성 및 이전 키 모두)는 키 레지스트리 파일에 저장되고 활성 저장 키로 암호화됩니다.
 
 시작한 후, 활성 데이터 키가 너무 오래되면, CockroachDB는 새로운 데이터 키를 생성하고 이를 모든 추가 암호화에 사용하여 활성으로 표시합니다.
 
-CockroachDB does not currently force re-encryption of older files but instead relies on normal RocksDB churn to slowly rewrite all data with the desired encryption.
+CockroachDB는 현재 오래된 파일의 재 암호화를 강제하지 않지만, 대신 정상적인 RocksDB churn에 의존하여 모든 데이터를 원하는 암호화로 천천히 다시 쓰게됩니다.
 
 ## 회전 키
 
 여러 이유로 인해 Rest에서의 암호화에는 키 회전이 필요합니다:
 
-* To prevent key reuse with the same encryption parameters (after encrypting many files).
-* To reduce the risk of key exposure.
+* 동일한 암호화 매개변수로 키 재사용을 방지합니다.(많은 파일을 암호화한 후)
+* 키 노출 위험을 줄이기 위해. 
 
-Store keys are specified by the user and must be rotated by specifying different keys.
-This is done by setting the `key` parameter of the `--enterprise-encryption` flag to the path to the new key,
-and `old-key` to the previously-used key.
+저장소 키는 사용자에 의해 지정되므로 다른 키를 지정하여 회전되어야 합니다.
+이것은 `--enterprise-encryption` 플래그의 `key` 매개변수를 새로운 키의 경로로 설정하고, 이전에 사용된 키를`old-key`로 설정함으로써 이루어집니다.
 
-Data keys will automatically be rotated at startup if any of the following conditions are met:
+다음 조건 중 하나가 충족되면 시작시 데이터 키가 자동으로 회전됩니다:
 
-* The active store key has changed.
-* The encryption type has changed (different key size, or plaintext to/from encryption).
-* The current data key is `rotation-period` old or more.
+* 활성 저장소 키가 변경되었습니다.
+* 암호화 유형이 변경되었습니다 (다른 키 크기 또는 암호화로/암호화에서 일반 텍스트).
+* 현재 데이터 키는 `rotation-period` 이상입니다.
 
-Data keys will automatically be rotated at runtime if the current data key is `rotation-period` old or more.
+현재 데이터 키가 `rotation-period` 이상인 경우, 런타임시 데이터 키가 자동으로 회전됩니다.
 
-Once rotated, an old store key cannot be made the active key again.
+한 번 회전하면, 이전 저장소 키를 다시 활성 키로 만들 수 없습니다.
 
-Upon store key rotation the data keys registry is decrypted using the old key and encrypted with the new
-key. The newly-generated data key is used to encrypt all new data from this point on.
+저장소 키 회전시 데이터 키 레지스트리는 이전 키를 사용하여 암호 해독되고 새 키로 암호화됩니다
+새로 생성된 데이터 키는 이 지점의 모든 새 데이터를 암호화하는 데 사용됩니다.
 
 ## 암호화 유형 변경
 
-The user can change the encryption type from plaintext to encryption, between different encryption algorithms
-(using various key sizes), or from encryption to plaintext.
+사용자는 암호화 유형을 일반 텍스트에서 다른 암호화 알고리즘 사이의 암호화로 변경할 수 있습니다 (다양한 키 크기 사용) 또는 암호화에서 일반 텍스트로 변환할 수 있습니다.
 
-When changing the encryption type to plaintext, the data key registry is no longer encrypted and all previous
-data keys are readable by anyone. All data on the store is effectively readable.
+암호화 유형을 일반 텍스트로 변경하면, 데이터 키 레지스트리가 더 이상 암호화되지 않고 이전의 모든 데이터 키는 누구나 읽을 수 있습니다. 저장소의 모든 데이터를 효과적으로 읽을 수 있습니다.
 
-When changing from plaintext to encryption, it will take some time for all data to eventually be re-written
-and encrypted.
+일반 텍스트에서 암호화로 변경하면, 결국 모든 데이터가 다시 쓰여지고 암호화 될 때까지 약간의 시간이 걸립니다.
 
 ## 권장 사항
 
@@ -91,45 +86,44 @@ CockroachDB는 암호화가 요청될 때 시작시 코어 파일을 비활성�
 
 키 관리는 암호화의 가장 위험한 측면입니다. 다음 규칙을 염두에 두어야 합니다:
 
-* Make sure that only the UNIX user running the `cockroach` process has access to the keys.
-* Do not store the keys on the same partition/drive as the CockroachDB data. It is best to load keys at run time from a separate system (e.g., [Keywhiz](https://square.github.io/keywhiz/), [Vault](https://www.hashicorp.com/products/vault)).
-* Rotate store keys frequently (every few weeks to months).
-* Keep the data key rotation period low (default is one week).
+* `cockroach` 프로세스를 실행하는 UNIX 사용자만 키에 접근할 수 있는지 확인하십시오.
+* CockroachDB 데이터와 동일한 파티션/드라이브에 키를 저장하지 마십시오. 별도의 시스템 (예: [Keywhiz](https://square.github.io/keywhiz/), [Vault](https://www.hashicorp.com/products/vault))에서 실행 시간에 키를 로드하는 것이 가장 좋습니다.
+* 저장소 키를 자주 회전 (몇 주에서 몇 달 간격으로).
+* 데이터 키 순환 기간을 낮게 유지 (기본값은 1주).
 
 ### 다른 권장사항
 
-A few other recommendations apply for best security practices:
+최상의 시큐리티 관행에는 몇 가지 다른 권장 사항이 적용됩니다:
 
-* Do not switch from encrypted to plaintext, this leaks data keys. When plaintext is selected, all previously encrypted data must be considered reachable.
-* Do not copy the encrypted files, as the data keys are not easily available.
-* If encryption is desired, start a node with it enabled from the first run, without ever running in plaintext.
+* 암호화된 데이터를 일반 텍스트로 전환하지 마십시오. 데이터 키가 유출됩니다. 일반 텍스트를 선택하면, 이전에 암호화된 모든 데이터를 도달할 수 있는 것으로 간주해야 합니다.
+* 데이터 키를 쉽게 사용할 수 없으므로, 암호화된 파일을 복사하지 마십시오.
+* 암호화가 필요한 경우, 일반 텍스트로 실행하지 않고, 첫 번째 실행에서 활성화된 노드를 시작합니다.
 
 {{site.data.alerts.callout_danger}}
-Note that backups taken with the [`BACKUP`](backup.html) statement **are not encrypted** even if Encryption at Rest is enabled. Encryption at Rest only applies to the CockroachDB node's data on the local disk. If you want encrypted backups, you will need to encrypt your backup files using your preferred encryption method.
+Rest에서의 암호화가 활성화되어 있어도, [`BACKUP`](backup.html) 명령문으로 수행된 백업은 **암호화되지 않습니다**. Rest에서의 암호화는 로컬 디스크에서의 CockroachDB 노드의 데이터에만 적용됩니다. 암호화된 백업을 원하면, 원하는 암호화 방법을 사용하여 백업 파일을 암호화해야 합니다.
 {{site.data.alerts.end}}
 
 ## 예제
 
 ### 키 파일 생성
 
-Cockroach determines which encryption algorithm to use based on the size of the key file.
-The key file must contain random data making up the key ID (32 bytes) and the actual key (16, 24, or 32
-bytes depending on the encryption algorithm).
+Cockroach는 키 파일의 크기에 따라 사용할 암호화 알고리즘을 결정합니다.
+키 파일은 키 ID (32 바이트)와 실제 키 (암호화 알고리즘에 따라 16, 24 또는 32 바이트)를 구성하는 임의의 데이터를 포함해야 합니다.
 
-| Algorithm | Key size | Key file size |
+| 알고리즘 | 키 크기 | 키 파일 크기 |
 |-|-|-|
 | AES-128 | 128 bits (16 bytes) | 48 bytes |
 | AES-192 | 192 bits (24 bytes) | 56 bytes |
 | AES-256 | 256 bits (32 bytes) | 64 bytes |
 
-Generating a key file can be done using the `cockroach` CLI:
+키 파일 생성은 `cockroach` CLI를 사용하여 수행할 수 있습니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach gen encryption-key -s 128 /path/to/my/aes-128.key
 ~~~
 
-Or the equivalent [openssl](https://www.openssl.org/docs/man1.0.2/apps/openssl.html) CLI command:
+또는 동등한 [openssl](https://www.openssl.org/docs/man1.0.2/apps/openssl.html) CLI 명령:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -138,22 +132,21 @@ $ openssl rand -out /path/to/my/aes-128.key 48
 
 ### 암호화된 노드 시작
 
-Encryption is configured at node start time using the `--enterprise-encryption` command line flag.
+`--enterprise-encryption` command line flag. 암호화는`--enterprise-encryption` 명령 행 플래그를 사용하여 노드 시작 시간에 구성됩니다.
 플래그는 노드의 스토어 중 하나에 대한 암호화 옵션을 지정합니다. 여러 저장소가 있는 경우,플래그는 각 저장소에 대해 지정되어야 합니다.
 
-The flag takes the form: `--enterprise-encryption=path=<store path>,key=<key file>,old-key=<old key file>,rotation-period=<period>`.
+플래그는 다음 형식을 취합니다: `--enterprise-encryption=path=<store path>,key=<key file>,old-key=<old key file>,rotation-period=<period>`.
 
 플래그에 허용되는 구성 요소는 다음과 같습니다:
 
-| 구성 요소 | Requirement | 설명 |
+| 구성 요소 | 요구 여부 | 설명 |
 |-|-|-|
-| `path`            | Required | Path of the store to apply encryption to. |
-| `key`             | Required | Path to the key file to encrypt data with, or `plain` for plaintext. |
-| `old-key`         | Required | Path to the key file the data is encrypted with, or `plain` for plaintext. |
-| `rotation-period` | Optional | How often data keys should be automatically rotated. Default: one week. |
+| `path`            | 요구됨 | 암호화를 적용할 저장소의 경로. |
+| `key`             | 요구됨 | 데이터를 암호화할 키 파일의 경로 또는 일반 텍스트의 `plain` |
+| `old-key`         | 요구됨 | 데이터가 암호화된 키 파일의 경로 또는 일반 텍스트의 `plain`. |
+| `rotation-period` | 선택 | 데이터 키가 자동으로 순환되는 빈도. 기본값 : 1주. |
 
-The `key` and `old-key` components must **always** be specified. They allow for transitions between
-encryption algorithms, and between plaintext and encrypted.
+`key` 와 `old-key` 구성 요소는 **항상** 지정되어야 합니다. 암호화 알고리즘 간 및 일반 텍스트와 암호화 간 전환을 허용합니다.
 
 AES-128 암호화를 사용하여 처음으로 노드를 시작하는 작업은 다음을 사용하여 수행할 수 있습니다:
 
@@ -168,7 +161,7 @@ $ cockroach start --store=cockroach-data --enterprise-encryption=path=cockroach-
 
 ### 암호화 상태 확인
 
-Encryption status can be seen on the node's stores report, reachable through: `http(s)://nodeaddress:8080/#/reports/stores/local` (or replace `local` with the node ID). For example, if you are running a [local cluster](secure-a-cluster.html), you can see the node's stores report at <https://localhost:8888/#/reports/stores/local>.
+암호화 상태는 노드의 저장소 레포트에서 확인할 수 있으며, 다음을 통해 확인할 수 있습니다: `http(s)://nodeaddress:8080/#/reports/stores/local` (또는 `local`을 노드 ID로 대체). 예를 들어, [로컬 클러스터](secure-a-cluster.html)를 실행중인 경우, <https://localhost:8888/#/reports/stores/local>에서 노드의 저장소 보고서를 볼 수 있습니다.
 
 이 레포트에는 다음을 포함하여 선택한 노드의 모든 저장소에 대한 암호화 상태가 표시됩니다:
 
@@ -176,20 +169,20 @@ Encryption status can be seen on the node's stores report, reachable through: `h
 * 활성 데이터 키 정보.
 * 활성 데이터 키를 사용하여 암호화된 파일/바이트 비율.
 
-CockroachDB relies on RocksDB compactions to write new files using the latest encryption key. It may take several days for all files to be replaced. Some files are only rewritten at startup, and some keep older copies around, requiring multiple restarts. You can force RocksDB compaction with the `cockroach debug compact` command (the node must first be [stopped](stop-a-node.html)).
+CockroachDB는 RocksDB 압축에 의존하여 최신 암호화 키를 사용하여 새 파일을 작성합니다. 모든 파일을 교체하는 데 며칠이 걸릴 수 있습니다. 일부 파일은 시작시에만 다시 쓰여지고, 일부는 오래된 복사본을 보관하며, 여러 번 다시 시작해야 합니다. `cockroach debug compact` 명령으로 RocksDB 압축을 강제할 수 있습니다 (노드는 먼저 [중지](stop-a-node.html)되어야 합니다)
 
-A more detailed list of encryption keys in use for each file is available using the `cockroach debug encryption-status` command.
+
+각 파일에 사용되는 암호화 키의 자세한 목록은 `cockroach debug encryption-status` 명령을 사용하여 구할 수 있습니다.
 
 키에 대한 정보는 다음을 포함하여 [로그](debug-and-error-logs.html)에 기록됩니다:
 
-* Active/old key information at startup.
-* New key information after data key rotation.
+* 시작시 활성/이전 키 정보.
+* 데이터 키 회전 후 새 키 정보.
 
 ### 암호화 알고리즘 또는 키 변경
 
-Encryption type and keys can be changed at any time by restarting the node.
-To change keys or encryption type, the `key` component of the `--enterprise-encryption` flag is set to the new key,
-while the key previously used must be specified in the `old-key` component.
+암호화 유형 및 키는 노드를 다시 시작하여 언제든지 변경할 수 있습니다.
+키 또는 암호화 유형을 변경하려면, `--enterprise-encryption` 플래그의 `key` 구성 요소가 새로운 키로 설정되고, 이전에 사용된 키는 `old-key` 구성 요소에 지정되어야 합니다.
 
 예를 들어, 다음을 사용하여 AES-128에서 AES-256으로 전환할 수 있습니다:
 
