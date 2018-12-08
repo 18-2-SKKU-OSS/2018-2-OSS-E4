@@ -134,7 +134,7 @@ CREATE INDEX foo_b_idx ON foo (b) PARTITION BY LIST (b) (
 
 충돌을 피하기 위해 인덱스 이름을 사용하는 명명 체계를 사용해보십시오. 예를 들어, 위의 파티션은 `primary_idx_bar`,`primary_idx_default`,`b_idx_baz`,`b_idx_default`로 명명될 수 있습니다.
 
-#### Define partitions on interleaved tables
+#### 인터리브된 테이블에 파티션 정의
 
 [인터리브된 테이블](interleave-in-parent.html)의 경우, 파티션은 인터리브 계층 구조의 루트 테이블에서만 정의될 수 있으며 자식은 부모와 같은 인터리브로 나타납니다.
 
