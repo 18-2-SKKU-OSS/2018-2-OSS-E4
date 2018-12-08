@@ -4,35 +4,35 @@ summary: Roles are SQL groups that contain any number of users and roles as memb
 toc: true
 ---
 
-Roles are SQL groups that contain any number of users and roles as members. To create and manage your cluster's roles, use the following statements:
+역할은 구성원으로 여러 사용자와 역할을 포함하는 SQL 그룹입니다. 클러스터 역할을 생성하고 관리하려면, 다음 명령문을 사용하십시오:
 
-- [`CREATE ROLE` (Enterprise)](create-role.html)
-- [`DROP ROLE` (Enterprise)](drop-role.html)
-- [`GRANT <roles>` (Enterprise)](grant-roles.html)
-- [`REVOKE <roles>` (Enterprise)](revoke-roles.html)
+- [`CREATE ROLE` (엔터프라이즈)](create-role.html)
+- [`DROP ROLE` (엔터프라이즈)](drop-role.html)
+- [`GRANT <roles>` (엔터프라이즈)](grant-roles.html)
+- [`REVOKE <roles>` (엔터프라이즈)](revoke-roles.html)
 - [`GRANT <privileges>`](grant.html)
 - [`REVOKE <privileges>`](revoke.html)
 - [`SHOW ROLES`](show-roles.html)
 - [`SHOW GRANTS`](show-grants.html)
 
 
-## Terminology
+## 용어
 
-To get started, basic role terminology is outlined below:
+시작하기 위해, 기본 역할 용어가 아래에 요약되어 있습니다:
 
-Term | Description
+용어 | 설명
 -----|------------
-Role | A group containing any number of [users](create-and-manage-users.html) or other roles.<br><br>Note: All users belong to the `public` role, to which you can [grant](grant.html) and [revoke](revoke.html) privileges.
-Role admin | A member of the role that's allowed to modify role membership. To create a role admin, use [`WITH ADMIN OPTION`](grant-roles.html#grant-the-admin-option).
-Superuser / Admin | A member of the `admin` role. Only superusers can [`CREATE ROLE`](create-role.html) or [`DROP ROLE`](drop-role.html). The `admin` role is created by default and cannot be dropped.
-`root` | A user that exists by default as a member of the `admin` role. The `root` user must always be a member of the `admin` role.
-Inherit | The behavior that grants a role's privileges to its members.
-Direct member | A user or role that is an immediate member of the role.<br><br>Example: `A` is a member of `B`.
-Indirect member | A user or role that is a member of the role by association. <br><br>Example: `A` is a member of `C` ... is a member of `B` where "..." is an arbitrary number of memberships.
+역할 | 임의의 수의 [사용자](create-and-manage-users.html) 또는 다른 역할을 포함하는 그룹.<br><br>참고: 모든 사용자는 권한을 [부여](grant.html)하고 권한을 [취소](revoke.html)할 수 있는 `public`역할을 담당합니다.
+역할 관리자 | 역할 구성원을 수정할 수 있는 역할의 구성원. 역할 관리자를 생성하려면, [`WITH ADMIN OPTION`](grant-roles.html#grant-the-admin-option)을 사용하십시오.
+수퍼 유저 / 관리자 | `admin` 역할의 구성원. 수퍼 유저만 [`CREATE ROLE`](create-role.html) 또는 [`DROP ROLE`](drop-role.html)할 수 있습니다. `admin` 역할은 기본적으로 생성되며 삭제될 수 없습니다.
+`root` | 기본적으로 `admin` 역할의 구성원으로 존재하는 사용자. `root` 사용자는 항상 `admin` 역할의 구성원이어야 합니다.
+상속 | 구성원에게 역할의 권한을 부여하는 동작.
+다이렉트 구성원 | 역할의 직접적인 구성원인 사용자 또는 역할.<br><br>예: `A`는 `B`의 구성원입니다.
+인다이렉트 구성원 | 연결별 역할의 구성원인 사용자 또는 역할.<br><br> `A`는 `C`의 구성원입니다 ...는 "..."가 임의의 회원 수인 `B`의 구성원입니다.  
 
-## Example
+## 예제
 
-For the purpose of this example, you need an [enterprise license](enterprise-licensing.html) and one CockroachDB node running in insecure mode:
+이 예제의 경우, 인시큐어 모드에서 실행되는 [엔터프라이즈 라이센스](enterprise-licensing.html)와 하나의 CockroachDB 노드가 필요합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -42,21 +42,21 @@ $ cockroach start \
 --listen-addr=localhost:26257
 ~~~
 
-1. As the `root` user, use the [`cockroach user`](create-and-manage-users.html) command to create a new user, `maxroach`:
+1. `root` 사용자로서,[`cockroach user`](create-and-manage-users.html) 명령을 사용하여 새로운 사용자인 `maxroach`를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach user set maxroach --insecure
     ~~~
 
-2. As the `root` user, open the [built-in SQL client](use-the-built-in-sql-client.html):
+2. `root`사용자로서, [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 여십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-3. Create a database and set it as the default:
+3. 데이터베이스를 생성하고 그것을 기본값으로 설정하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -68,7 +68,7 @@ $ cockroach start \
     > SET DATABASE = test_roles;
     ~~~
 
-4. [Create a role](create-role.html) and then [list all roles](show-roles.html) in your database:
+4. [역할을 생성](create-role.html)하고 다음 데이터베이스에 [모든 역할을 나열](show-roles.html)하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -89,7 +89,7 @@ $ cockroach start \
     +------------+
     ~~~
 
-5. Grant privileges to the `system_ops` role you created:
+5. 생성한 `system_ops` 역할에 권한을 부여하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -124,21 +124,21 @@ $ cockroach start \
     +------------+--------------------+------------+------------+
     ~~~
 
-6. Add the `maxroach` user to the `system_ops` role:
+6. `maxroach` 사용자를 `system_ops` 역할에 추가하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > GRANT system_ops TO maxroach;
     ~~~
 
-7. To test the privileges you just added to the `system_ops` role, use `\q` or `ctrl-d` to exit the interactive shell, and then open the shell again as the `maxroach` user (who is a member of the `system_ops` role):
+7. `system_ops` 역할에 방금 추가한 권한을 테스트하려면, `\q` 또는 `ctrl-d`를 사용하여 대화형 쉘을 종료한 다음, 쉘을 다시 `maxroach` 사용자로 엽니 다 (누가 `system_ops` 역할의 구성원인지):
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --user=maxroach --database=test_roles --insecure
     ~~~
 
-8. As the `maxroach` user, create a table:
+8. `maxroach` 사용자로서, 테이블을 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -148,9 +148,9 @@ $ cockroach start \
       );
     ~~~
 
-    We were able to create the table because `maxroach` has `CREATE` privileges.
+    `maxroach`는 `CREATE` 권한을 가지고 있기 때문에 우리는 테이블을 생성할 수 있었습니다.
 
-9. As the `maxroach` user, try to drop the table:
+9. `maxroach` 사용자로서, 테이블을 삭제하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -161,9 +161,9 @@ $ cockroach start \
     pq: user maxroach does not have DROP privilege on relation employees
     ~~~
 
-    You cannot drop the table because your current user (`maxroach`) is a member of the `system_ops` role, which doesn't have `DROP` privileges.
+    현재 사용자 (`maxroach`)가 `DROP` 권한이 없는 `system_ops` 역할의 멤버이기 때문에, 테이블을 삭제할 수 없습니다.
 
-10. `maxroach` has `CREATE` and `SELECT` privileges, so try a `SHOW` statement:
+10. `maxroach` 는 `CREATE`와`SELECT` 권한을 가지므로, `SHOW` 명령문을 사용하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -181,14 +181,14 @@ $ cockroach start \
     +------------+--------+-----------+------------+------------+
     ~~~
 
-11. Now switch back to the `root` user to test more of the SQL statements related to roles. Use `\q` or `ctrl-d` to exit the interactive shell, and then open the shell again as the `root` user:
+11. 이제 역할과 관련된 더 많은 SQL 명령문을 테스트하기 위해 `root` 사용자로 다시 전환하십시오. 대화식 쉘을 종료하려면, `\q` 또는 `ctrl-d`를 사용하고, 쉘을 `root` 사용자로 다시 엽니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-12. As the `root` user, revoke privileges and then drop the `system_ops` role:
+12. `root` 사용자로서 권한을 취소한 다음 `system_ops` 역할을 삭제하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -232,14 +232,14 @@ $ cockroach start \
     +------------+--------+-----------+-------+------------+
     ~~~
 
-    {{site.data.alerts.callout_info}}All of a role or user's privileges must be revoked before it can be dropped.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_info}}역할이나 사용자의 권한은 모두 삭제되기 전에 되어야 합니다.{{site.data.alerts.end}}
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > DROP ROLE system_ops;
     ~~~
 
-## See also
+## 더 보기
 
 - [`CREATE ROLE`](create-role.html)
 - [`DROP ROLE`](drop-role.html)
@@ -249,6 +249,6 @@ $ cockroach start \
 - [`REVOKE <privileges>`](revoke.html)
 - [`REVOKE <roles>` (Enterprise)](revoke-roles.html)
 - [`SHOW GRANTS`](show-grants.html)
-- [Manage Users](create-and-manage-users.html)
-- [Privileges](privileges.html)
-- [Other Cockroach Commands](cockroach-commands.html)
+- [사용자 관리](create-and-manage-users.html)
+- [권한](privileges.html)
+- [다른 Cockroach 명령어들](cockroach-commands.html)
