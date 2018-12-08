@@ -5,24 +5,24 @@ toc: true
 twitter: false
 ---
 
-This tutorial shows you how build a simple Clojure application with CockroachDB using [leiningen](https://leiningen.org/) and a PostgreSQL-compatible driver.
+이 튜토리얼에서는 [leiningen](https://leiningen.org/)와 PostgreSQL과 호환되는 드라이버를 사용하여 CockroachDB로 간단한 Clojure 어플리케이션을 제작하는 방법을 보여줍니다.
 
-We have tested the [Clojure java.jdbc driver](http://clojure-doc.org/articles/ecosystem/java_jdbc/home.html) in conjunction with the [PostgreSQL JDBC driver](https://jdbc.postgresql.org/) enough to claim **beta-level** support, so that combination is featured here. If you encounter problems, please [open an issue](https://github.com/cockroachdb/cockroach/issues/new) with details to help us make progress toward full support.
+[Clojure java.jdbc driver](http://clojure-doc.org/articles/ecosystem/java_jdbc/home.html)는 [PostgreSQL JDBC driver](https://jdbc.postgresql.org/)와 함께  **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다. 만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도 도와주시길 부탁드립니다.
 
 
-## Before you begin
+## 시작하기 전에
 
-Make sure you have already [installed CockroachDB](install-cockroachdb.html).
+[설치된 CockroachDB](install-cockroachdb.html)가 이미 설치되어있는지 확인하시오.
 
-## Step 1. Install `leiningen`
+## 1단계. `leiningen` 설치하기
 
-Install the Clojure `lein` utility as described in its [official documentation](https://leiningen.org/).
+[공식 설명서](https://leiningen.org/)에 설명된 대로 Clojure `lein` 유틸리티를 설치하십시오.
 
 {% include {{ page.version.version }}/app/common-steps.md %}
 
-## Step 5. Create a table in the new database
+## 5단계. 새로운 데이터베이스에 표 생성하기
 
-As the `maxroach` user, use the [built-in SQL client](use-the-built-in-sql-client.html) to create an `accounts` table in the new database.
+`maxroach` 사용자로 [built-in SQL client](use-the-built-in-sql-client.html)를 사용하여 새로운 데이터베이스에 `accounts` 표를 생성하시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -32,49 +32,50 @@ $ cockroach sql --insecure \
 -e 'CREATE TABLE accounts (id INT PRIMARY KEY, balance INT)'
 ~~~
 
-## Step 6. Run the Clojure code
+## 6단계. Clojure 코드 실행하기
 
-Now that you have a database and a user, you'll run code to create a table and insert some rows, and then you'll run code to read and update values as an atomic [transaction](transactions.html).
+이제 데이터베이스와 사용자가 있으므로 코드를 실행하여 표를 만들고 행을 삽입한 다음, 코드를 실행하여 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
 
-### Create a basic Clojure/JDBC project
+### 기초적인 Clojure/JDBC project 생성하기
 
-1. Create a new directory `myapp`.
-2. Create a file `myapp/project.clj` and populate it with the following code, or <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/project.clj" download>download it directly</a>. Be sure to place the file in the subdirectory `src/test` in your project.
+1. 새디렉터리 `myapp`을 만드시오.
+2. `myapp/project.clj` 파일을 생성하고 다음 코드로 채우거나,  <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/project.clj" download>직접 다운로드 하시오</a>. 프로젝트의 하위 디렉터리 `src/test`에 파일을 저장하시오.
 
     {% include copy-clipboard.html %}
     ~~~ clojure
     {% include {{ page.version.version }}/app/project.clj %}
     ~~~
 
-3. Create a file `myapp/src/test/util.clj` and populate it with the code from <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/util.clj" download>this file</a>. Be sure to place the file in the subdirectory `src/test` in your project.
+3. `myapp/src/test/util.clj` 파일을 생성하고 <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/util.clj" download>파일의</a> 코드로 채우시오. 프로젝트의 하위 디렉터리 `src/test`에 파일을 저장하시오.
 
-### Basic statements
+### 기초적인 명령문
 
-First, use the following code to connect as the `maxroach` user and execute some basic SQL statements, inserting rows and reading and printing the rows.
 
-Create a file `myapp/src/test/test.clj` and copy the code below to it, or <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/basic-sample.clj" download>download it directly</a>. Be sure to rename this file to `test.clj` in the subdirectory `src/test` in your project.
+첫째로, 다음 코드를 이용하여 `maxroach` 사용자에 연결하고, 몇 가지 기본 SQL 명령문을 실행하고, 표를 생성하고, 행을 삽입하고, 행을 읽고 인쇄합니다.
+
+`myapp/src/test/test.clj` 파일을 생성하고 아래 코드를 복사하거나, <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/basic-sample.clj" download>직접 다운로드하시오</a>. 프로젝트의 하위 디렉터리 `src/test`에서 이 파일의 이름을 `test.clj`로 바꾸시오.
 
 {% include copy-clipboard.html %}
 ~~~ clojure
 {% include {{ page.version.version }}/app/basic-sample.clj %}
 ~~~
 
-Run with:
+실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 lein run
 ~~~
 
-### Transaction (with retry logic)
+### 트랜잭션 (재시도 논리 사용)
 
-Next, use the following code to again connect as the `maxroach` user but this time execute a batch of statements as an atomic transaction to transfer funds from one account to another, where all included statements are either committed or aborted.
+다음으로, 다음 코드를 이용하여 다시 `maxroach` 사용자로 연결하지만, 이번에는 포함된 모든 명령문이 커밋되거나 중단되는 한 계좌에서 다른 계좌로 자금을 이전하기 위해 원자성 트랜잭션으로 명령문 그룹을 실행할 것입니다.
 
-Copy the code below to `myapp/src/test/test.clj` or
-<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/txn-sample.clj" download>download it directly</a>. Again, preserve the file name `test.clj`.
+아래의 코드를 `myapp/src/test/test.clj`에 복사하거나 
+<a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/app/txn-sample.clj" download>직접 다운로드 받으시오</a>. 파일명`test.clj`은 유지하십시오.
 {{site.data.alerts.callout_info}}
-With the default `SERIALIZABLE` isolation level, CockroachDB may require the
-[client to retry a transaction](transactions.html#transaction-retries) in case of read/write contention. CockroachDB provides a generic **retry function** that runs inside a transaction and retries it as needed. You can copy and paste the retry function from here into your code.
+CockroachDB는 읽기/쓰기 경합 시 
+[클라이언트가 트랜잭션을 다시 시도하기](transactions.html#transaction-retries)를 요구할 수 있습니다. CockroachDB 는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 **재시도 함수**를 제공합니다. 여기서 재시도 함수를 복사하여 코드에 붙여 넣을 수 있습니다.
 {{site.data.alerts.end}}
 
 {% include copy-clipboard.html %}
@@ -82,14 +83,14 @@ With the default `SERIALIZABLE` isolation level, CockroachDB may require the
 {% include {{ page.version.version }}/app/txn-sample.clj %}
 ~~~
 
-Run with:
+실행하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 lein run
 ~~~
 
-After running the code, use the [built-in SQL client](use-the-built-in-sql-client.html) to verify that funds were transferred from one account to another:
+코드를 실행시긴 후에, 한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면 [built-in SQL client](use-the-built-in-sql-client.html)을 사용하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -106,8 +107,8 @@ $ cockroach sql --insecure -e 'SELECT id, balance FROM accounts' --database=bank
 (2 rows)
 ~~~
 
-## What's next?
+## 더 보기
 
-Read more about using the [Clojure java.jdbc driver](http://clojure-doc.org/articles/ecosystem/java_jdbc/home.html).
+[Clojure java.jdbc driver](http://clojure-doc.org/articles/ecosystem/java_jdbc/home.html) 사용법에 대해 자세히 읽어보세요.
 
 {% include {{ page.version.version }}/app/see-also-links.md %}
