@@ -5,16 +5,16 @@ toc: true
 twitter: true
 ---
 
-This tutorial shows you how build a simple C# (.NET) application with CockroachDB using a PostgreSQL-compatible driver.
+이 튜토리얼에서는 PostgreSQL과 호환되는 드라이버를 사용하여 CockroachDB로 간단한 C# (.NET) 어플리케이션을 제작하는 방법을 보여줍니다.
 
-We have tested the [.NET Npgsql driver](http://www.npgsql.org/) enough to claim **beta-level** support, so that driver is featured here. If you encounter problems, please [open an issue](https://github.com/cockroachdb/cockroach/issues/new) with details to help us make progress toward full support.
+[.NET Npgsql driver](http://www.npgsql.org/)는 **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다. 만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도록 도와주시길 부탁드립니다.
 
 
-## Before you begin
+## 시작하기 전에
 
-Make sure you have already [installed CockroachDB](install-cockroachdb.html) and the <a href="https://www.microsoft.com/net/download/" data-proofer-ignore>.NET SDK</a> for your OS.
+[설치된 CockroachDB](install-cockroachdb.html)와 해당 OS용 <a href="https://www.microsoft.com/net/download/" data-proofer-ignore>.NET SDK</a>가 설치되어 있는지 확인하시오.
 
-## Step 1. Create a .NET project
+## 1단계. .NET project 생성하기
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -26,20 +26,20 @@ $ dotnet new console -o cockroachdb-test-app
 $ cd cockroachdb-test-app
 ~~~
 
-The `dotnet` command creates a new app of type `console`. The `-o` parameter creates a directory named `cockroachdb-test-app` where your app will be stored and populates it with the required files. The `cd cockroachdb-test-app` command puts you into the newly created app directory.
+`dotnet` 명령어는 `console` 형식의 새로운 앱을 생성합니다. `-o` 파라미터는 앱이 저장될 `cockroachdb-test-app`라는 디렉터리를 만들어 필요한 파일들로 채웁니다. `cd cockroachdb-test-app` 명령어를 실행하면 새로 생성된 앱 디렉터리에 들어가게 됩니다.
 
-## Step 2. Install the Npgsql driver
+## 2단계. Npgsql driver 설치하기
 
-Install the latest version of the [Npgsql driver](https://www.nuget.org/packages/Npgsql/) into the .NET project using the built-in nuget package manager:
+최신 버전의 [Npgsql driver](https://www.nuget.org/packages/Npgsql/)를 built-in nuget 패키지 매니저를 이용하여 .NET 프로젝트에 설치하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ dotnet add package Npgsql
 ~~~
 
-## Step 3. Start a single-node cluster
+## 3단계. 싱글-노드 클러스터 시작하기
 
-For the purpose of this tutorial, you need only one CockroachDB node running in insecure mode:
+이 튜토리얼을 위해서, 보안되지 않은 모드에서 실행되는 CockroachDB 노드 하나만 필요합니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -49,52 +49,52 @@ $ cockroach start \
 --listen-addr=localhost
 ~~~
 
-## Step 4. Create a user
+## 4단계. 사용자 생성하기
 
-In a new terminal, as the `root` user, use the [`cockroach user`](create-and-manage-users.html) command to create a new user, `maxroach`.
+새로운 터미널에서 `root` 사용자로 [`cockroach user`](create-and-manage-users.html)명령어를 사용하여 새로운 사용자인 `maxroach`를 생성하시오. 
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach user set maxroach --insecure
 ~~~
 
-## Step 5. Create a database and grant privileges
+## 5단계. 데이터베이스 생성 및 권한 부여하기
 
-As the `root` user, use the [built-in SQL client](use-the-built-in-sql-client.html) to create a `bank` database.
+`root` 사용자로서 [built-in SQL client](use-the-built-in-sql-client.html)를 사용하여 `bank` 데이터베이스를 생성하시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --insecure -e 'CREATE DATABASE bank'
 ~~~
 
-Then [grant privileges](grant.html) to the `maxroach` user.
+그리고 `maxroach` 사용자에 [권한 부여하기](grant.html)를 하시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --insecure -e 'GRANT ALL ON DATABASE bank TO maxroach'
 ~~~
 
-## Step 6. Run the C# code
+## 6단계. C# 코드 실행하기
 
-Now that you have a database and a user, you'll run code to create a table and insert some rows, and then you'll run code to read and update values as an atomic [transaction](transactions.html).
+이제 데이터베이스와 사용자가 있으므로 코드를 실행하여 표를 만들고 행을 삽입한 다음, 코드를 실행하여 원자성 [트랜잭션](transactions.html)으로 값을 읽고 업데이트합니다.
 
-### Basic statements
+### 기초적인 명령문
 
-Replace the contents of `cockraochdb-test-app/Program.cs` with the following code:
+`cockraochdb-test-app/Program.cs`의 내용을 다음 코드로 대체하시오:
 
 {% include copy-clipboard.html %}
 ~~~ csharp
 {% include {{ page.version.version }}/app/basic-sample.cs %}
 ~~~
 
-Then run the code to connect as the `maxroach` user and execute some basic SQL statements, creating a table, inserting rows, and reading and printing the rows:
+그리고 다음 코드를 실행하여 `maxroach` 사용자에 연결하고, 몇 가지 기본 SQL 명령문을 실행하고, 표를 생성하고, 행을 삽입하고, 행을 읽고 인쇄하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ dotnet run
 ~~~
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~
 Initial balances:
@@ -102,16 +102,16 @@ Initial balances:
 	account 2: 250
 ~~~
 
-### Transaction (with retry logic)
+### 트랜잭션 (재시도 논리 사용)
 
-Open `cockraochdb-test-app/Program.cs` again and replace the contents with the following code:
+`cockraochdb-test-app/Program.cs`를 다시 열고 내용을 다음 코드로 대체하시오:
 
 {% include copy-clipboard.html %}
 ~~~ csharp
 {% include {{ page.version.version }}/app/txn-sample.cs %}
 ~~~
 
-Then run the code to again connect as the `maxroach` user but this time execute a batch of statements as an atomic transaction to transfer funds from one account to another, where all included statements are either committed or aborted:
+다음으로, 다음 코드를 실행하여 다시 `maxroach` 사용자로 연결하지만, 이번에는 포함된 모든 명령문이 커밋되거나 중단되는 한 계좌에서 다른 계좌로 자금을 이전하기 위해 원자성 트랜잭션으로 명령문 그룹을 실행할 것입니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -119,10 +119,11 @@ $ dotnet run
 ~~~
 
 {{site.data.alerts.callout_info}}
-With the default `SERIALIZABLE` isolation level, CockroachDB may require the [client to retry a transaction](transactions.html#transaction-retries) in case of read/write contention. CockroachDB provides a generic **retry function** that runs inside a transaction and retries it as needed. You can copy and paste the retry function from here into your code.
+기본 `SERIALIZABLE` 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 [클라이언트가 트랜잭션을 다시 시도하기](transactions.html#transaction-retries)를 요구할 수 있습니다.  CockroachDB 는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 **재시도 함수**를 제공합니다. 여기서 재시도 함수를 복사하여 코드에 붙여 넣을 수 있습니다.
+
 {{site.data.alerts.end}}
 
-The output should be:
+출력은 다음과 같아야 합니다:
 
 ~~~
 Initial balances:
@@ -133,7 +134,7 @@ Final balances:
 	account 2: 350
 ~~~
 
-However, if you want to verify that funds were transferred from one account to another, use the [built-in SQL client](use-the-built-in-sql-client.html):
+그러나, 한 계좌에서 다른 계좌로 자금이 이전되었는지 확인하려면 [built-in SQL client](use-the-built-in-sql-client.html)을 사용하시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -150,8 +151,8 @@ $ cockroach sql --insecure -e 'SELECT id, balance FROM accounts' --database=bank
 (2 rows)
 ~~~
 
-## What's next?
+## 더 보기
 
-Read more about using the [.NET Npgsql driver](http://www.npgsql.org/).
+[.NET Npgsql driver](http://www.npgsql.org/) 사용법에 대해 자세히 읽어보세요.
 
 {% include {{ page.version.version }}/app/see-also-links.md %}
