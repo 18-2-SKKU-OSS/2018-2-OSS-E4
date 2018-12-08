@@ -13,7 +13,7 @@ twitter: false
 
 이 튜토리얼에서는 PostgreSQL과 호환되는 드라이버나 ORM을 사용하여 CockroachDB로 간단한 Python 어플리케이션을 제작하는 방법을 보여줍니다.
 
-[Python psycopg2 driver](http://initd.org/psycopg/docs/)와 [SQLAlchemy ORM](https://docs.sqlalchemy.org/en/latest/)는 **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다. 만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도 도와주시길 부탁드립니다.
+[Python psycopg2 driver](http://initd.org/psycopg/docs/)와 [SQLAlchemy ORM](https://docs.sqlalchemy.org/en/latest/)는 **베타-레벨** 지원을 요청할 수 있을 정도로 테스트 되었고, 여기에 사용되었습니다. 만약 문제가 발생할 경우 상세 설명과 함께 [이슈 열기](https://github.com/cockroachdb/cockroach/issues/new)를 하여 저희가 전체를 지원할 수 있도록 도와주시길 부탁드립니다.
 
 ## 시작하기 전에
 
