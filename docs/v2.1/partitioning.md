@@ -14,8 +14,10 @@ CockroachDB를 사용하면 테이블 파티션을 정의할 수 있으므로, �
 
 테이블 파티셔닝을 통해 대기 시간과 비용을 줄일 수 있습니다: 
 
-- **지리적-파티셔닝** allows you to keep user data close to the user, which reduces the distance that the data needs to travel, thereby **대기 시간 감소**. To geo-partition a table, define location-based partitions while creating a table, create location-specific zone configurations, and apply the zone configurations to the corresponding partitions.
-- **아카이브-파티셔닝** allows you to store infrequently-accessed data on slower and cheaper storage, thereby **reducing costs**. To archival-partition a table, define frequency-based partitions while creating a table, create frequency-specific zone configurations with appropriate storage devices constraints, and apply the zone configurations to the corresponding partitions.
+- **지리적-파티셔닝**에서는 사용자 데이터를 사용자 가까이에 두어 데이터가 이동해야하는 거리를 줄여주므로 **대기 시간 감소**가 가능합니다. 테이블을 지리적으로 분할하려면, 테이블를 작성하는 동안 위치-기반 분할 영역을 정의하고, 위치별 영역 구성을 생성하고, 해당 분할 영역에 영역 구성을 적용하십시오.
+- **아카이브-파티셔닝**를 사용하면 자주 사용하지 않는 데이터를 더 느리고 저렴한 스토리지에 저장할 수 있으므로 **비용이 절감**됩니다. 테이블을 아카이브-분할하려면, 테이블을 생성하는 동안 빈도-기반 파티션을 정의하고, 적절한 저장 장치 제약 조건을 사용하여 주파수-별 영역 구성을 만들고, 해당 파티션에 영역 구성을 적용하십시오.
+
+
 
 ## 작동 원리
 
@@ -28,7 +30,7 @@ CockroachDB를 사용하면 테이블 파티션을 정의할 수 있으므로, �
 
 ### 노드 속성
 
-To store partitions in specific locations (e.g., geo-partitioning), or on machines with specific attributes (e.g., archival-partitioning), the nodes of your cluster must be [started](start-a-node.html) with the relevant flags:
+특정 위치 (예: 지리적-파티셔닝) 또는 특정 속성이 있는 머신(예: 아카이브-파티셔닝)에 파티션을 저장하려면, 클러스터의 노드가 관련 플래그와 함께 [시작](start-a-node.html)되어야 합니다:
 
 - `--locality` 플래그를 사용하여 노드의 위치를 설명하는 키-값 쌍을 할당하십시오, 예를 들어, `--locality=region=east,datacenter=us-east-1`
 - 특수한 하드웨어나 코어의 수를 포함할 수 있는 노드 용량을 지정하려면 `--attrs` 플래그를 사용하십시오, 예를 들어, `--attrs=ram:64gb`
@@ -52,20 +54,20 @@ To store partitions in specific locations (e.g., geo-partitioning), or on machin
 - 분할된 테이블에 데이터 삽입 또는 업데이트
 - 분할된 테이블 삭제
 - 분할된 테이블 분할 해제
-- Making non-partitioning changes to a partitioned table 분할된 테이블에 비-파티셔닝 변경 생성 (예: 열/인덱스/외래 키/검사 제약 조건 추가)
+- 분할된 테이블에 비-파티셔닝 변경 생성 (예: 열/인덱스/외래 키/검사 제약 조건 추가)
 
 ### 테이블 생성
 
-You can define partitions and subpartitions over one or more columns of a table. During [table creation](create-table.html), you declare which values belong to each partition in one of two ways:
+테이블의 하나 이상의 열에 대해 파티션 및 하위 파티션을 정의할 수 있습니다. [테이블 생성](create-table.html) 중에, 다음 두 가지 방법 중 하나로 각 파티션에 속한 값을 선언합니다:
 
-- **목록 파티셔닝**: Enumerate all possible values for each partition. List partitioning is a good choice when the number of possible values is small. List partitioning is well-suited for geo-partitioning.
-- **범위 파티셔닝**: Specify a contiguous range of values for each partition by specifying lower and upper bounds. Range partitioning is a good choice when the number of possible values is too large to explicitly list out. Range partitioning is well-suited for archival-partitioning.
+- **목록 파티셔닝**: 각 파티션에 대해 가능한 모든 값을 열거하십시오. 가능한 값의 수가 적은 경우 목록 파티셔닝이 좋은 선택입니다. 목록 파티셔닝은 지리적-파티셔닝에 매우 적합합니다.
+- **범위 파티셔닝**: 상한 및 하한을 지정하여 각 파티션에 인접한 값 범위를 지정하십시오. 범위 파티셔닝은 가능한 값의 수가 너무 커서 명시적으로 나열할 수 없는 경우 좋은 선택입니다. 범위 파티셔닝은 아카이브-파티셔닝에 매우 적합합니다.
 
 #### 목록 별 파티션
 
 [`PARTITION BY LIST`](partition-by.html)를 사용하면 하나 이상의 튜플을 파티션에 매핑할 수 있습니다.
 
-To partition a table by list, use the [`PARTITION BY LIST`](partition-by.html) syntax while creating the table. While defining a list partition, you can also set the `DEFAULT` partition that acts as a catch-all if none of the rows match the requirements for the defined partitions.
+리스트로 테이블을 분할하려면, 테이블을 생성하는 동안 [`PARTITION BY LIST`](partition-by.html) 구문을 사용하십시오. 목록 파티션을 정의하는 동안, 정의 된 파티션에 대한 요구 사항과 일치하는 행이 없을 경우, 포괄적인 역할을 하는 `DEFAULT` 파티션을 설정할 수도 있습니다.
 
 자세한 내용은 아래의 [목록별 파티션](#partition-by-list) 예제를 참조하십시오.
 
@@ -75,7 +77,7 @@ To partition a table by list, use the [`PARTITION BY LIST`](partition-by.html) s
 
 범위로 테이블 파티션을 정의하려면, 테이블을 생성하는 동안 [`PARTITION BY RANGE`](partition-by.html) 구문을 사용하십시오.  범위 파티션을 정의하는 동안, CockroachDB-정의된 `MINVALUE` 및 `MAXVALUE` 매개 변수를 사용하여 범위의 하한 및 상한을 각각 정의할 수 있습니다.
 
-{{site.data.alerts.callout_info}}범위 파티션의 하한은 포함되지만, 상한은 배타적입니다. For range partitions, <code>NULL</code> is considered less than any other data, which is consistent with our key encoding ordering and <code>ORDER BY</code> behavior.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}범위 파티션의 하한은 포함되지만, 상한은 배타적입니다. 범위 파티션의 경우, <code>NULL</code>은 키 인코딩 순서 및 <code>ORDER BY</code> 동작과 일치하는 다른 데이터보다 작은 것으로 간주됩니다.{{site.data.alerts.end}}
 
 파티션 값은 모든 SQL 표현식이 될 수 있지만, 한 번만 평가됩니다. 2017-01-30 에 `<(now () - '1d')`값으로 파티션을 생성하면, 2017-01-29보다 작은 모든 값을 포함하게 됩니다. 다음 날에는 업데이트되지 않으며, 계속해서 2017-01-29보다 작은 값을 포함합니다.
 
@@ -83,7 +85,7 @@ To partition a table by list, use the [`PARTITION BY LIST`](partition-by.html) s
 
 #### 기본 키를 사용하여 파티션하기
 
-파티셔닝에 필요한 기본 키는 기존의 기본 키와 다릅니다. To define the primary key for partitioning, prefix the unique identifier(s) in the primary key with all columns you want to partition and subpartition the table on, in the order in which you want to nest your subpartitions.
+파티셔닝에 필요한 기본 키는 기존의 기본 키와 다릅니다. 파티셔닝의 기본 키를 정의하려면, 기본 키의 고유 식별자 앞에 분할할 모든 열을 붙이고 하위 분할 영역을 중첩하려는 순서대로 테이블을 하위 분할하십시오.
 
 예를 들어, 전 세계의 모든 코스 학생들을 대상으로 한 테이블이 있는 글로벌 온라인 학습 포털의 데이터베이스를 생각해보십시오. 학생 국가를 기반으로 테이블을 지역-파티션으로 지정하려면, 기본 키를 다음과 같이 정의해야 합니다:
 
@@ -100,8 +102,8 @@ To partition a table by list, use the [`PARTITION BY LIST`](partition-by.html) s
 
 **기본 키 고려 사항**
 
-- For v2.0, you cannot change the primary key after you create the table. Provision for all future subpartitions by including those columns in the primary key. In the example of the online learning portal, if you think you might want to subpartition based on `expected_graduation_date` in the future, define the primary key as `(country, expected_graduation_date, id)`. v2.1 will allow you to change the primary key.
-- The order in which the columns are defined in the primary key is important. The partitions and subpartitions need to follow that order. In the example of the online learning portal, if you define the primary key as `(country, expected_graduation_date, id)`, the primary partition is by `country`, and then subpartition is by `expected_graduation_date`. You cannot skip `country` and partition by `expected_graduation_date`.
+- v2.0의 경우, 테이블을 생성한 후에는 기본 키를 변경할 수 없습니다. 기본 키에 해당 열을 포함시켜 이후의 모든 하위 파티션에 대해 공급하십시오. 온라인 학습 포털의 예에서, 미래에 `expected_graduation_date`를 기반으로 하위 분할을 할 수 있다고 생각되면, 기본 키를 `(country, expected_graduation_date, id)`로 정의하십시오. v2.1에서는 기본 키를 변경할 수 있습니다.
+- 기본 키에 열이 정의되는 순서가 중요합니다. 파티션과 하위 파티션은 이 순서대로 따라야 합니다. 온라인 학습 포털의 예에서, 기본 키를 `(country, expected_graduation_date, id)`로 정의하면, 기본 파티션은`country`이고, 하위 파티션은 `expected_graduation_date`입니다. `country`를 건너뛰고 `expected_graduation_date`으로 분할할 수는 없다.
 
 #### 보조 인덱스를 사용하여 파티션하기
 
@@ -138,9 +140,9 @@ CREATE INDEX foo_b_idx ON foo (b) PARTITION BY LIST (b) (
 
 ### 복제 영역
 
-On their own, partitions are inert and simply apply a label to the rows of the table that satisfy the criteria of the defined partitions.자체적으로, 파티션은 비활성이며 정의 된 파티션의 기준을 충족시키는 테이블의 행에 레이블을 적용하기 만하면됩니다. Applying functionality to a partition requires creating and applying [replication zone](configure-replication-zones.html) to the corresponding partitions.
+자체적으로, 파티션은 비활성이며 정의된 파티션의 기준을 충족시키는 테이블의 행에 레이블을 적용하기만 하면 됩니다. 파티션에 기능을 적용하려면, [복제 영역](configure-replication-zones.html)을 생성하여 해당 파티션에 적용해야 합니다.
 
-CockroachDB uses the most granular zone config available. Zone configs that target a partition are considered more granular than those that target a table or index, which in turn are considered more granular than those that target a database.
+CockroachDB는 사용 가능한 가장 세부적인 영역 구성을 사용합니다. 파티션을 대상으로 하는 영역 구성은 테이블 또는 인덱스를 대상으로 하는 영역 구성보다 세분화 된 것으로 간주되며, 테이블 또는 인덱스는 데이터베이스를 대상으로 하는 구성보다 세부적인 것으로 간주됩니다.
 
 ## 예제
 
@@ -415,7 +417,7 @@ $ cockroach init --insecure --host=<address of any node>
     );
 ~~~
 
-Subpartition names must be unique within a table. In our example, even though `graduated` and `current` are sub-partitions of distinct partitions, they still need to be uniquely named. Hence the names `graduated_au`, `graduated_us`, and `current_au` and `current_us`.
+하위 분할 이름은 테이블 내에서 고유해야 합니다. 이 예에서는, `graduated`와 `current`가 구분된 파티션의 하위-파티션이지만, 여전히 고유한 이름을 지정해야 합니다. 따라서, `graduated_au`,`graduated_us`,`current_au`와`current_us`라는 이름이 있습니다.
 
 #### 5단계. 해당 영역 구성 생성 및 적용
 
@@ -479,7 +481,7 @@ Time: 11.586626ms
 
 ### 테이블 다시 분할
 
-Consider the partitioned table of students of RoachLearn. Suppose the table has been partitioned on range to store the current students on fast and expensive storage devices (example: SSD) and store the data of the graduated students on slower, cheaper storage devices(example: HDD). Now suppose we want to change the date after which the students will be considered current to `2018-08-15`. We can achieve this by using the [`PARTITION BY`](partition-by.html) subcommand of the [`ALTER TABLE`](alter-table.html) command.
+RoachLearn의 학생들의 분할된 테이블을 고려하십시오. 테이블이 현재의 학생들을 빠르고 비싼 저장 장치 (예 : SSD)에 저장하고 졸업한 학생의 데이터를 더 느리고 저렴한 저장 장치 (예 : HDD)에 저장하기 위해 범위를 분할했다고 가정합니다. 이제 우리는 학생들이 현재 `2018-08-15`로 간주될 날짜를 변경하고 싶다고 가정합니다. [`ALTER TABLE`](alter-table.html) 명령의 [`PARTITION BY`](partition-by.html) 부속 명령을 사용하여 이 작업을 수행할 수 있습니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -499,17 +501,17 @@ Consider the partitioned table of students of RoachLearn. Suppose the table has 
 
 ## 지역성-탄력성 상충 관계
 
-읽기/쓰기를 빠르게 하는 것과 생존 실패 사이에는 상충 관계가 있습니다. Consider a partition with three replicas of `roachlearn.students` for Australian students.
+읽기/쓰기를 빠르게 하는 것과 생존 실패 사이에는 상충 관계가 있습니다. 호주 학생들을 위한 `roachlearn.students`의 3개의 복제본이 있는 파티션을 생각해보십시오.
 
-- If only one replica is pinned to an Australian datacenter, then reads may be fast (via leases follow the workload) but writes will be slow.
-- If two replicas are pinned to an Australian datacenter, then reads and writes will be fast (as long as the cross-ocean link has enough bandwidth that the third replica doesn’t fall behind). If those two replicas are in the same datacenter, then the loss of one datacenter can lead to data unavailability, so some deployments may want two separate Australian datacenters.
-- If all three replicas are in Australian datacenters, then three Australian datacenters are needed to be resilient to a datacenter loss.
+- 호주 데이터 센터에 고정된 복제본이 하나 뿐인 경우, 읽기가 빠르지만 (리스가 워크로드를 따라 가면서) 읽기가 느려질 수 있습니다.
+- 두 개의 복제본이 호주 데이터 센터에 고정되어 있으면, 읽기와 쓰기가 빨라집니다 (교차 대륙 링크의 대역폭이 충분하고 세 번째 복제본이 뒤떨어지지 않는 한). 두 개의 복제본이 동일한 데이터 센터에 있으면, 하나의 데이터 센터가 손실되어 데이터를 사용할 수 없게 될 수 있으므로, 일부 배포에서는 두 개의 별도 호주 데이터 센터가 필요할 수 있습니다.
+- 3개의 복제본이 모두 호주 데이터 센터에 있으면, 3개의 호주 데이터 센터가 데이터 센터 손실에 복원력이 있어야 합니다.
 
 ## CockroachDB의 파티셔닝이 다른 데이터베이스와 어떻게 다른가
 
 다른 데이터베이스는 세 가지 추가 사용 경우에 대해 파티셔닝을 사용합니다: 보조 인덱스, 샤딩 및 대량 로드/삭제. CockroachDB는 파티셔닝을 사용하지 않고 다음과 같은 방법으로 이러한 사용-경우를 해결합니다.
 
-- **보조 인덱스로 변경:** CockroachDB는 온라인 계획 변경을 통해 이러한 변경 사항을 해결합니다. Online schema changes are a superior feature to partitioning because they require zero-downtime and eliminate the potential for consistency problems. 온라인 계획 변경은 중단 시간을 필요로하고 일관성 문제의 가능성을 없애기 때문에 파티셔닝보다 우수한 기능입니다.
+- **보조 인덱스로 변경:** CockroachDB는 온라인 계획 변경을 통해 이러한 변경 사항을 해결합니다. 온라인 계획 변경은 제로-다운타임을 필요로하고 일관성 문제의 가능성을 없애기 때문에 파티셔닝보다 우수한 기능입니다.
 - **샤딩:** CockroachDB는 분산 데이터베이스 아키텍처의 일부로 데이터를 자동으로 파쇄합니다.
 - **대량 로드 및 삭제:** CockroachDB에는 현재 이 사용 경우를 지원하는 기능이 없습니다.
 
