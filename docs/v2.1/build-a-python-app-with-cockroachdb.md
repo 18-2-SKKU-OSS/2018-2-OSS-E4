@@ -84,7 +84,7 @@ Initial balances:
 
 <a href="https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/v2.1/app/txn-sample.py" download><code>txn-sample.py</code></a> 파일을 다운로드하거나 직접 파일을 만들고 코드를 파일에다 복사합니다.
 
-{{site.data.alerts.callout_info}}기본 <code>SERIALIZABLE</code> 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 <a href="transactions.html#transaction-retries">클라이언트가 트랜잭션을 다시 시도하기</a>를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 <strong>재시도 함수</strong>를 제공합니다. CockroachDB에서 재시도 기능을 복사하여 코드에 붙여 넣을 수 있습니다.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}기본 <code>SERIALIZABLE</code> 격리 수준을 사용하면, CockroachDB는 읽기/쓰기 경합 시 <a href="transactions.html#transaction-retries">클라이언트가 트랜잭션을 다시 시도하기</a>를 요구할 수 있습니다. CockroachDB는 트랜잭션 내에서 실행되고 필요에 따라 재시도하는 일반적인 <strong>재시도 함수</strong>를 제공합니다. CockroachDB에서 재시도 함수를 복사하여 코드에 붙여 넣을 수 있습니다.{{site.data.alerts.end}}
 
 {% include copy-clipboard.html %}
 ~~~ python
