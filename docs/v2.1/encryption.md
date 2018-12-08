@@ -4,7 +4,7 @@ summary: Encryption at Rest encrypts node data on local disk transparently.
 toc: true
 ---
 
-<span class="version-tag">New in v2.1:</span>
+<span class="version-tag">v2.1의 새로운 기능:</span>
 Rest에서의 암호화는 로컬 디스크에 있는 노드의 데이터를 투명하게 암호화한다.
 
 {{site.data.alerts.callout_danger}}
@@ -38,7 +38,7 @@ Rest에서의 암호화는 모든 키 크기가 허용되는 [카운터 모드](
 
 CockroachDB는 현재 오래된 파일의 재 암호화를 강제하지 않지만, 대신 정상적인 RocksDB churn에 의존하여 모든 데이터를 원하는 암호화로 천천히 다시 쓰게됩니다.
 
-## 회전 키
+## 키 회전
 
 여러 이유로 인해 Rest에서의 암호화에는 키 회전이 필요합니다:
 
