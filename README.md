@@ -14,7 +14,7 @@
 
 ## 2. OSS Project
 
-### CockroachDB user documentation Translation (EN->KN) 
+### CockroachDB user documentation Translation (EN->KO) 
 
 ### What is CockroachDB? <br>
 
