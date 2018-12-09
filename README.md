@@ -43,7 +43,7 @@ CockroachDB is a cloud-native SQL database for building global, scalable cloud s
 
 ## 3. Why did we select this project? 
 
- Opened Issue : translation to Korean
+ Opened Issue : User Documentation Translation (English to Korean)
 
  https://github.com/cockroachdb/docs/issues/4053
 
@@ -52,7 +52,7 @@ CockroachDB is a cloud-native SQL database for building global, scalable cloud s
 
 ## 4. If you want to know more
 
-[Home](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4.wiki.git) : Wiki Home <br>
+[Home](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki) : Wiki Home <br>
 
 [Diary](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki/Diary) : What we did everyday <br>
 
