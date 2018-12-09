@@ -5,103 +5,105 @@ toc: true
 drift: true
 ---
 
-This tutorial shows you essential techniques for getting fast reads and writes in CockroachDB, starting with a single-region deployment and expanding into multiple regions.
+이 튜토리얼은 단일 영역 배치에서 시작하여 여러 영역으로 확장한 경우까지 CockroachDB에서 빠른 읽기 및 쓰기를 수행하기 위한 필수 기술을 설명합니다.
 
-For a comprehensive list of tuning recommendations, only some of which are demonstrated here, see [SQL Performance Best Practices](performance-best-practices-overview.html).
+여기에 일부 소개된 조정 권장 사항의 전체 목록을 보려면 [SQL 성능 모범 사례](performance-best-practices-overview.html)를 참조하십시오.
 
-## Overview
+## 개요
 
-### Topology
+### 토폴로지
 
-You'll start with a 3-node CockroachDB cluster in a single Google Compute Engine (GCE) zone, with an extra instance for running a client application workload:
+3-노드 CockroachDB 클러스터를 단일 GCE(Google Compute Engine) 영역에 두고 클라이언트 애플리케이션 워크로드를 실행하기 위한 추가 인스턴스와 함께 시작하십시오.
 
 <img src="{{ 'images/v2.1/perf_tuning_single_region_topology.png' | relative_url }}" alt="Perf tuning topology" style="max-width:100%" />
 
 {{site.data.alerts.callout_info}}
-Within a single GCE zone, network latency between instances should be sub-millisecond.
+단일 GCE 영역 내에서 인스턴스 간의 네트워크 지연 시간은 밀리초 미만이어야 합니다.
 {{site.data.alerts.end}}
 
-You'll then scale the cluster to 9 nodes running across 3 GCE regions, with an extra instance in each region for a client application workload:
+그런 다음 클러스터를 세 개의 GCE 지역 간에 실행되는 9개 노드로 확장하고 각 지역에서 클라이언트 애플리케이션 워크로드에 대한 추가 인스턴스를 포함하십시오.
 
 <img src="{{ 'images/v2.1/perf_tuning_multi_region_topology.png' | relative_url }}" alt="Perf tuning topology" style="max-width:100%" />
 
-To reproduce the performance demonstrated in this tutorial:
+이 튜토리얼에 설명된 성능을 재현하려면:
 
-- For each CockroachDB node, you'll use the [`n1-standard-4`](https://cloud.google.com/compute/docs/machine-types#standard_machine_types) machine type (4 vCPUs, 15 GB memory) with the Ubuntu 16.04 OS image and a [local SSD](https://cloud.google.com/compute/docs/disks/#localssds) disk.
-- For running the client application workload, you'll use smaller instances, such as `n1-standard-1`.
+- 각 CockroachDB 노드에 대해,  Ubuntu 16.04 OS 이미지와 [local SSD](https://cloud.google.com/compute/docs/disks/#localssds) 디스크를 포함하는 [`n1-standard-4`](https://cloud.google.com/compute/docs/machine-types#standard_machine_types) 컴퓨터 유형을 사용합니다.
+- 클라이언트 애플리케이션 워크로드를 실행에는 `n1-standard-1` 과 같은 더 작은 인스턴스를 사용하십시오.
 
-### Schema
+### 스키마
 
-Your schema and data will be based on the fictional peer-to-peer vehicle-sharing app, MovR, that was featured in the [CockroachDB 2.0 demo](https://www.youtube.com/watch?v=v2QK5VgLx6E):
+스키마 및 데이터는 [CockroachDB 2.0 demo](https://www.youtube.com/watch?v=v2QK5VgLx6E)에 소개된 가상의 피어 투 피어 차량 공유 앱인 MovR을 기반으로 합니다.
 
 <img src="{{ 'images/v2.1/perf_tuning_movr_schema.png' | relative_url }}" alt="Perf tuning schema" style="max-width:100%" />
 
-A few notes about the schema:
+스키마에 대한 몇 가지 참고 사항:
 
-- There are just three self-explanatory tables: In essence, `users` represents the people registered for the service, `vehicles` represents the pool of vehicles for the service, and `rides` represents when and where users have participated.   
-- Each table has a composite primary key, with `city` being first in the key. Although not necessary initially in the single-region deployment, once you scale the cluster to multiple regions, these compound primary keys will enable you to [geo-partition data at the row level](partitioning.html#partition-using-primary-key) by `city`. As such, this tutorial demonstrates a schema designed for future scaling.
-- The [`IMPORT`](import.html) feature you'll use to import the data does not support foreign keys, so you'll import the data without [foreign key constraints](foreign-key.html). However, the import will create the secondary indexes required to add the foreign keys later.
-- The `rides` table contains both `city` and the seemingly redundant `vehicle_city`. This redundancy is necessary because, while it is not possible to apply more than one foreign key constraint to a single column, you will need to apply two foreign key constraints to the `rides` table, and each will require city as part of the constraint. The duplicate `vehicle_city`, which is kept in synch with `city` via a [`CHECK` constraint](check.html), lets you overcome [this limitation](https://github.com/cockroachdb/cockroach/issues/23580).
+- 세 개의 자체 설명 테이블: 기본적으로 `users`(사용자)는 서비스를 이용하기 위해 등록한 사람들을, `vehicles`(차량)는 서비스 차량 풀을, `rides`(승차권)는 이용자들의 참여 시기와 장소를 나타낸다. 
+- 각 테이블에는 복합 기본 키가 있으며,`city`가 그 첫번째입니다. 처음 단일 영역 배포에서 필요 없지만 ,클러스터를 여러 영역으로 확장하면 이 복합 기본 키를 사용하여 `city` 에 의해 [행 수준의 데이터 지역 분할](partitioning.html#partition-using-primary-key)을 사용할 수 있습니다. 이와 같이 본 튜토리얼은 향후 확장을 위해 설계된 스키마를 설명합니다.
+- - 데이터를 가져오는 데 사용할 [`IMPORT`](import.html) 기능이 외부 키를 지원하지 않으므로 [외부 키 제약](foreign-key.html) 없이 데이터를 가져올 수 있습니다. 하지만, 이 기능은 나중에 외부 키를 추가하는 데 필요한 보조 인덱스를 생성합니다.
+- `rides` 테이블은`city`와 중복되는 듯 보이는 `vehicle_city`를 포함하고 있습니다. 하나의 열에 둘 이상의 외부 키 제약 조건을 적용할 수는 없지만, 두 개의 외부 키 제약 조건을 `rides` 테이블에 적용해야 하며, 각 제약조건의 일부로 city가 필요합니다. 따라서 이 중복성이 필요하게 됩니다. `city` 와 동기화된 복제본 `vehicle_city`는 [`CHECK` 제약 조건](check.html)을 통해 [이런 한계점](https://github.com/cockroachdb/cockroach/issues/23580)을 극복하도록 합니다.
 
-### Important concepts
+### 중요한 개념
 
-To understand the techniques in this tutorial, and to be able to apply them in your own scenarios, it's important to first review some important [CockroachDB architectural concepts](architecture/overview.html):
+이 튜토리얼의 기술을 이해하고 상황에 맞게 적용할 수 있도록 하기 위해, 먼저 중요한 [CockroachDB 아키텍처 개념들](architecture/overview.html)을 복습하는 것이 중요합니다.
 
 {% include {{ page.version.version }}/misc/basic-terms.md %}
 
-As mentioned above, when a query is executed, the cluster routes the request to the leaseholder for the range containing the relevant data. If the query touches multiple ranges, the request goes to multiple leaseholders. For a read request, only the leaseholder of the relevant range retrieves the data. For a write request, the Raft consensus protocol dictates that a majority of the replicas of the relevant range must agree before the write is committed.
+위에서 언급했듯이, 쿼리가 실행될 때 클러스터는 관련 데이터가 포함된 범위에 대한 요청을 임대자에게 라우팅합니다. 쿼리가 여러 범위에 도달하면 요청은 여러 명의 임대자에게 전달됩니다. 읽기 요청의 경우 관련 범위의 임대자만 데이터를 검색합니다. 쓰기 요청의 경우, Raft 합의 프로토콜이 쓰기가 완료되기 전에 관련 범위의 복제본의 과반수가 동의해야 한다고 규정합니다.
 
-Let's consider how these mechanics play out in some hypothetical queries.
+이 기계들이 어떤 가상의 쿼리에서 어떻게 작용하는지 생각해 봅시다.
 
-#### Read scenario
+#### Read 시나리오
 
-First, imagine a simple read scenario where:
+첫째, 다음과 같은 간단한 읽기 시나리오를 상상해 보십시오.
 
-- There are 3 nodes in the cluster.
-- There are 3 small tables, each fitting in a single range.
-- Ranges are replicated 3 times (the default).
-- A query is executed against node 2 to read from table 3.
+- 클러스터에 노드가 3개 있다
+- 3개의 작은 테이블이 있으며, 각 테이블은 단일 범위에 있다.
+- 범위를 3회 복제한다 (기본값)
+- 노드 2에 대해 쿼리를 실행하여 테이블 3에서 읽어온다
 
 <img src="{{ 'images/v2.1/perf_tuning_concepts1.png' | relative_url }}" alt="Perf tuning concepts" style="max-width:100%" />
 
-In this case:
+이 경우에서:
 
-1. Node 2 (the gateway node) receives the request to read from table 3.
-2. The leaseholder for table 3 is on node 3, so the request is routed there.
-3. Node 3 returns the data to node 2.
-4. Node 2 responds to the client.
+1. 노드 2(게이트 노드)는 테이블 3에서 읽기 요청을 수신한다.
+2. 테이블 3의 임대자는 노드 3에 있으므로 요청은 노드 3에 배치된다.
+3. 노드 3은 노드 2로 데이터를 반환한다.
+4. 노드 2는 클라이언트에 응답한다.
 
-If the query is received by the node that has the leaseholder for the relevant range, there are fewer network hops:
+관련 범위의 임대자를 가진 노드에서 쿼리를 수신하는 경우 네트워크 홉이 더 적습니다:
 
 <img src="{{ 'images/v2.1/perf_tuning_concepts2.png' | relative_url }}" alt="Perf tuning concepts" style="max-width:100%" />
 
-#### Write scenario
+#### Write 시나리오
 
-Now imagine a simple write scenario where a query is executed against node 3 to write to table 1:
+이제 노드 3에 대해 쿼리를 실행하여 테이블 1에 쓰는 간단한 쓰기 시나리오를 상상해 보십시오.
+
 
 <img src="{{ 'images/v2.1/perf_tuning_concepts3.png' | relative_url }}" alt="Perf tuning concepts" style="max-width:100%" />
 
-In this case:
+이 경우에서:
 
-1. Node 3 (the gateway node) receives the request to write to table 1.
-2. The leaseholder for table 1 is on node 1, so the request is routed there.
-3. The leaseholder is the same replica as the Raft leader (as is typical), so it simultaneously appends the write to its own Raft log and notifies its follower replicas on nodes 2 and 3.
-4. As soon as one follower has appended the write to its Raft log (and thus a majority of replicas agree based on identical Raft logs), it notifies the leader and the write is committed to the key-values on the agreeing replicas. In this diagram, the follower on node 2 acknowledged the write, but it could just as well have been the follower on node 3. Also note that the follower not involved in the consensus agreement usually commits the write very soon after the others.
-5. Node 1 returns acknowledgement of the commit to node 3.
-6. Node 3 responds to the client.
+1. 노드 3(게이트 노드)은 표 1에 쓰기 요청을 수신한다.
+2. 테이블 1의 임대자는 노드 1에 있으므로 요청은 노드 1에 배치된다.
+3. 임대자는 Raft 리더와 동일한 복제본이므로 (일반적으로), Raft 로그에 쓰기를 동시에 추가하고 노드 2와 3에 후속 복제본을 통보한다.
+4. 한 팔로워가 Raft 로그에 쓰기를 추가함과 동시에(따라서 대부분의 복제본이 동일한 Raft 로그에 근거해 합의), 리더에게 통지하고, 쓰기는 동의한 복제본의 키 값에 커밋된다. 이 다이어그램에서 노드 2의 팔로워가 쓰기를 인정했지만 이는 노드 3의 팔로워일 수도 있었다. 또한 합의안에 포함되지 않은 팔로워들은 보통 다른 이들이 커밋된 직후 커밋된다.
+5. 노드 1은 노드 3에 대한 커밋 확인을 반환한다.
+6. 노드 3은 클라이언트에 응답한다.
 
-Just as in the read scenario, if the write request is received by the node that has the leaseholder and Raft leader for the relevant range, there are fewer network hops:
+읽기 시나리오에서와 같이, 관련 범위의 임대자와 Raft 리더가 있는 노드에서 쓰기 요청을 수신하는 경우, 네트워크 홉이 더 적습니다.
 
 <img src="{{ 'images/v2.1/perf_tuning_concepts4.png' | relative_url }}" alt="Perf tuning concepts" style="max-width:100%" />
 
-#### Network and I/O bottlenecks
+#### 네트워크 및 I/O 병목 현상
 
-With the above examples in mind, it's always important to consider network latency and disk I/O as potential performance bottlenecks. In summary:
+위의 예를 염두에 두고, 네트워크 지연 시간 및 디스크 I/O를 항상 잠재적인 성능 병목 현상으로 고려하는 것이 중요합니다. 
+요약:
 
-- For reads, hops between the gateway node and the leaseholder add latency.
-- For writes, hops between the gateway node and the leaseholder/Raft leader, and hops between the leaseholder/Raft leader and Raft followers, add latency. In addition, since Raft log entries are persisted to disk before a write is committed, disk I/O is important.
+- 읽기의 경우, 게이트웨이 노드와 임대자 사이의 홉은 대기 시간을 추가한다.
+- 쓰기의 경우, 게이트웨이 노드와 임대자/Raft 리더 간 홉, 임대자/Raft 리더와 Raft 팔로워 간의 홉이 대기 시간을 더한다. 또한 Raft 로그 항목은 쓰기가 커밋되기 전에 디스크에 계속 남아 있으므로 디스크 I/O가 중요하다.
 
-## Single-region deployment
+## 단일 영역 배포
 
 <!-- roachprod instructions for single-region deployment
 1. Reserve 12 instances across 3 GCE zone: roachprod create <yourname>-tuning --geo --gce-zones us-east1-b,us-west1-a,us-west2-a --local-ssd -n 12
@@ -120,14 +122,14 @@ With the above examples in mind, it's always important to consider network laten
    - Still on instance 4, run commands in Step 7.
 -->
 
-### Step 1. Configure your network
+### 1단계. 네트워크 구성
 
-CockroachDB requires TCP communication on two ports:
+CockroachDB는 두 개의 포트에서 TCP 통신을 필요로 합니다.
 
-- **26257** (`tcp:26257`) for inter-node communication (i.e., working as a cluster)
-- **8080** (`tcp:8080`) for accessing the Web UI
+- **26257** (`tcp:26257`) : 노드 간 통신용 (클러스터로 작업)
+- **8080** (`tcp:8080`) : 웹 UI 액세스용
 
-Since GCE instances communicate on their internal IP addresses by default, you don't need to take any action to enable inter-node communication. However, if you want to access the Web UI from your local network, you must [create a firewall rule for your project](https://cloud.google.com/vpc/docs/using-firewalls):
+기본적으로 GCE 인스턴스는 내부 IP 주소로 통신하므로, 노드 간 통신을 활성화하기 위해 어떤 조치도 취할 필요가 없습니다. 그러나 로컬 네트워크에서 웹 UI에 액세스하려면 [프로젝트에 대한 방화벽 규칙 생성](https://cloud.google.com/vpc/docs/using-firewalls)을 해야 합니다.
 
 Field | Recommended Value
 ------|------------------
@@ -141,26 +143,26 @@ Target tags | `cockroachdb`
 The **tag** feature will let you easily apply the rule to your instances.
 {{site.data.alerts.end}}
 
-### Step 2. Create instances
+### 2단계. 인스턴스 생성
 
 You'll start with a 3-node CockroachDB cluster in the `us-east1-b` GCE zone, with an extra instance for running a client application workload.
 
-1. [Create 3 instances](https://cloud.google.com/compute/docs/instances/create-start-instance) for your CockroachDB nodes. While creating each instance:  
-    - Select the `us-east1-b` [zone](https://cloud.google.com/compute/docs/regions-zones/).
-    - Use the `n1-standard-4` machine type (4 vCPUs, 15 GB memory).
-    - Use the Ubuntu 16.04 OS image.
-    - [Create and mount a local SSD](https://cloud.google.com/compute/docs/disks/local-ssd#create_local_ssd).
-    - To apply the Web UI firewall rule you created earlier, click **Management, disk, networking, SSH keys**, select the **Networking** tab, and then enter `cockroachdb` in the **Network tags** field.
+1. CockroachDB 노드에 대해 [3 instances를 생성](https://cloud.google.com/compute/docs/instances/create-start-instance) 하십시오. 각 인스턴스를 생성하는 동안:
+    - `us-east1-b` [영역](https://cloud.google.com/compute/docs/regions-zones/)을 선택
+    - `n1-standard-4` 컴퓨터 유형(4 vCPUs, 15 GB memory) 사용
+    - Ubuntu 16.04 OS 이미지 사용
+    - [로컬 SSD 생성 및 마운트](https://cloud.google.com/compute/docs/disks/local-ssd#create_local_ssd).
+    - 앞서 생성한 웹 UI 방화벽 규칙을 적용하려면  **Management, disk, networking, SSH keys** 를 클릭하고 **Networking** 탭을 선택한 다음 **Network tags** 필드에`cockroachdb`를 입력
 
-2. Note the internal IP address of each `n1-standard-4` instance. You'll need these addresses when starting the CockroachDB nodes.
+2. 각 `n1-standard-4` 인스턴스의 내부 IP 주소를 기록해 두십시오. CockroachDB 노드를 시작할 때 이 주소가 필요할 것입니다.
 
-3. Create a separate instance for running a client application workload, also in the `us-east1-b` zone. This instance can be smaller, such as `n1-standard-1`.
+3. `us-east1-b` 영역에서도 클라이언트 애플리케이션 워크로드를 실행할 수 있는 별도의 인스턴스를 만드십시오. 이 경우는 `n1-standard-1` 와 같이 작아도 됩니다.
 
-### Step 3. Start a 3-node cluster
+### 3단계. 3-노드 클러스터 시작하기
 
-1. SSH to the first `n1-standard-4` instance.
+1. 첫번째 `n1-standard-4` 인스턴스에 대한 SSH.
 
-2. Download the [CockroachDB archive](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz) for Linux, extract the binary, and copy it into the `PATH`:
+2. [CockroachDB 아카이브](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz)를 리눅스용으로 다운로드하고, 바이너리를 추출하여, `PATH`에 복사하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -173,7 +175,7 @@ You'll start with a 3-node CockroachDB cluster in the `us-east1-b` GCE zone, wit
     $ sudo cp -i cockroach-{{ page.release_info.version }}.linux-amd64/cockroach /usr/local/bin
     ~~~
 
-3. Run the [`cockroach start`](start-a-node.html) command:
+3. [`cockroach start`](start-a-node.html) 명령을 실행합니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -187,24 +189,24 @@ You'll start with a 3-node CockroachDB cluster in the `us-east1-b` GCE zone, wit
     --background
     ~~~
 
-4. Repeat steps 1 - 3 for the other two `n1-standard-4` instances.
+4. 나머지 두 개의 `n1-standard-4` 인스턴스에 1 - 3 번을 반복합니다.
 
-5. On any of the `n1-standard-4` instances, run the [`cockroach init`](initialize-a-cluster.html) command:
+5. `n1-standard-4` 인스턴스 중 하나에, [`cockroach init`](initialize-a-cluster.html) 명령을 실행합니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach init --insecure --host=localhost
     ~~~
 
-    Each node then prints helpful details to the [standard output](start-a-node.html#standard-output), such as the CockroachDB version, the URL for the Web UI, and the SQL URL for clients.
+    그런 다음 각 노드는 CockroachDB 버전, 웹 UI URL 및 클라이언트의 SQL URL과 같은 유용한 세부 정보를 [표준 출력](start-a-node.html#standard-output)에 출력합니다.
 
-### Step 4. Import the Movr dataset
+### 4단계. Movr 데이터 세트 가져오기
 
-Now you'll import Movr data representing users, vehicles, and rides in 3 eastern US cities (New York, Boston, and Washington DC) and 3 western US cities (Los Angeles, San Francisco, and Seattle).
+이제 3개의 미국 동부 도시(뉴욕, 보스턴, 워싱턴 DC)와 3개의 미국 서부 도시(Los Angeles, San Francisco, 시애틀)에서 사용자, 차량 및 승차권을 나타내는 Movr의 데이터를 가져올 것이다.
 
-1. SSH to the fourth instance, the one not running a CockroachDB node.
+1. 네 번째 인스턴스에 대한 SSH(CockroachDB 노드를 실행하지 않는 경우)
 
-2. Download the [CockroachDB archive](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz) for Linux, and extract the binary:
+2. [CockroachDB 아카이브](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz)에서 리눅스용을 다운로드하고, 바이너리를 추출하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -212,21 +214,21 @@ Now you'll import Movr data representing users, vehicles, and rides in 3 eastern
     | tar  xvz
     ~~~
 
-3. Copy the binary into the `PATH`:
+3. `PATH`에 바이너리를 복사합니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ sudo cp -i cockroach-{{ page.release_info.version }}.linux-amd64/cockroach /usr/local/bin
     ~~~
 
-4. Start the [built-in SQL shell](use-the-built-in-sql-client.html), pointing it at one of the CockroachDB nodes:
+4. [built-in SQL shell](use-the-built-in-sql-client.html)를 시작하여 CockroachDB 노드 중 하나를 가리키십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure --host=<address of any node>
     ~~~
 
-5. Create the `movr` database and set it as the default:
+5. `movr` 데이터베이스를 만들고 기본값으로 설정하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -238,7 +240,7 @@ Now you'll import Movr data representing users, vehicles, and rides in 3 eastern
     > SET DATABASE = movr;
     ~~~
 
-6. Use the [`IMPORT`](import.html) statement to create and populate the `users`, `vehicles,` and `rides` tables:
+6. [`IMPORT`](import.html) 문을 사용하여 `users`, `vehicles,` `rides` 테이블을 만들고 채웁니다.
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -334,10 +336,10 @@ Now you'll import Movr data representing users, vehicles, and rides in 3 eastern
     ~~~
 
     {{site.data.alerts.callout_success}}
-    You can observe the progress of imports as well as all schema change operations (e.g., adding secondary indexes) on the [**Jobs** page](admin-ui-jobs-page.html) of the Web UI.
+    웹 UI의 [**Jobs** page](admin-ui-jobs-page.html) 에서 모든 스키마 변경 작업(예: 보조 인덱스 추가)뿐만 아니라 가져오기 작업의 진행률을 확인할 수 있다.
     {{site.data.alerts.end}}
 
-7. Logically, there should be a number of [foreign key](foreign-key.html) relationships between the tables:
+7. 논리적인 결과로, 테이블 사이에는 여러 개의 [외부 키](foreign-key.html 관계가 있어야 한다.
 
     Referencing columns | Referenced columns
     --------------------|-------------------
@@ -345,7 +347,8 @@ Now you'll import Movr data representing users, vehicles, and rides in 3 eastern
     `rides.city`, `rides.rider_id` | `users.city`, `users.id`
     `rides.vehicle_city`, `rides.vehicle_id` | `vehicles.city`, `vehicles.id`
 
-    As mentioned earlier, it wasn't possible to put these relationships in place during `IMPORT`, but it was possible to create the required secondary indexes. Now, let's add the foreign key constraints:
+    앞서 언급한 바와 같이, 이러한 관계를 `IMPORT` 도중에는 구축할 수 없었지만, 필요한 보조 인덱스를 만들 수 있었습니다.
+    그럼 이제 외부 키 제약 조건을 추가해 봅시다.
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -371,32 +374,33 @@ Now you'll import Movr data representing users, vehicles, and rides in 3 eastern
     REFERENCES vehicles (city, id);
     ~~~
 
-8. Exit the built-in SQL shell:
+8. built-in SQL 쉘을 중지합니다.
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > \q
     ~~~
 
-### Step 5. Install the Python client
+### Step 5. Python 클라이언트 설치
 
-When measuring SQL performance, it's best to run a given statement multiple times and look at the average and/or cumulative latency. For that purpose, you'll install and use a Python testing client.
+SQL 성능을 측정할 때는 주어진 명령문을 여러 번 실행하고 평균 또는 누적 지연 시간을 확인하는 것이 가장 좋습니다. 
+이를 위해 Python 테스트 클라이언트를 설치하고 사용하십시오.
 
-1. Still on the fourth instance, make sure all of the system software is up-to-date:
+1. 여전히 네 번째 인스턴스에서 모든 시스템 소프트웨어가 최신 상태인지 확인하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ sudo apt-get update && sudo apt-get -y upgrade
     ~~~
 
-2. Install the `psycopg2` driver:
+2. `psycopg2` 드라이버 설치:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ sudo apt-get install python-psycopg2
     ~~~
 
-3. Download the Python client:
+3. Python 클라이언트 다운로드:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -412,25 +416,25 @@ When measuring SQL performance, it's best to run a given statement multiple time
     `--statement` | The SQL statement to execute.
     `--repeat` | The number of times to repeat the statement. This defaults to 20.
 
-    When run, the client prints the median time in seconds across all repetitions of the statement. Optionally, you can pass two other flags, `--time` to print the execution time in seconds for each repetition of the statement, and `--cumulative` to print the cumulative time in seconds for all repetitions. `--cumulative` is particularly useful when testing writes.
+    실행 시 클라이언트는 문장의 모든 반복에 걸쳐 중간값 시간(초)을 인쇄합니다. 또는 두 개의 다른 플래그를 이용하는 방법도 있습니다. 플래그  `--time`을 전달하면 성명이 반복될 때마다 실행 시간을 초 단위로, `--cumulative`를 전달하면 모든 반복에 대해 누적 시간을 초 단위로 출력할 수 있습니다.. 누적(cumulative)은 쓰기를 테스트할 때 특히 유용합니다.
 
     {{site.data.alerts.callout_success}}
-    To get similar help directly in your shell, use `./tuning.py --help`.
+    이와 유사한 도움을 사용자의 쉘에 직접 받기 위해서는`./tuning.py --help`를 사용하십시오.
     {{site.data.alerts.end}}
 
-### Step 6. Test/tune read performance
+### 6단계. 읽기 성능 테스트/조정
 
-- [Filtering by the primary key](#filtering-by-the-primary-key)
-- [Filtering by a non-indexed column (full table scan)](#filtering-by-a-non-indexed-column-full-table-scan)
-- [Filtering by a secondary index](#filtering-by-a-secondary-index)
-- [Filtering by a secondary index storing additional columns](#filtering-by-a-secondary-index-storing-additional-columns)
-- [Joining data from different tables](#joining-data-from-different-tables)
-- [Using `IN (list)` with a subquery](#using-in-list-with-a-subquery)
-- [Using `IN (list)` with explicit values](#using-in-list-with-explicit-values)
+- [기본 키로 필터링](#filtering-by-the-primary-key)
+- [색인화되지 않은 열을 기준으로 필터링(전체 테이블 검색)(#filtering-by-a-non-indexed-column-full-table-scan)
+- [보조 인덱스에 의해 필터링](#filtering by Secondary-a-secondary-index)
+- [추가 열을 저장하는 보조 인덱스에 의해 필터링](#filtering-by-a-secondary-index-storing-additional-columns)
+- [다른 테이블에서 데이터 조정](#joining-data-from-different-tables)
+- [`IN (list)` 와 서브쿼리 사용](#using-in-list-with-a-subquery)
+- [명시적인 값과 함께 `IN (list)` 사용](#using-in-list-with-explicit-values)
 
-#### Filtering by the primary key
+#### 기본 키로 필터링
 
-Retrieving a single row based on the primary key will usually return in 2ms or less:
+기본 키를 기준으로 단일 행을 검색하면 일반적으로 2ms 이하로 반환됨:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -453,7 +457,7 @@ Median time (milliseconds):
 1.10495090485
 ~~~
 
-Retrieving a subset of columns will usually be even faster:
+일반적으로 열의 부분 집합을 검색하는 것은 훨씬 더 빠를 것입니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -478,9 +482,9 @@ Median time (milliseconds):
 1.09159946442
 ~~~
 
-#### Filtering by a non-indexed column (full table scan)
+#### 색인이 지정되지 않은 열에 의한 필터링(전체 테이블 검색)
 
-You'll get generally poor performance when retrieving a single row based on a column that is not in the primary key or any secondary index:
+기본 키 또는 보조 인덱스에 없는 열을 기반으로 단일 행을 검색할 때 일반적으로 성능이 저하됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -503,7 +507,7 @@ Median time (milliseconds):
 4.51302528381
 ~~~
 
-To understand why this query performs poorly, use the SQL client built into the `cockroach` binary to [`EXPLAIN`](explain.html) the query plan:
+이 쿼리가 성능이 좋지 않은 이유를 이해하려면 `cockroach` 바이너리에 내장된 SQL 클라이언트를 사용하여 쿼리 계획을 [`설명`](explain.html)으로 이동하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -523,11 +527,11 @@ $ cockroach sql \
 (3 rows)
 ~~~
 
-The row with `spans | ALL` shows you that, without a secondary index on the `name` column, CockroachDB scans every row of the `users` table, ordered by the primary key (`city`/`id`), until it finds the row with the correct `name` value.
+`spans | ALL` 을 가진 행은 `name` 열에 보조 인덱스가 없으면 기본 키(`city`/`id`)로 정렬된 사용자 테이블의 모든 행을 검색해 정확한 `name` 값을 가진 행을 찾아낸다.
 
-#### Filtering by a secondary index
+#### 보조 인덱스에 의한 필터링
 
-To speed up this query, add a secondary index on `name`:
+이 쿼리의 속도를 높이려면 `name`에 보조 인덱스를 추가하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -538,7 +542,8 @@ $ cockroach sql \
 --execute="CREATE INDEX on users (name);"
 ~~~
 
-The query will now return much faster:
+
+이제 쿼리가 훨씬 빠르게 반환될 것입니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -561,7 +566,7 @@ Median time (milliseconds):
 1.72162055969
 ~~~
 
-To understand why performance improved from 4.51ms (without index) to 1.72ms (with index), use [`EXPLAIN`](explain.html) to see the new query plan:
+성능이 4.51ms(인덱스 미포함 시)에서 1.82ms(인덱스 포함 시)로 개선된 이유를 이해하려면 [`설명`](explain.html)을 사용하여 새 쿼리 계획을 확인하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -2144,7 +2149,7 @@ Now let's again imagine 100 people in New York and 100 people in Seattle and 100
 
     Before partitioning, this query took a median time of 116.86ms. After partitioning, the query took a median time of only 9.26ms.
 
-## See also
+## 더 알아보기
 
 - [SQL Performance Best Practices](performance-best-practices-overview.html)
 - [Performance Benchmarking](performance-benchmarking-with-tpc-c.html)
