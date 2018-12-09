@@ -428,7 +428,7 @@ SQL 성능을 측정할 때는 주어진 명령문을 여러 번 실행하고 �
 - [색인화되지 않은 열을 기준으로 필터링(전체 테이블 검색)(#filtering-by-a-non-indexed-column-full-table-scan)
 - [보조 인덱스에 의해 필터링](#filtering by Secondary-a-secondary-index)
 - [추가 열을 저장하는 보조 인덱스에 의해 필터링](#filtering-by-a-secondary-index-storing-additional-columns)
-- [다른 테이블에서 데이터 조정](#joining-data-from-different-tables)
+- [다른 테이블에서 데이터 결합](#joining-data-from-different-tables)
 - [`IN (list)` 와 서브쿼리 사용](#using-in-list-with-a-subquery)
 - [명시적인 값과 함께 `IN (list)` 사용](#using-in-list-with-explicit-values)
 
@@ -589,15 +589,15 @@ $ cockroach sql \
 (6 rows)
 ~~~
 
-This shows you that CockroachDB starts with the secondary index (`table | users@users_name_idx`). Because it is sorted by `name`, the query can jump directly to the relevant value (`spans | /"Natalie Cunningham"-/"Natalie Cunningham"/PrefixEnd`). However, the query needs to return values not in the secondary index, so CockroachDB grabs the primary key (`city`/`id`) stored with the `name` value (the primary key is always stored with entries in a secondary index), jumps to that value in the primary index, and then returns the full row.
+이것은 CockroachDB가 보조 인덱스(`table | users@users_name_idx`)로 시작한다는 것을 보여줍니다. 이는 `name`에 따라 정렬되어 있어 관련 값(`spans | /"Natalie Cunningham"-/"Natalie Cunningham"/PrefixEnd`) 으로 바로 이동할 수 있습니다다. 단, 쿼리는 보조 인덱스에 없는 값을 반환해야 하므로 CockroachDB는 `name` 값(항상 보조 인덱스에 입력된 정보가 있는 기본 키)이 저장된 기본 키 (`city`/`id`)를 잡고 기본 인덱스의 해당 값으로 이동한 다음 전체 행을 반환합니다.
 
-Thinking back to the [earlier discussion of ranges and leaseholders](#important-concepts), because the `users` table is small (under 64 MiB), the primary index and all secondary indexes are contained in a single range with a single leaseholder. If the table were bigger, however, the primary index and secondary index could reside in separate ranges, each with its own leaseholder. In this case, if the leaseholders were on different nodes, the query would require more network hops, further increasing latency.
+[earlier discussion of ranges and leaseholders](#important-concepts)를 다시 보면, `users` 테이블이 작기 때문에(64MiB 이하) 기본 인덱스 및 보조 인덱스가 단일 임대자를 가진 단일 범위에 포함됩니다. 그러나, 만약 테이블이 더 크다면 기본 인덱스와 보조 인덱스가 각각 자신의 임대자를 가진 별도의 범위에 존재할 수도 있습니다. 이 경우, 임대자가 서로 다른 노드에 있는 경우 쿼리는 더 많은 네트워크 홉이 필요하게 되어 대기 시간이 더욱 길어지게 됩니다.
 
-#### Filtering by a secondary index storing additional columns
+#### 추가 열을 저장하는 보조 인덱스에 의한 필터링
 
-When you have a query that filters by a specific column but retrieves a subset of the table's total columns, you can improve performance by [storing](indexes.html#storing-columns) those additional columns in the secondary index to prevent the query from needing to scan the primary index as well.
+특정 열을 기준으로 필터링하지만 테이블의 전체 열의 일부를 검색하는 쿼리가 있는 경우, 해당 쿼리가 기본 인덱스를 검색할 필요가 없도록 보조 인덱스에 추가 열을 [저장](indexes.html#storing-columns)하여 성능을 개선할 수 있습니다.
 
-For example, let's say you frequently retrieve a user's name and credit card number:
+예를 들어, 사용자의 이름과 신용카드 번호를 자주 검색한다고 가정해 보십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -620,7 +620,7 @@ Median time (milliseconds):
 1.77955627441
 ~~~
 
-With the current secondary index on `name`, CockroachDB still needs to scan the primary index to get the credit card number:
+현재 보조 인덱스가 `name`으로 되어 있는 상태에서, CockroachDB는 여전히 신용카드 번호를 얻기 위해 기본 인덱스를 스캔해야 합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -643,7 +643,7 @@ $ cockroach sql \
 (6 rows)
 ~~~
 
-Let's drop and recreate the index on `name`, this time storing the `credit_card` value in the index:
+이번에는 `name`'에 대한 인덱스를 삭제하고 `credit_card` 값을 저장하는 인덱스를 다시 만들어 봅시다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -663,7 +663,7 @@ $ cockroach sql \
 --execute="CREATE INDEX ON users (name) STORING (credit_card);"
 ~~~
 
-Now that `credit_card` values are stored in the index on `name`, CockroachDB only needs to scan that index:
+이제 `credit_card` 값이 인덱스에 이름`name`으로 저장되므로 CockroachDB는 해당 인덱스만 검사하면 됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -683,7 +683,7 @@ $ cockroach sql \
 (3 rows)
 ~~~
 
-This results in even faster performance, reducing latency from 1.77ms (index without storing) to 0.99ms (index with storing):
+이로 인해 성능이 훨씬 빨라지고 지연 시간이 1.77ms(저장되지 않은 인덱스)에서 0.99ms(저장된 인덱스)가 됩니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -706,11 +706,11 @@ Median time (milliseconds):
 0.990509986877
 ~~~
 
-#### Joining data from different tables
+#### 다른 테이블에서 데이터 결합
 
-Secondary indexes are crucial when [joining](joins.html) data from different tables as well.
+보조 인덱스는 다른 테이블의 데이터를 [결합(joins.html)]할 때도 매우 중요합니다.
 
-For example, let's say you want to count the number of users who started rides on a given day. To do this, you need to use a join to get the relevant rides from the `rides` table and then map the `rider_id` for each of those rides to the corresponding `id` in the `users` table, counting each mapping only once:
+예를 들어, 특정 날에 `rides`를 시작한 사용자의 수를 세어보고 싶다고 합시다. 이를 위해서는 join을 사용하여 관련 놀이기구를 `rides` 테이블에서 가져온 다음 각 ride의 `rider_id`를 `users` 테이블의 해당 `id` 에 매핑하고 각 매핑을 한 번만 카운트합니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -736,7 +736,7 @@ Median time (milliseconds):
 1573.00913334
 ~~~
 
-To understand what's happening, use [`EXPLAIN`](explain.html) to see the query plan:
+어떤 일이 일어나는지 정확히 이해하려면 [`EXPLAIN`](explain.html)을 사용하여 쿼리 계획을 확인하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -769,11 +769,12 @@ WHERE start_time BETWEEN '2018-07-20 00:00:00' AND '2018-07-21 00:00:00';"
 (13 rows)
 ~~~
 
-Reading from bottom up, you can see that CockroachDB does a full table scan (`spans    | ALL`) first on `rides` to get all rows with a `start_time` in the specified range and then does another full table scan on `users` to find matching rows and calculate the count.
+아래부터 읽어 보면, CockroachDB가 먼저 Rides에서 전체 테이블 스캔(`spans    | ALL`)을 실시하여 지정된 범위에서 `start_time` 으로 모든 행을 표시한 다음 `users` 에서 또 다른 전체 테이블 스캔을 수행하여 일치하는 행을 찾아 카운트를 계산한다는 것을 알 수 있습니다.
 
-Given that the `rides` table is large, its data is split across several ranges. Each range is replicated and has a leaseholder. At least some of these leaseholders are likely located on different nodes. This means that the full table scan of `rides` involves several network hops to various leaseholders before finally going to the leaseholder for `users` to do a full table scan there.
+`rides` 테이블은 거대하기 때문에 데이터가 여러 범위에 걸쳐 나눠져 있습니다. 각 범위는 복제되었으며, 임대자가 있습니다. 따라서 이러한 임대자 중 적어도 일부는 서로 다른 노드에 위치할 가능성이 있습니다. 즉, `rides`의 전체 테이블 스캔은 여러 임대자에 의해 네트워크 홉을 몇 차례 포함한 후 최종적으로 `users` 에게 가서 전체 테이블스캔을 한다는 뜻입니다.
 
-To track this specifically, let's use the [`SHOW EXPERIMENTAL_RANGES`](show-experimental-ranges.html) statement to find out where the relevant leaseholders reside for `rides` and `users`:
+이를 구체적으로 추적하기 위해 [`SHOW EXPERIMENTAL_RANGES`](show-experimental-ranges.html) 문을 사용하여 `rides` 와 `users`에 대한 관련 임대자가 있는 지역을 파악하십시오.
+
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -813,12 +814,12 @@ $ cockroach sql \
 (1 row)
 ~~~
 
-The results above tell us:
+위의 결과는 다음을 말해줍니다:
 
-- The `rides` table is split across 7 ranges, with six leaseholders on node 2 and one leaseholder on node 1.
-- The `users` table is just a single range with its leaseholder on node 2.
+- `rides` 테이블이 노드 2의 임대자 6개, 노드 1의 임대자 1개로 7개 영역에 걸쳐 구분된다 
+- `users` 테이블은 노드 2의 임대자가 있는 한 가지의 범위에 불과하다
 
-Now, given the `WHERE` condition of the join, the full table scan of `rides`, across all of its 7 ranges, is particularly wasteful. To speed up the query, you can create a secondary index on the `WHERE` condition (`rides.start_time`) storing the join key (`rides.rider_id`):
+지금은 결합의 `WHERE` 조건을 볼 때 7개 영역에 걸친 `rides`의 전체 테이블스캔은 특히 낭비가 심합니다. 쿼리 속도를 높이려면 결합 키(`rides.rider_id`)를 저장하는 `WHERE` 조건 (`rides.start_time`)에서 보조 인덱스를 생성하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -830,10 +831,10 @@ $ cockroach sql \
 ~~~
 
 {{site.data.alerts.callout_info}}
-The `rides` table contains 1 million rows, so adding this index will take a few minutes.
+`rides` 테이블은 100만 행으로 되어 있어 이 지수를 추가하는 데는 몇 분 정도가 소요됩니다.
 {{site.data.alerts.end}}
 
-Adding the secondary index reduced the query time from 1573ms to 61.56ms:
+보조 인덱스를 추가하면 쿼리 시간이 1573ms에서 61.56ms로 단축됩니다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -915,9 +916,9 @@ $ cockroach sql \
 
 This tells us that the index is stored in 2 ranges, with the leaseholders for both of them on node 2. Based on the output of `SHOW EXPERIMENTAL_RANGES FROM TABLE users` that we saw earlier, we already know that the leaseholder for the `users` table is on node 2.
 
-#### Using `IN (list)` with a subquery
+#### 서브쿼리와 함께 `IN (list)` 사용
 
-Now let's say you want to get the latest ride of each of the 5 most used vehicles. To do this, you might think to use a subquery to get the IDs of the 5 most frequent vehicles from the `rides` table, passing the results into the `IN` list of another query to get the most recent ride of each of the 5 vehicles:
+이제 가장 많이 사용하는 5대 차량의 최신 주행 정보를 얻고 싶다고 가정해 보십시오. 이를 위해, 서브쿼리를 사용하여 가장 빈번한 5대 차량의 ID를 `rides` 테이블에서 얻고, 각 차량의 가장 최근 ride를 얻기 위한 또다른 쿼리의 `IN` 목록으로 전달합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1518,9 +1519,9 @@ For contrast, imagine we are now a Movr administrator in Los Angeles, and we wan
 
 Because the leaseholder for `vehicles` is in the same zone as the client request, this query took just 7.60ms compared to the similar query in New York that took 72.02ms.  
 
-#### Writes
+#### 쓰기
 
-The geographic distribution of data impacts write performance as well. For example, imagine 100 people in Seattle and 100 people in New York want to create new Movr accounts:
+데이터의 지리적 분포는 쓰기 성능에도 영향을 미칩니다. 예를 들어, 시애틀에 있는 100명의 사람들과 뉴욕에 있는 100명의 사람들이 새로운 Movr 계정을 만들고 싶다고 가정해 보십시오.
 
 1. SSH to the instance in `us-west1-a` with the Python client.
 
@@ -1582,14 +1583,15 @@ $ cockroach sql \
 (1 row)
 ~~~
 
-For the single range containing `users` data, one replica is in each zone, with the leaseholder in the `us-west1-a` zone. This means that:
+데이터를 포함하는 단일 범위의 경우, `us-west1-a` 영역에 있는 임대자와 함께 각 영역에 복제본 1개가 있습니다. 
+이는 다음을 의미합니다:
 
-- When creating a user in Seattle, the request doesn't have to leave the zone to reach the leaseholder. However, since a write requires consensus from its replica group, the write has to wait for confirmation from either the replica in `us-west1-b` (Los Angeles) or `us-east1-b` (New York) before committing and then returning confirmation to the client.
-- When creating a user in New York, there are more network hops and, thus, increased latency. The request first needs to travel across the continent to the leaseholder in `us-west1-a`. It then has to wait for confirmation from either the replica in `us-west1-b` (Los Angeles) or `us-east1-b` (New York) before committing and then returning confirmation to the client back in the east.
+- 시애틀에서 사용자를 생성할 때, 해당 요청은 임대자에게 도달하기 위해 영역을 벗어날 필요가 없습니다. 그러나 쓰기는 복제본 그룹의 합의를 필요로 하기 때문에, 쓰기는 `us-west1-b` (로스 앤젤레스) 또는 `us-east1-b` (뉴욕)의 복제본으로부터의 확인을 기다렸다가 커밋한 후 클라이언트에게 확인을 반환해야 합니다.
+- 뉴욕에서 유저 생성시 네트워크 홉이 많아져 대기시간이 늘어납니다. 우선 그 요청은 대륙을 건너서 임대주가 있는 `us-west1-a`로 가야 합니다. 그리고 커밋하기 전에 `us-west1-b` (Los Angeles) 또는 `us-east1-b` (New York) 의 복제본으로부터 확인을 기다렸다가 다시 동쪽에 있는 클라이언트에게 확인을 반환해야 합니다.
 
-### Step 13. Partition data by city
+### 13단계. 도시별 데이터 분할
 
-For this service, the most effective technique for improving read and write latency is to [geo-partition](partitioning.html) the data by city. In essence, this means changing the way data is mapped to ranges. Instead of an entire table and its indexes mapping to a specific range or set of ranges, all rows in the table and its indexes with a given city will map to a range or set of ranges. Once ranges are defined in this way, we can then use the [replication zone](configure-replication-zones.html) feature to pin partitions to specific locations, ensuring that read and write requests from users in a specific city don't have to leave that region.
+ 이 서비스의 경우, 읽기 및 쓰기 대기 시간을 개선하는 가장 효과적인 기법은 도시별 데이터를 [geo-partition(지리적 분할)](partitioning.html)하는 것입니다. 본질적으로, 이것은 데이터가 범위에 매핑되는 방법을 바꾸는 것을 의미합니다. 특정 범위 또는 범위 집합에 매핑되는 전체 테이블과 그 색인 대신, 표의 모든 행과 인덱스의 모든 행은 범위 또는 범위 세트에 매핑됩니다. 범위를 정의한 후에는 [복제 영역](configure-replication-zones.html) 기능을 사용하여 파티션을 특정 위치에 고정함으로써 특정 도시의 사용자의 읽기 및 쓰기 요청이 해당 지역을 떠나지 않도록 할 수 있습니다.
 
 1. Partitioning is an enterprise feature, so start off by [registering for a 30-day trial license](https://www.cockroachlabs.com/get-cockroachdb/).
 
@@ -1721,7 +1723,7 @@ For this service, the most effective technique for improving read and write late
     );"
     ~~~
 
-    Finally, drop an unused index on `rides` rather than partition it:
+    마지막으로, `rides`에 있는 사용되지 않은 인덱스를 분할하지 않고 삭제하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1733,10 +1735,10 @@ For this service, the most effective technique for improving read and write late
     ~~~
 
     {{site.data.alerts.callout_info}}
-    The `rides` table contains 1 million rows, so dropping this index will take a few minutes.
+    `rides` 테이블은 100만 행으로 되어 있어 이 인덱스를 떨어뜨리는 데는 몇 분 정도가 소요됩니다.
     {{site.data.alerts.end}}
 
-7. Now [create replication zones](configure-replication-zones.html#create-a-replication-zone-for-a-table-or-secondary-index-partition) to require city data to be stored on specific nodes based on node locality.
+7. 이제 [복제 영역 만들기](configure-replication-zones.html#create-a-replication-zone-for-a-table-or-secondary-index-partition)를 통해 노드 인접성을 기반으로 특정 노드에 도시 데이터를 저장해야 합니다.
 
     City | Locality
     -----|---------
@@ -1748,7 +1750,7 @@ For this service, the most effective technique for improving read and write late
     Los Angelese | `zone=us-west2-a`
 
     {{site.data.alerts.callout_info}}
-    Since our nodes are located in 3 specific GCE zones, we're only going to use the `zone=` portion of node locality. If we were using multiple zones per regions, we would likely use the `region=` portion of the node locality instead.
+    우리의 노드는 3개의 특정 GCE 구역에 위치하고 있기 때문에, 우리는 노드 위치의 `zone=` 부분만을 사용합니다. 지역별로 여러 구역을 사용하는 경우에는 노드 인접성의 `region=`부분을 대신 사용할 수 있습니다.
     {{site.data.alerts.end}}
 
     Start with the `users` table partitions:
@@ -2009,15 +2011,15 @@ For this service, the most effective technique for improving read and write late
     --host=<address of any node>
     ~~~
 
-### Step 14. Check rebalancing after partitioning
+### Step 14. 분할 후 재조정 확인
 
-Over the next minutes, CockroachDB will rebalance all partitions based on the constraints you defined.
+다음 몇 분 동안, CockroachDB는 사용자가 정의한 제약조건에 따라 모든 파티션의 균형을 재조정할 것입니다.
 
-To check this at a high level, access the Web UI on any node at `<node address>:8080` and look at the **Node List**. You'll see that the range count is still close to even across all nodes but much higher than before partitioning:
+이를 확인하려면 " `<node address>:8080`의 모든 노드에 있는 웹 UI에 접속하여 **Node List** 를 참조하십시오. 모든 노드에서 범위 카운트가 여전히 거의 균등하지만, 분할 전보다 훨씬 더 높은 것을 확인할 수 있습니다.
 
 <img src="{{ 'images/v2.1/perf_tuning_multi_region_rebalancing_after_partitioning.png' | relative_url }}" alt="Perf tuning rebalancing" style="border:1px solid #eee;max-width:100%" />
 
-To check at a more granular level, SSH to one of the instances not running CockroachDB and run the `SHOW EXPERIMENTAL_RANGES` statement on the `vehicles` table:
+보다 세분화된 수준에서 확인하기 위해 CockroachDB를 실행하지 않는 인스턴스 중 하나에 SSH를 수행하고 `vehicles` 테이블에 `SHOW EXPERIMENTAL_RANGES` 문을 실행하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -2043,7 +2045,7 @@ WHERE \"start_key\" IS NOT NULL \
 (6 rows)
 ~~~
 
-For reference, here's how the nodes map to zones:
+참고: 노드가 영역에 매핑되는 방식
 
 Node IDs | Zone
 ---------|-----
@@ -2051,21 +2053,21 @@ Node IDs | Zone
 4-6 | `us-west1-a` (Oregon)
 7-9 | `us-west2-a` (Los Angeles)
 
-We can see that, after partitioning, the replicas for New York, Boston, and Washington DC are located on nodes 1-3 in `us-east1-b`, replicas for Seattle are located on nodes 4-6 in `us-west1-a`, and replicas for San Francisco and Los Angeles are located on nodes 7-9 in `us-west2-a`.
+분할 후 뉴욕, 보스턴, 워싱턴 DC의 복제본은 `us-east1-b`, 의 노드 1-3에 위치하며, 시애틀의 복제본은 `us-west1-a` 의 노드 4-6에 위치하며, 샌프란시스코와 로스엔젤레스 복제본은 `us-west2-a`의 노드 7-9에 위치하는 것을 볼 수 있습니다.
 
-### Step 15. Test performance after partitioning
+### Step 15. 분할 후 성능 테스트
 
-After partitioning, reads and writers for a specific city will be much faster because all replicas for that city are now located on the nodes closest to the city.
+특정 도시를 위한 모든 복제본이 현재 도시에서 가장 가까운 노드에 위치하기 때문에 분할을 한 후, 읽기 및 쓰기 속도가 훨씬 빨라질 것입니다. 
 
-To check this, let's repeat a few of the read and write queries that we executed before partitioning in [step 12](#step-12-test-performance).
+이를 확인하려면  [step 12](#step-12-test-performance).에서 분할하기 전에 실행한 몇 가지 읽기 및 쓰기 쿼리를 반복하십시오.
 
-#### Reads
+#### 읽기
 
-Again imagine we are a Movr administrator in New York, and we want to get the IDs and descriptions of all New York-based bikes that are currently in use:
+우리가 뉴욕의 Movr 관리자로서, 현재 사용 중인 모든 뉴욕 기반 자전거의 ID와 정보를 얻고 싶다고 다시 가정해 보십시오.
 
-1. SSH to the instance in `us-east1-b` with the Python client.
+1. Python 클라이언트와 함께 `us-east1-b` 에 있는 인스턴스에 대한 SSH.
 
-2. Query for the data:
+2. 데이터에 대한 쿼리:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -2097,15 +2099,15 @@ Again imagine we are a Movr administrator in New York, and we want to get the ID
     7.62641429901
     ~~~
 
-Before partitioning, this query took a median time of 72.02ms. After partitioning, the query took a median time of only 7.62ms.
+분할 전에 이 쿼리는 72.02ms의 평균 시간이 걸렸으나, 분할 후 쿼리는 7.62ms의 평균 시간만 걸리는 것을 볼 수 있습니다.
 
-#### Writes
+#### 쓰기
 
-Now let's again imagine 100 people in New York and 100 people in Seattle and 100 people in New York want to create new Movr accounts:
+자, 이제 뉴욕의 100명, 시애틀의 100명, 그리고 뉴욕의 100명이 새로운 Movr 계정을 만들고 싶어한다고 다시 가정해봅시다.
 
-1. SSH to the instance in `us-west1-a` with the Python client.
+1. Python 클라이언트와 함께 `us-west1-a` 의 인스턴스에 대한 SSH.
 
-2. Create 100 Seattle-based users:
+2. 시애틀 기반 사용자 100명 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -2124,11 +2126,11 @@ Now let's again imagine 100 people in New York and 100 people in Seattle and 100
     8.90052318573
     ~~~
 
-    Before partitioning, this query took a median time of 48.40ms. After partitioning, the query took a median time of only 8.90ms.
+   분할 전에 이 쿼리는 48.40ms의 평균 시간이 걸렸으나, 분할 후 쿼리는 8.90ms의 평균 시간만 걸리는 것을 볼 수 있습니다.
 
-3. SSH to the instance in `us-east1-b` with the Python client.
+3. 클라이언트와 함께 `us-east1-b` 에서 인스턴스에 대한 SSH.
 
-4. Create 100 new NY-based users:
+4. 신규 NY 기반 사용자 100명 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -2147,7 +2149,7 @@ Now let's again imagine 100 people in New York and 100 people in Seattle and 100
     9.26303863525
     ~~~
 
-    Before partitioning, this query took a median time of 116.86ms. After partitioning, the query took a median time of only 9.26ms.
+    분할 전에 이 쿼리는 116.86ms의 평균 시간이 걸렸으나, 분할 후 쿼리는 9.26ms의 평균 시간이 걸리는 것을 볼 수 있습니다.
 
 ## 더 알아보기
 
