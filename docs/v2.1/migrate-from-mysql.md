@@ -164,14 +164,14 @@ CockroachDB 클러스터의 각 노드는 가져올 파일에 액세스할 수 �
 ## 더 알아보기
 
 - [`IMPORT`](import.html)
-- [Migrate from CSV][csv]
-- [Migrate from Postgres][postgres]
-- [Can a Postgres or MySQL application be migrated to CockroachDB?](frequently-asked-questions.html#can-a-postgresql-or-mysql-application-be-migrated-to-cockroachdb)
-- [SQL Dump (Export)](sql-dump.html)
-- [Back up Data](back-up-data.html)
-- [Restore Data](restore-data.html)
-- [Use the Built-in SQL Client](use-the-built-in-sql-client.html)
-- [Other Cockroach Commands](cockroach-commands.html)
+- [CSV로부터 마이그레이션][csv]
+- [Postgres로부터 마이그레이션][postgres]
+- [Postgres 또는 MySQL 응용 프로그램을 CockroachDB로 마이그레이션할 수 있는가?](frequently-asked-questions.html#can-a-postgresql-or-mysql-application-be-migrated-to-cockroachdb)
+- [SQL 덤프(내보내기)](sql-dump.html)
+- [데이터 백업](back-up-data.html)
+- [데이터 복원](restore-data.html)
+- [Built-in SQL 클라이언트 사용하기](use-the-built-in-sql-client.html)
+- [다른 Cockroach 명령어](cockroach-commands.html)
 
 <!-- Reference Links -->
 
