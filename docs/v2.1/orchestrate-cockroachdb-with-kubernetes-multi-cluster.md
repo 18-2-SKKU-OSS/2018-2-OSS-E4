@@ -388,12 +388,11 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
 
 ## Step 5. 데이터센터 장애 시뮬레이션 하기
 
-One of the major benefits of running a multi-region cluster is that an entire datacenter or region can go down without affecting the availability of the CockroachDB cluster as a whole.
+다중 영역 클러스터를 실행할 때 얻을 수 있는 주요 이점 중 하나는 전체 데이터 센터 또는 영역이 전체적으로 CockroachDB 클러스터의 가용성에 영향을 주지 않고 중단될 수 있다는 것입니다.
 
-To see this in action:
+이는 다음 작업을 통해 확인해볼 수 있습니다:
 
-1. Scale down one of the StatefulSets to zero pods, specifying the namespace and context of the Kubernetes cluster where it's running:
-
+1. StatefulSets 중 하나를 포드 0으로 축소하고, 실행 중인 Kubernet 클러스터의 네임스페이스 및 컨텍스트를 지정하십시오.
     {% include copy-clipboard.html %}
     ~~~ shell
     $ kubectl scale statefulset cockroachdb --replicas=0 --namespace=<cluster-namespace> --context=<cluster-context>
@@ -403,9 +402,9 @@ To see this in action:
     statefulset "cockroachdb" scaled
     ~~~
 
-2. In the Admin UI, the **Cluster Overview** will soon show the three nodes from that region as **Suspect**. If you wait for 5 minutes or more, they will be listed as **Dead**. Note that even though there are three dead nodes, the other nodes are all healthy, and any clients using the database in the other regions will continue to work just fine.
+2. 관리 UI에서 **Cluster Overview**는 곧 해당 영역의 3개 노드를 **Suspect**로 표시합니다. 5분 이상 기다리면 그 노드들은 **Dead**로 표시될 것입니다. 세 개의 비활성(dead) 노드가 있더라도 다른 노드는 모두 정상이며 다른 지역에서 데이터베이스를 사용하는 클라이언트는 계속 정상적으로 작동한다는 점에 주목하십시오.
 
-3. When you're done verifying that the cluster still fully functions with one of the regions down, you can bring the region back up by running:
+3. 영역 중 하나가 중단된 경우에도 클러스터가 완전히 작동하는지 확인이 끝났다면, 다음을 실행하여 영역을 다시 백업하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
