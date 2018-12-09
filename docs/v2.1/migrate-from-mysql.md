@@ -7,70 +7,70 @@ build_for: [standard, managed]
 
 {% include {{page.version.version}}/misc/beta-warning.md %}
 
-This page has instructions for migrating data from MySQL to CockroachDB using [`IMPORT`](import.html)'s support for reading [`mysqldump`][mysqldump] files.
+이 페이지에서는 [`IMPORT`](import.html) 의 [`mysqldump`][mysqldump] 파일 읽기 지원을 사용하여 MySQL에서 CockroachDB로 데이터를 마이그레이션하는 방법을 설명합니다.
 
-The examples below use the [employees data set](https://github.com/datacharmer/test_db) that is also used in the [MySQL docs](https://dev.mysql.com/doc/employee/en/).
+아래의 예는 [MySQL docs](https://dev.mysql.com/doc/employee/en/)에서도 사용된 [employees data set](https://github.com/datacharmer/test_db)을 사용한 예시입니다.
 
-## Considerations
+## 고려 사항
 
-In addition to the general considerations listed in the [Migration Overview](migration-overview.html), there is also the following MySQL-specific information to consider as you prepare your migration.
+[Migration Overview](migration-overview.html)에 나열된 일반적인 고려 사항 외에 마이그레이션을 준비할 때 고려해야 할 MySQL 관련 정보는 다음과 같습니다.
 
 ### String case sensitivity
 
-MySQL strings are case-insensitive by default, but strings in CockroachDB are case-sensitive.  This means that you may need to edit your MySQL dump file to get the results you expect from CockroachDB.  For example, you may have been doing string comparisons in MySQL that will need to be changed to work with CockroachDB.
+.MySQL 문자열은 기본적으로 대/소문자를 구분하지 않지만, CockroachDB의 문자열은 대/소문자를 구분합니다. 이는 CockroachDB에서 원하는 결과를 얻으려면 MySQL 덤프 파일을 편집해야 할 수도 있다는 것을 의미합니다. 예를 들어, CockroachDB와 함께 작업하기 위해 변경해야 할 MySQL에서 문자열 비교를 수행해야할 수도 있습니다.
 
-For more information about the case sensitivity of strings in MySQL, see [Case Sensitivity in String Searches](https://dev.mysql.com/doc/refman/8.0/en/case-sensitivity.html) from the MySQL documentation.  For more information about CockroachDB strings, see [`STRING`](string.html).
+MySQL 문자열의 대/소문자 감도에 대한 자세한 내용은 MySQL 문서에서 [Case Sensitivity in String Searches](https://dev.mysql.com/doc/refman/8.0/en/case-sensitivity.html)를 참조하십시오. CockroachDB 문자열에 대한 자세한 내용은 [`STRING`](string.html)을 참조하십시오.
 
-## Step 1. Dump the MySQL database
+## Step 1. MySQL 데이터베이스 덤프
 
-There are several ways to dump data from MySQL to be imported into CockroachDB:
+MySQL에서 CockroachDB로 가져올 데이터를 덤프(시스템에 저장된 정보를 복사)하는 방법:
 
 - [Dump the entire database](#dump-the-entire-database)
 - [Dump one table at a time](#dump-one-table-at-a-time)
 
-### Dump the entire database
+### 전체 데이터베이스 덤프
 
-Most users will want to import their entire MySQL database all at once, as shown below in [Import a full database dump](#import-a-full-database-dump).  To dump the entire database, run the [`mysqldump`][mysqldump] command shown below:
+대부분의 사용자는 [Import a full database dump](#import-a-full-database-dump)에서와 같이 전체 MySQL 데이터베이스를 한 번에 가져오려고 할 것입니다. 전체 데이터베이스를 덤프하려면 아래 나온 [`mysqldump`][mysqldump] 명령을 실행하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ mysqldump -uroot employees > /tmp/employees-full.sql
 ~~~
 
-If you only want to import one table from a database dump, see [Import a table from a full database dump](#import-a-table-from-a-full-database-dump) below.
+데이터베이스 덤프에서 테이블 하나만 가져오려면 아래의 [Import a table from a full database dump](#import-a-table-from-a-full-database-dump) b를 참조하십시오.
 
-### Dump one table at a time
+### 한 번에 하나의 테이블 덤프
 
-To dump the `employees` table from a MySQL database also named `employees`, run the [`mysqldump`][mysqldump] command shown below.  You can import this table using the instructions in [Import a table from a table dump](#import-a-table-from-a-table-dump) below.
+이름이 `employees`인 MySQL 데이터베이스에서 `employees` 테이블을 덤프하려면 아래 표시된  [`mysqldump`][mysqldump] 명령을 실행하십시오. 아래 [Import a table from a table dump](#import-a-table-from-a-table-dump) 의 방법을 사용하여 이 테이블을 가져올 수 있습니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ mysqldump -uroot employees employees > employees.sql
 ~~~
 
-## Step 2. Host the files where the cluster can access them
+## Step 2. 클러스터에서 액세스할 수 있는 파일 호스트
 
-Each node in the CockroachDB cluster needs to have access to the files being imported.  There are several ways for the cluster to access the data; for a complete list of the types of storage [`IMPORT`][import] can pull from, see [Import File URLs](import.html#import-file-urls).
+CockroachDB 클러스터의 각 노드는 가져올 파일에 액세스할 수 있어야 합니다. 클러스터가 데이터에 액세스할 수 있는 몇 가지 방법이 있습니다. [`IMPORT`][import]의 전체 저장소 유형은 [Import File URLs](import.html#import-file-urls)를 참조하십시오.
 
 {{site.data.alerts.callout_success}}
-We strongly recommend using cloud storage such as Amazon S3 or Google Cloud to host the data files you want to import.
+가져오려는 데이터 파일을 호스팅하기 위해 Amazon S3 또는 Google Cloud와 같은 클라우드 스토리지를 사용할 것을 적극 권장합니다.
 {{site.data.alerts.end}}
 
-## Step 3. Import the MySQL dump file
+## Step 3. MySQL 덤프 파일 가져오기
 
-You can choose from several variants of the [`IMPORT`][import] statement, depending on whether you want to import an entire database or just one table:
+전체 데이터베이스를 가져올지 아니면 한 테이블만 가져올지에 따라 [`IMPORT`][import]문의 여러 가지 종류 중에서 선택하여 사용할 수 있습니다.
 
 - [Import a full database dump](#import-a-full-database-dump)
 - [Import a table from a full database dump](#import-a-table-from-a-full-database-dump)
 - [Import a table from a table dump](#import-a-table-from-a-table-dump)
 
-All of the [`IMPORT`][import] statements in this section pull real data from [Amazon S3](https://aws.amazon.com/s3/) and will kick off background import jobs that you can monitor with [`SHOW JOBS`](show-jobs.html).
+본 섹션의 모든 [`IMPORT`][import]문은 [Amazon S3](https://aws.amazon.com/s3/)]에서 실제 데이터를 가져와  [`SHOW JOBS`](show-jobs.html) 로 모니터링할 수 있는 백그라운드 가져오기 작업을 시작합니다.
 
-### Import a full database dump
+### 전체 데이터베이스 덤프 가져오기
 
-This example assumes you [dumped the entire database](#dump-the-entire-database).
+이 예시에서는 [전체 데이터베이스를 덤프](#dump-the-entire-database)했다고 가정합니다.
 
-The [`IMPORT`][import] statement below reads the data and [DDL](https://en.wikipedia.org/wiki/Data_definition_language) statements (including `CREATE TABLE` and [foreign key constraints](foreign-key.html)) from the full database dump.
+아래의 [`IMPORT`][import] 문은 전체 데이터베이스 덤프에서 데이터와 [DDL](https://en.wikipedia.org/wiki/Data_definition_language) 문장을 읽어옵니다.(`CREATE TABLE` 와 [foreign key constraints](foreign-key.html) 포함)
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -86,11 +86,11 @@ The [`IMPORT`][import] statement below reads the data and [DDL](https://en.wikip
 (1 row)
 ~~~
 
-### Import a table from a full database dump
+### 전체 데이터베이스 덤프에서 하나의 테이블 가져오기
 
-This example assumes you [dumped the entire database](#dump-the-entire-database).
+이 예시에서는 [전체 데이터베이스를 덤프](#dump-the-entire-database)했다고 가정합니다.
 
-[`IMPORT`][import] can import one table's data from a full database dump.  It reads the data and applies any `CREATE TABLE` statements from the dump file.
+[`IMPORT`][import]는 전체 데이터베이스 덤프에서 한 개 테이블의 데이터를 가져올 수 있으며, 데이터를 읽고 덤프 파일에서 임의의 `CREATE TABLE` 문을 적용합니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -106,11 +106,11 @@ This example assumes you [dumped the entire database](#dump-the-entire-database)
 (1 row)
 ~~~
 
-### Import a table from a table dump
+### 테이블 덤프에서 테이블 
 
-The examples below assume you [dumped one table](#dump-one-table-at-a-time).
+아래의 예시에서는 [하나의 테이블만 덤프](#dump-one-table-at-a-time)했다고 가정합니다.
 
-The simplest way to import a table dump is to run [`IMPORT TABLE`][import] as shown below.  It reads the table data and any `CREATE TABLE` statements from the dump file.
+테이블 덤프를 가져오는 가장 간단한 방법은 아래와 같이 [`IMPORT TABLE`][import]를 실행하는 것입니다. 이는 테이블 데이터를 읽어오고 `CREATE TABLE`문을 덤프 파일로부터 읽어옵니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -126,8 +126,7 @@ The simplest way to import a table dump is to run [`IMPORT TABLE`][import] as sh
 (1 row)
 ~~~
 
-If you need to specify the table's columns for some reason, you can use an [`IMPORT TABLE`][import] statement like the one below, which will import data but ignore any `CREATE TABLE` statements in the dump file, instead relying on the columns you specify.
-
+테이블의 열을 지정해야 하는 경우 아래 문처럼 [`IMPORT TABLE`][import] 문을 사용하면 데이터는 가져오지만, 덤프 파일의 `CREATE TABLE`문을 무시하고 지정한 열에 의존합니다.
 {% include copy-clipboard.html %}
 ~~~ sql
 > CREATE DATABASE IF NOT EXISTS employees;
@@ -143,26 +142,26 @@ If you need to specify the table's columns for some reason, you can use an [`IMP
   MYSQLDUMP DATA ('https://s3-us-west-1.amazonaws.com/cockroachdb-movr/datasets/employees-db/mysqldump/employees.sql.gz');
 ~~~
 
-## Configuration Options
+## 구성 옵션
 
-The following options are available to `IMPORT ... MYSQLDUMP`:
+이 옵션은 `IMPORT ... MYSQLDUMP` 에서 사용할 수 있습니다.
 
-+ [Skip foreign keys](#skip-foreign-keys)
++ [외부 키 스킵하기](#skip-foreign-keys)
 
-### Skip foreign keys
+### 외부 키 스킵하기
 
-By default, [`IMPORT ... MYSQLDUMP`][import] supports foreign keys.  **Default: false**.  Add the `skip_foreign_keys` option to speed up data import by ignoring foreign key constraints in the dump file's DDL.  It will also enable you to import individual tables that would otherwise fail due to dependencies on other tables.
+기본적으로 [`IMPORT ... MYSQLDUMP`][import] 는 외부 키를 지원합니다.  **Default: false**.  `skip_foreign_keys` 옵션을 추가하여 덤프 파일의 DDL에 있는 외부 키 제약 조건을 무시하고 데이터 가져오기 속도를 높이십시오. 이 옵션을 사용하면 다른 테이블의 종속성으로 인해 실패할 수 있는 개별 테이블을 가져올 수도 있습니다. 
 
-Example usage:
+사용 예시:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > IMPORT MYSQLDUMP 's3://your-external-storage/employees.sql?AWS_ACCESS_KEY_ID=123&AWS_SECRET_ACCESS_KEY=456' WITH skip_foreign_keys;
 ~~~
 
-[Foreign key constraints](foreign-key.html) can be added by using [`ALTER TABLE ... ADD CONSTRAINT`](add-constraint.html) commands after importing the data.
+[Foreign key constraints](foreign-key.html)은 데이터를 가져온 후 [`ALTER TABLE ... ADD CONSTRAINT`](add-constraint.html) 명령을 사용해 추가할 수 있습니다.
 
-## See also
+## 더 알아보기
 
 - [`IMPORT`](import.html)
 - [Migrate from CSV][csv]
