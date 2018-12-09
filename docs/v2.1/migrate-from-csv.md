@@ -185,12 +185,12 @@ CockroachDB 클러스터의 각 노드는 가져올 파일에 액세스할 수 �
 ## 더 알아보기
 
 - [`IMPORT`][import]
-- [Migrate from MySQL][mysql]
-- [Migrate from Postgres][postgres]
-- [SQL Dump (Export)](sql-dump.html)
-- [Back Up and Restore Data](backup-and-restore.html)
-- [Use the Built-in SQL Client](use-the-built-in-sql-client.html)
-- [Other Cockroach Commands](cockroach-commands.html)
+- [MySQL로부터 마이그레이션][mysql]
+- [Postgres로부터 마이그레이션][postgres]
+- [SQL 덤프 (내보내기)](sql-dump.html)
+- [데이터 백업 및 복원](backup-and-restore.html)
+- [Built-in SQL 클라이언트 사용하기](use-the-built-in-sql-client.html)
+- [다른 Cockroach 명령어](cockroach-commands.html)
 
 <!-- Reference Links -->
 
