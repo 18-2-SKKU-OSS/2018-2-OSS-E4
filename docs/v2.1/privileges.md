@@ -27,7 +27,7 @@ CockroachDB에서, 데이터베이스 및 테이블 레벨에서 [역할](roles.
 ## 권한 표시
 
 역할이나 사용자에게 부여된 권한을 표시하려면, [`SHOW GRANTS`](show-grants.html) 명령문을 사용하십시오. 예를 들면:
-
+ 
 {% include copy-clipboard.html %}
 ~~~ sql
 > SHOW GRANTS ON DATABASE bank FOR maxroach;
