@@ -17,14 +17,14 @@ redirect_from: orchetrate-cockroachdb-with-kubernetes-multi-region.html
 
 Feature | Description
 --------|------------
-instance | A physical or virtual machine. In this tutorial, you'll run instances as part of three independent Kubernetes clusters, each in a different region.
+instance | 물리 또는 가상 머신. 이 튜토리얼에서는 각각 다른 지역에 있는 세 개의 독립된 Kubernet 클러스터의 일부로 인스턴스를 실행합니다.
 [pod](http://kubernetes.io/docs/user-guide/pods/) | 포드는 더커(Docker) 컨테이너 중 하나의 그룹이다. 이 튜토리얼에서 각 포드는 별도의 인스턴스에서 실행되며, 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 포드는 3 포드로 시작하여 4포드로 늘어납니다.
 [StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | StatefulSet은 상태 저장 장치로 취급되는 포드의 그룹이며, 각 포드는 구별할 수 있는 네트워크 ID를 가지며, 재시작 시 항상 동일한 영구 스토리지에 다시 바인딩됩니다. StatefulSets는 버전 1.5에서 베타 버전에 도달한 후 Kubernets 버전 1.9에서는 안정적인 것으로 간주됩니다.
-[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | A persistent volume is a piece of networked storage (Persistent Disk on GCE, Elastic Block Store on AWS) mounted into a pod. The lifetime of a persistent volume is decoupled from the lifetime of the pod that's using it, ensuring that each CockroachDB node binds back to the same storage on restart.<br><br>This tutorial assumes that dynamic volume provisioning is available. When that is not the case, [persistent volume claims](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) need to be created manually.
-[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) | RBAC, or Role-Based Access Control, is the system Kubernetes uses to manage permissions within the cluster. In order to take an action (e.g., `get` or `create`) on an API resource (e.g., a `pod`), the client must have a `Role` that allows it to do so.
-[namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) | A namespace provides a scope for resources and names within a Kubernetes cluster. Names of resources need to be unique within a namespace, but not across namespaces. Most Kubernetes client commands will use the `default` namespace by default, but can operate on resources in other namespaces as well if told to do so.
-[kubectl](https://kubernetes.io/docs/reference/kubectl/overview/) | `kubectl` is the command-line interface for running commands against Kubernetes clusters.
-[kubectl context](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-context-and-configuration) | A `kubectl` "context" specifies a Kubernetes cluster to connect to and authentication for doing so. You can set a context as the default using the `kubectl use-context <context-name>` command such that all future `kubectl` commands will talk to that cluster, or you can specify the `--context=<context-name>` flag on almost any `kubectl` command to tell it which cluster you want to run the command against. We will make heavy use of the `--context` flag in these instructions in order to run commands against the different regions' Kubernetes clusters.
+[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | 영구 볼륨은 포드에 마운트된 네트워크 스토리지(GCE의 영구 디스크, AWS의 Elastic Block Store)의 한 부분이다. 영구 볼륨의 수명은 해당 볼륨을 사용하는 포드의 수명과 분리되어 각 CockroachDB 노드가 재시작 시 동일한 스토리지에 다시 바인딩되도록 보장합니다. 이 튜토리얼에서는 동적 볼륨 프로비저닝을 사용할 수 있다고 가정합니다. 그렇지 않은 경우, [persistent volume claims(영구 볼륨 요청)](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) 이 이루어져야 합니다.
+[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) | RBAC 또는 Role 기반 액세스 제어는 Kubernetes가 클러스터 내에서 사용 권한을 관리하는 데 사용하는 시스템입니다. API 리소스(예:`pod`)에 대한 작업(예: `get` 또는 `create`)을 수행하려면 고객은 이를 허용하는 `Role`을 가져야 합니다.
+[namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) | 네임스페이스는 Kubernets 클러스터 내의 리소스와 이름에 대한 범위를 제공합니다. 리소스 이름은 네임스페이스 내에서 고유해야 하지만 네임스페이스 사이에서는 그렇지 않습니다. 대부분의 Kubernetes 클라이언트 명령은 기본적으로 `default` 네임스페이스를 사용하지만, 다른 네임스페이스의 리소스에도 사용할 수 있다.
+[kubectl](https://kubernetes.io/docs/reference/kubectl/overview/) | `kubectl`은 Kubernetes 클러스터에 대한 명령을 실행하기 위한 커맨드라인 인터페이스입니다.
+[kubectl context](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-context-and-configuration) | `kubectl` "context" 는 연결 및 인증할 Kubernetes 클러스터를 명시합니다. 향후 모든 `kubectl` 명령어가 클러스터와 대화할 수 있도록 `kubectl use-context <context-name>` 명령을 사용하여 컨텍스트를 기본값으로 설정하거나, 거의 모든 `kubectl` 명령에서 `--context=<context-name>`플래그를 지정하여 명령을 실행할 클러스터를 지정할 수 있습니다. 각각 다른 지역의 Kubernetes 클러스터에 대한 명령을 실행하기 위해, 이 튜토리얼에서는 `--context` 플래그를 많이 사용합니다.
 
 ### UX differences from running in a single cluster
 
@@ -284,9 +284,9 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     pod "cockroachdb-client-secure" created
     ~~~
 
-    The pod uses the `root` client certificate created earlier by the `setup.py` script. Note that this will work from any of the three Kubernetes clusters as long as you use the correct namespace and context combination.
+   포드는 앞서 `setup.py` 스크립트에 의해 만들어진 `root` 클라이언트 인증서를 사용합니다. 올바른 네임스페이스와 컨텍스트 조합을 사용하여 이 작업이 세 개의 Kubernet 클러스터 중 하나에서 작동하도록 해야합니다.
 
-2. Get a shell into the pod and start the CockroachDB [built-in SQL client](use-the-built-in-sql-client.html), again specifying the namespace and context of the Kubernetes cluster where the pod is running:
+2. 포드에 셸을 넣고 CockroachDB [built-in SQL client](use-the-built-in-sql-client.html)를 다시 시작하여 포드가 실행되는 Kubernetes 클러스터의 네임스페이스 및 컨텍스트를 지정합니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -307,7 +307,7 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     root@cockroachdb-public:26257/>
     ~~~
 
-3. Run some basic [CockroachDB SQL statements](learn-cockroachdb-sql.html):
+3. 기본적인 [CockroachDB SQL statements](learn-cockroachdb-sql.html) 몇 개를 실행합니다.
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -338,14 +338,14 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     (1 row)
     ~~~
 
-3. [Create a user with a password](create-user.html#create-a-user-with-a-password):
+3. [사용자 만들고 비밀번호 지정하기](create-user.html#create-a-user-with-a-password):
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > CREATE USER roach WITH PASSWORD 'Q7gc8rEdS';
     ~~~
 
-      You will need this username and password to access the Admin UI in Step 4.
+      Step 4에서 관리 UI에 액세스하려면 이 사용자 이름과 암호가 필요할 것입니다.
 
 4. Exit the SQL shell and pod:
 
@@ -353,10 +353,10 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     ~~~ sql
     > \q
     ~~~
+   
+   포드는 무한정 계속 실행되므로, built-in SQL 클라이언트를 다시 열거나 다른 [`cockroach` 클라이언트 명령](cockroach-commands.html)(예: `cockroach node`)을 실행해야 할 때마다 적절한 명령을 사용하여 step 2를 반복하십시오.
 
-    The pod will continue running indefinitely, so any time you need to reopen the built-in SQL client or run any other [`cockroach` client commands](cockroach-commands.html) (e.g., `cockroach node`), repeat step 2 using the appropriate command.
-
-    If you'd prefer to delete the pod and recreate it when needed, run:
+   포드를 삭제하고 필요할 때 재생성하는 편을 선호하는 경우에는 다음을 실행하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -365,9 +365,9 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
 
 ## Step 4. 웹 UI 액세스 하기
 
-To access the cluster's [Web UI](admin-ui-overview.html):
+클러스어의 [Web UI(웹 UI)](admin-ui-overview.html) 에 액세스 하려면:
 
-1. Port-forward from your local machine to a pod in one of your Kubernetes clusters:
+1. 로컬 컴퓨터에서 Kubernet 클러스터 중 하나의 포드에 포트 포워딩 하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -379,12 +379,12 @@ To access the cluster's [Web UI](admin-ui-overview.html):
     ~~~
 
     {{site.data.alerts.callout_info}}
-    The `port-forward` command must be run on the same machine as the web browser in which you want to view the Web UI. If you have been running these commands from a cloud instance or other non-local shell, you will not be able to view the UI without configuring `kubectl` locally and running the above `port-forward` command on your local machine.
+    `port-forward`은 웹 UI를 보려는 웹 브라우저와 동일한 컴퓨터에서 실행해야 합니다. 클라우드 인스턴스나 다른 로컬 셸에서 이 명령을 실행한 경우 로컬 컴퓨터에서 `kubectl`을 구성하고 위의 `port-forward` 명령을 실행하지 않으면 UI를 볼 수 없습니다.
     {{site.data.alerts.end}}
 
-2. Go to <a href="https://localhost:8080/" data-proofer-ignore>https://localhost:8080</a> and login with the username and password created in the [Use the built-in SQL client](#step-3-use-the-built-in-sql-client) step.
+2. <a href="https://localhost:8080/" data-proofer-ignore>https://localhost:8080</a> 로 이동하여 [Use the built-in SQL client](#step-3-use-the-built-in-sql-client) 단계에서 생성된 사용자 이름과 암호를 사용하여 로그인하십시오.
 
-3. In the UI, check the **Node List** to verify that all nodes are running, and then click the **Databases** tab on the left to verify that `bank` is listed.
+3. UI에서 **Node List** 를 확인하여 모든 노드가 실행 중인지 확인한 다음 왼쪽의 **Databases** 탭을 클릭하여 `bank`가 나열되어 있는지 확인하십시오.
 
 ## Step 5. 데이터센터 장애 시뮬레이션 하기
 
@@ -416,15 +416,15 @@ To see this in action:
     statefulset "cockroachdb" scaled
     ~~~
 
-## Step 6. Maintain the cluster
+## Step 6. 클러스터 유지 관리하기
 
-### Scale the cluster
+### 클러스터 확장하기
 
-Each of your Kubernetes clusters contains 3 nodes that pods can run on. To ensure that you do not have two pods on the same node (as recommended in our [production best practices](recommended-production-settings.html)), you need to add a new worker node and then edit your StatefulSet configuration to add another pod.
+각 Kubernetes 클러스터에는 포드가 실행될 수 있는 3개의 노드가 포함되어 있습니다. 동일한 노드에 두 개의 포드가 없도록 하려면 ([production best practices](recommended-production-settings.html)에서 권고한 바와 같이), 새 작업자 노드를 추가한 다음 StatefulSet 구성을 편집하여 다른 포드를 추가하십시오.
 
-1. [Resize your cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/resizing-a-cluster).
+1. [Resize your cluster(클러스터 크기 조정하기)](https://cloud.google.com/kubernetes-engine/docs/how-to/resizing-a-cluster).
 
-2. Use the `kubectl scale` command to add a pod to the StatefulSet in the Kubernetes cluster where you want to add a CockroachDB node:
+2. CockroachDB 노드를 추가할 Kubernetes 클러스터의 StatefulSet에 `kubectl scale` 명령을 사용하여 포드를 추가하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -435,7 +435,7 @@ Each of your Kubernetes clusters contains 3 nodes that pods can run on. To ensur
     statefulset "cockroachdb" scaled
     ~~~
 
-3. Verify that a fourth pod was added successfully:
+3. 4번째 노드가 성공적으로 추가되었는지 확인하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -451,36 +451,36 @@ Each of your Kubernetes clusters contains 3 nodes that pods can run on. To ensur
     cockroachdb-client-secure   1/1       Running   0          26m
     ~~~
 
-### Upgrade the cluster
+### 클러스터 업그레이드 하기
 
 CockroachDB의 새로운 버전이 출시됨에 따라 버그 수정, 성능 개선 및 새로운 기능을 얻기 위해 새로운 버전으로 업그레이드하는 것을 강력히 권장합니다. 일반 [CockroachDB 업그레이드 설명서](upgrade-cockroach-version.html)는 CockroachDB 클러스터의 업그레이드를 준비하고 실행하는 방법에 대한 모범 사례를 제공하지만, Kubernetes에서 실제로 프로세스를 중지하고 다시 시작하는 메커니즘은 다소 특별합니다.
 
 Kubernetes는 CockroachDB 노드의 안전한 롤링 업그레이드 프로세스를 수행하는 방법을 알고 있습니다. 사용자가 CockroachDB StatefulSet에 사용된 Docker 이미지를 변경하라고 하면 Kubernetes는 노드를 중지하고 새 이미지로 다시 시작하고 다음 이미지로 이동하기 전에 클라이언트 요청을 수신할 준비가 될 때까지 대기합니다. 자세한 내용은 [Kubernetes documentation](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets).을 참조하십시오.
 
 
-1. Decide how the upgrade will be finalized.
+1. 업그레이드를 완료하는 방법을 결정하십시오.
 
-    {{site.data.alerts.callout_info}}This step is relevant only when upgrading from v2.0.x to v2.1. For upgrades within the v2.1.x series, skip this step.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_info}}이 단계는 v2.0.x에서 v2.1로 업그레이드할 때만 관련이 있습니다. v2.1.x 시리즈 내에서 업그레이드하는 경우 이 단계를 건너뛰십시오.{{site.data.alerts.end}}
 
-    By default, after all nodes are running the new version, the upgrade process will be **auto-finalized**. This will enable certain performance improvements and bug fixes introduced in v2.1. After finalization, however, it will no longer be possible to perform a downgrade to v2.0. In the event of a catastrophic failure or corruption, the only option will be to start a new cluster using the old binary and then restore from one of the backups created prior to performing the upgrade.
+    기본적으로 모든 노드가 새 버전을 실행한 후 업그레이드 프로세스는 **auto-finalized(자동 완료)** 가 됩니다. 이를 통해 v2.1에 도입된 특정 성능 개선 및 버그 수정이 가능해집니다. 그러나 완료(finalization) 후에는 v2.0으로 다운그레이드를 더 이상 수행할 수 없을 것입니다. 심각한 오류나 손상이 발생할 경우에는 이전 바이너리를 사용하여 새 클러스터를 시작한 다음 업그레이드를 수행하기 전에 생성된 백업 중 하나에서 복원하는 것이 유일한 옵션입니다.
 
-    We recommend disabling auto-finalization so you can monitor the stability and performance of the upgraded cluster before finalizing the upgrade:
+    업그레이드를 완료하기 전에 업그레이드된 클러스터의 안정성 및 성능을 모니터링할 수 있도록 자동 완료를 사용하지 않도록 설정하는 것을 권장합니다.
 
-    1. Get a shell into the pod with the `cockroach` binary created earlier and start the CockroachDB [built-in SQL client](use-the-built-in-sql-client.html):
+    1. 앞서 생성된 `cockroach` 바이너리로 쉘을 포드에 넣고 CockroachDB [built-in SQL client](use-the-built-in-sql-client.html)를 시작하십시오.
 
         {% include copy-clipboard.html %}
         ~~~ shell
         $ kubectl exec -it cockroachdb-client-secure --context=<cluster-context> -- ./cockroach sql --certs-dir=/cockroach-certs --host=cockroachdb-public
         ~~~
 
-    2. Set the `cluster.preserve_downgrade_option` [cluster setting](cluster-settings.html):
+    2. `cluster.preserve_downgrade_option` [cluster setting](cluster-settings.html) 설정:
 
         {% include copy-clipboard.html %}
         ~~~ sql
         > SET CLUSTER SETTING cluster.preserve_downgrade_option = '2.0';
         ~~~
 
-2. For each Kubernetes cluster, kick off the upgrade process by changing the desired Docker image. To do so, pick the version that you want to upgrade to, then run the following command, replacing "VERSION" with your desired new version and specifying the relevant namespace and "context" name for the Kubernetes cluster:
+2. 각 Kubernetes 클러스터에 대해 원하는 Docker 이미지를 변경하여 업그레이드 프로세스를 시작하십시오. 이렇게 하려면 업그레이드할 버전을 선택한 후 다음 명령을 실행하여 "VERSION"을 원하는 새 버전으로 교체하고 관련 네임스페이스 및 Kubernet 클러스터의 "context" 이름을 지정하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -497,7 +497,7 @@ Kubernetes는 CockroachDB 노드의 안전한 롤링 업그레이드 프로세�
     $ kubectl patch statefulset cockroachdb --namespace=<namespace-of-kubernetes-cluster3> --context=<context-name-of-kubernetes-cluster3> --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value":"cockroachdb/cockroach:VERSION"}]'
     ~~~
 
-3. If you then check the status of the pods in each Kubernetes cluster, you should see one of them being restarted:
+3. 그런 다음 각 Kubernetes 클러스터에서 포드 상태를 확인할 경우 다음 중 하나가 다시 시작되고 있음을 확인하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -516,29 +516,29 @@ Kubernetes는 CockroachDB 노드의 안전한 롤링 업그레이드 프로세�
 
     This will continue until all of the pods have restarted and are running the new image.
 
-4. Finish the upgrade.
+4. 업그레이드를 완료하십시오.
 
-    {{site.data.alerts.callout_info}}This step is relevant only when upgrading from v2.0.x to v2.1. For upgrades within the v2.1.x series, skip this step.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_info}}이 단계는 v2.0.x에서 v2.1로 업그레이드할 때만 관련이 있습니다. v2.1.x 시리즈 내에서 업그레이드하는 경우 이 단계를 건너뛰십시오.{{site.data.alerts.end}}
 
-    If you disabled auto-finalization in step 1 above, monitor the stability and performance of your cluster for as long as you require to feel comfortable with the upgrade (generally at least a day). If during this time you decide to roll back the upgrade, repeat the rolling restart procedure with the old binary.
+    위의 1단계에서 자동 완료(auto-finalization) 기능을 사용하지 않도록 설정한 경우 업그레이드에 익숙해질 필요가 있는 한(일반적으로 적어도 하루 이상) 클러스터의 안정성 및 성능을 모니터링하십시오. 만약 이 시간 동안 업그레이드를 롤백하기로 결정했다면 이전 바이너리를 사용하여 롤링 재시작 절차를 반복하십시오.
 
-    Once you are satisfied with the new version, re-enable auto-finalization:
+    새 버전이 마음에 들었다면, 자동 완성 기능을 다시 활성화하십시오.:
 
-    1. Get a shell into the pod with the `cockroach` binary created earlier and start the CockroachDB [built-in SQL client](use-the-built-in-sql-client.html):
+    1. 앞서 생성된 `cockroach` 바이너리로 쉘을 포드에 넣고 CockroachDB [built-in SQL client](use-the-built-in-sql-client.html)를 시작하십시오.
 
         {% include copy-clipboard.html %}
         ~~~ shell
         $ kubectl exec -it cockroachdb-client-secure --context=<cluster-context> -- ./cockroach sql --certs-dir=/cockroach-certs --host=cockroachdb-public
         ~~~
 
-    2. Re-enable auto-finalization:
+    2. auto-finalization를 다시 사용하도록 설정합니다.
 
         {% include copy-clipboard.html %}
         ~~~ sql
         > RESET CLUSTER SETTING cluster.preserve_downgrade_option;
         ~~~
 
-### Stop the cluster
+### 클러스터 중지하기
 
 1. 클러스터에서 생성된 리소스를 모두 삭제하려면 `setup.py`에서 `contexts` 맵을 복사하고, `teardown.py`로 만든 다음 `teardown.py`를 실행합니다.
 
@@ -565,7 +565,7 @@ Kubernetes는 CockroachDB 노드의 안전한 롤링 업그레이드 프로세�
     pod "kube-dns-5dcfcbf5fb-lcfxd" deleted
     ~~~
 
-2. Stop each Kubernetes cluster:
+2. 각각의 Kubernetes 클러스터를 중지합니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
