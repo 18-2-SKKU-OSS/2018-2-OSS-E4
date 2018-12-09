@@ -50,7 +50,7 @@ $ mysqldump -uroot employees employees > employees.sql
 
 ## 2단계. 클러스터에서 액세스할 수 있는 파일 호스트
 
-CockroachDB 클러스터의 각 노드는 가져올 파일에 액세스할 수 있어야 합니다. 클러스터가 데이터에 액세스할 수 있는 몇 가지 방법이 있습니다. [`IMPORT`][import]의 전체 저장소 유형은 [Import File URLs](import.html#import-file-urls)를 참조하십시오.
+CockroachDB 클러스터의 각 노드는 가져올 파일에 액세스할 수 있어야 합니다. 클러스터가 데이터에 액세스할 수 있는 몇 가지 방법이 있습니다. [`IMPORT`][import]의 전체 저장소 유형은 [파일 URL 가져오기](import.html#import-file-urls)를 참조하십시오.
 
 {{site.data.alerts.callout_success}}
 가져오려는 데이터 파일을 호스팅하기 위해 Amazon S3 또는 Google Cloud와 같은 클라우드 스토리지를 사용할 것을 적극 권장합니다.
