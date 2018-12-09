@@ -198,24 +198,25 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     }
     ~~~
 
-    Setting regions is optional, but recommended, because it improves CockroachDB's ability to diversify data placement if you use more than one zone in the same region. If you aren't specifying regions, just leave the map empty.
+    설정 영역은 선택 사항이지만 동일한 영역에 둘 이상의 영역을 사용할 경우 데이터 배치를 다양화하는 CockroachDB의 능력이 향상되기 때문에 권장됩니다. 영역을 지정하지 않으면 맵을 비워 두십시오.
+    
+4. CockroachhDB를 아직 설치하지 않은 경우, [로컬에 CockroachDB 를 설치하고 `PATH`에 추가하십시오](install-cockroachdb.html). `cockroach` 바이너리는 인증서를 생성하는 데 사용됩니다.
 
-4. If you haven't already, [install CockroachDB locally and add it to your `PATH`](install-cockroachdb.html). The `cockroach` binary will be used to generate certificates.
+    `cockroach` 바이너리가`PATH`에 없으면`setup.py` 스크립트에서`cockroach_path` 변수를 바이너리 경로로 설정하십시오.
 
-    If the `cockroach` binary is not on your `PATH`, in the `setup.py` script, set the `cockroach_path` variable to the path to the binary.
+5. 더 나은 성능을 위해 배포를 최적화하려면 [CockroachDB Performance on Kubernetes] (kubernetes-performance.html)를 검토하고`cockroachdb-statefulset-secure.yaml` 파일을 수정하십시오. 이 항목은 필수가 아닌 선택 사항입니다.
 
-5. Optionally, to optimize your deployment for better performance, review [CockroachDB Performance on Kubernetes](kubernetes-performance.html) and make the desired modifications to the `cockroachdb-statefulset-secure.yaml` file.
-
-6. Run the `setup.py` script:
+6. `setup.py` 스크립트를 실행합니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ python setup.py
     ~~~
 
-    As the script creates various resources and creates and initializes the CockroachDB cluster, you'll see a lot of output, eventually ending with `job "cluster-init-secure" created`.
+    스크립트가 다양한 리소스를 생성하고 CockroachDB 클러스터를 생성하고 초기화하면 많은 출력을 볼 수 있고, 결과적으로`job "cluster-init-secure" created`가 생성됩니다.
 
-7. Confirm that the CockroachDB pods in each cluster say `1/1` in the `READY` column, indicating that they've successfully joined the cluster:
+
+7. 각 클러스터의 CockroachDB 포드가 `READY` 열에`1 / 1`이라고 표시되어 클러스터에 성공적으로 가입되었음을 나타내는지 확인하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -253,7 +254,7 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     us-west1-a   cockroachdb-2   1/1       Running   0          14m
     ~~~    
 
-    If you notice that only one of the Kubernetes clusters' pods are marked as `READY`, you likely also need to configure a network firewall rule that will allow the pods in the different clusters to talk to each other. You can run the following command to create a firewall rule allowing traffic on port 26257 (the port used by CockroachDB for inter-node traffic) within your private GCE network. It will not allow any traffic in from outside your private network:
+    Kubernetes 클러스터의 포드 중 하나만 'READY'로 표시되면 다른 클러스터의 포드가 서로 통신 할 수 있도록 네트워크 방화벽 규칙을 구성해야합니다. 다음 명령을 실행하여 사설 GCE 네트워크에서 포트 26257 (노드 간 트래픽용으로 CockroachDB에서 사용하는 포트)에서 트래픽을 허용하는 방화벽 규칙을 만들 수 있습니다. 개인 네트워크(사설망) 외부에서 들어오는 트래픽은 허용하지 않습니다.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -267,7 +268,7 @@ Kubernetes 클러스터의 서비스는 공개적으로 액세스할 수 없지�
     ~~~
 
 {{site.data.alerts.callout_success}}
-In each Kubernetes cluster, the StatefulSet configuration sets all CockroachDB nodes to write to `stderr`, so if you ever need access to a pod/node's logs to troubleshoot, use `kubectl logs <podname> --namespace=<cluster-namespace> --context=<cluster-context>` rather than checking the log on the persistent volume.
+각 Kubernetes 클러스터에서 StatefulSet 구성은 모든 CockroachDB 노드가`stderr`에 기록하도록 설정합니다. 따라서 문제를 해결하기 위해 포드/노드의 로그에 접근해야하는 경우 persistent volume의 로그를 확인하지 않고 `kubectl logs <podname> --namespace = <cluster-namespace> --context = <cluster-context>`를 사용하십시오.
 {{site.data.alerts.end}}
 
 ## Step 3. 빌트인 SQL 클라이언트 사용하기
@@ -539,11 +540,12 @@ Kubernetes는 CockroachDB 노드의 안전한 롤링 업그레이드 프로세�
 
 ### Stop the cluster
 
-1. To delete all of the resources created in your clusters, copy the `contexts` map from `setup.py` into `teardown.py`, and then run `teardown.py`:
+1. 클러스터에서 생성된 리소스를 모두 삭제하려면 `setup.py`에서 `contexts` 맵을 복사하고, `teardown.py`로 만든 다음 `teardown.py`를 실행합니다.
 
     ~~~ shell
     $ python teardown.py
     ~~~
+    
 
     ~~~
     namespace "us-east1-b" deleted
