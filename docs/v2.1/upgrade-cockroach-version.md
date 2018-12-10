@@ -12,11 +12,11 @@ CockroachDB의 [다중-활성 가용성](multi-active-availability.html) 설계�
 이 페이지에서는 v2.0.x 또는 v2.1.x 시리즈의 모든 패치 릴리스에서 최신 v2.1 릴리스 ({{page.release_info.version}})로 업그레이드하는 방법을 보여줍니다. v2.0.x 시리즈에서 업그레이드하려면, [이 페이지의 v2.0 버전](https://www.cockroachlabs.com/docs/v2.0/upgrade-cockroach-version.html)을 참조하십시오.
 {{site.data.alerts.end}}
 
-## 1단계. 업그레이드 할 수 있는지 확인. 
+## 1단계. 업그레이드 할 수 있는지 확인
 
 업그레이드 할 때, 패치 릴리스를 건너 뛸 수는 있지만, **전체 릴리스를 건너 뛸 수는 없습니다**. 따라서, v1.1.x에서 v2.1로 업그레이드하는 경우:
 
-1. 처음으로, [v2.0으로 업그레이드](../v2.0/upgrade-cockroach-version.html)하십시오. Be sure to complete all the steps, include the [finalization step](../v2.0/upgrade-cockroach-version.html#finalize-the-upgrade). 모든 단계를 완료하고, [완료 단계]를 포함하십시오. 
+1. 처음으로, [v2.0으로 업그레이드](../v2.0/upgrade-cockroach-version.html)하십시오. [완료 단계](../v2.0/upgrade-cockroach-version.html#finalize-the-upgrade)를 포함하여 모든 단계를 완료하십시오. 
 
 2. 그런 다음 이 페이지로 돌아가서 v2.1로 두 번째 롤링 업그레이드를 수행하십시오.
 
@@ -39,7 +39,7 @@ v2.0.x 또는 v2.1.x 패치 릴리스에서 업그레이드하는 경우, 중간
 
 4. [클러스터 백업](backup-and-restore.html)하십시오. 업그레이드가 계획대로 진행되지 않으면, 데이터를 사용하여 클러스터를 이전 상태로 복원할 수 있습니다.
 
-## 3단계. 업그레이드가 어떻게 완료될지 결정. 
+## 3단계. 업그레이드가 어떻게 완료될지 결정 
 
 {{site.data.alerts.callout_info}}
 이 단계는 v2.0.x에서 v2.1로 업그레이드할 때만 관련이 있습니다. v2.1.x 시리즈에서 업그레이드하려면, 이 단계를 건너 뜁니다.
