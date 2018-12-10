@@ -112,9 +112,9 @@ CockroachDB 클러스터의 각 노드는 가져 오는 파일에 액세스 할 
 
 ### 테이블 덤프에서 테이블 가져 오기
 
-The examples below assume you [dumped one table](#dump-one-table-at-a-time).
+아래의 예는 [한테이블 덤프](#dump-one-table-at-a-time) 를 가정합니다.
 
-The simplest way to import a table dump is to run [`IMPORT TABLE`][import] as shown below.  It reads the table data and any `CREATE TABLE` statements from the file.
+테이블 덤프를 가져 오는 가장 간단한 방법은 아래와 같이 [`IMPORT TABLE`][import] 를 실행하는 것입니다.  그것은 파일로부터 테이블 데이터와 모든 `CREATE TABLE` 문을 읽습니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -130,7 +130,7 @@ The simplest way to import a table dump is to run [`IMPORT TABLE`][import] as sh
 (1 row)
 ~~~
 
-If you need to specify the table's columns for some reason, you can use an [`IMPORT TABLE`][import] statement like the one below, which will import data but ignore any `CREATE TABLE` statements in the file, instead relying on the columns you specify.
+어떤 이유로 테이블의 열을 지정해야하는 경우, 데이터를 가져 오지만 파일의 `CREATE TABLE` 문은 무시하고 지정한 열을 사용하는 [`IMPORT TABLE`][import] 문을 사용할 수 있습니다. 
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -147,16 +147,16 @@ If you need to specify the table's columns for some reason, you can use an [`IMP
 
 ## 구성 옵션
 
-The following options are available to `IMPORT ... PGDUMP`:
+다음 옵션들은 `IMPORT ... PGDUMP`에서 사용 가능합니다 :
 
 + [Max row size](#max-row-size)
 + [Skip foreign keys](#skip-foreign-keys)
 
 ### 최대 행 크기
 
-The `max_row_size` option is used to override limits on line size.  **Default: 0.5MB**.  This setting may need to be tweaked if your Postgres dump file has extremely long lines, for example as part of a `COPY` statement.
+`max_row_size` 옵션은 라인 크기에 대한 제한을 덮어 쓰는 데 사용됩니다.  **Default: 0.5MB**.  이 설정은 Postgres 덤프 파일에 매우 긴 행이있는 경우 (예 : `COPY` 문의 경우) 조정해야 할 수 있습니다.
 
-Example usage:
+사용 예시:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -173,9 +173,9 @@ Example usage:
 
 ### 외국어 키 건너 뛰기
 
-By default, [`IMPORT ... PGDUMP`][import] supports foreign keys.  **Default: false**.  Add the `skip_foreign_keys` option to speed up data import by ignoring foreign key constraints in the dump file's DDL.  It will also enable you to import individual tables that would otherwise fail due to dependencies on other tables.
+기본적으로, [`IMPORT ... PGDUMP`][import] 는 외래 키를 지원합니다.  **Default: false**.  덤프 파일의 DDL에서 외래 키 제약 조건을 무시하여 데이터 가져 오기 속도를 높이려면 `skip_foreign_keys` 옵션을 추가하십시오.  또한 다른 테이블에 대한 종속성으로 인해 실패할 개별 테이블을 가져올 수도 있습니다.
 
-Example usage:
+사용 예씨:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -189,7 +189,7 @@ Example usage:
   ) PGDUMP DATA ('s3://your-external-storage/employees.sql?AWS_ACCESS_KEY_ID=123&AWS_SECRET_ACCESS_KEY=456') WITH skip_foreign_keys;
 ~~~
 
-[Foreign key constraints](foreign-key.html) can be added by using [`ALTER TABLE ... ADD CONSTRAINT`](add-constraint.html) commands after importing the data.
+[외래 키 제약 조건](foreign-key.html) 는 데이터를 가져온 후에 [`ALTER TABLE ... ADD CONSTRAINT`](add-constraint.html) 명령을 사용하여 추가 할 수 있습니다.
 
 ## 또 다른 참고문헌
 
