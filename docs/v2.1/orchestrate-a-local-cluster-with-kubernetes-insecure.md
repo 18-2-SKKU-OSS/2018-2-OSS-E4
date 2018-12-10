@@ -45,7 +45,7 @@ toc: true
 
 {% include {{ page.version.version }}/orchestration/initialize-cluster-insecure.md %}
 
-## 4. 클러스터 테스트하기
+## 4단계. 클러스터 테스트하기
 
 클러스터를 테스트하려면, 기본 제공 SQL 클라이언트를 사용하기위한 임시 포드를 실행 한 다음 배포 구성(deployment configuration) 파일을 사용하여 다른 포드의 클러스터에 대해 하이트래픽 로드 생성기를 실행하십시오.
 
