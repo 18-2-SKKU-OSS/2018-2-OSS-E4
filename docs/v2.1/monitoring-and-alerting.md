@@ -17,7 +17,7 @@ CockroachDB의 다양한 [장애에 대비한 내장형 보호 장치](high-avai
 
 #### 보안 클러스터의 관리 UI에 접근
 
-보안클러스터의 관리 UI에 접근 할 수 있는 각 사용자들은, [암호로 사용자를 만듭니다](create-user.html#create-a-user-with-a-password) 관리 UI에 접근하면, 사용자들은 그들의 사용이름과 비밀번호를 입력해야 하는 로그인 화면을 보게 됩니다.
+보안클러스터의 관리 UI에 접근 할 수 있는 각 사용자들은, [암호로 사용자를 만듭니다](create-user.html#create-a-user-with-a-password). 관리 UI에 접근하면, 사용자들은 그들의 사용이름과 비밀번호를 입력해야 하는 로그인 화면을 보게 됩니다.
 
 {{site.data.alerts.callout_danger}}관리 UI가 CockroachDB에 내장되어 있기 때문에, 만약 클러스터를 사용할 수 없는 경우, 대부분의 관리 UI도 사용할 수 없게 됩니다. 따라서, 아래에 설명된 대로 클러스터 상태를 모니터링하는 추가 방법을 계획하는 것이 중요합니다.{{site.data.alerts.end}}
 
@@ -48,7 +48,7 @@ replicas_quiescent{store="1"} 20
 ...
 ~~~
 
-{{site.data.alerts.callout_info}}외부 시스템을 통해 클러스터를 모니터링하기 위해 내보낸 timeseries 데이터를 사용하는 것 외에도. 더 많은 디테일 참고를 위해 <a href="#events-to-alert-on">Events to Alert On</a>를 보십시오.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}외부 시스템을 통해 클러스터를 모니터링하기 위해 내보낸 timeseries 데이터를 사용하는 것 외에도 더 많은 디테일 참고를 위해 <a href="#events-to-alert-on">Events to Alert On</a>를 보십시오.{{site.data.alerts.end}}
 
 ### 건강 엔드포인트
 
@@ -95,7 +95,7 @@ curl: (7) Failed to connect to localhost port 8080: Connection refused
 `http://<node-host>:<http-port>/health?ready=1` 의 끝점은 HTTP `503 서비스를 사용할 수 없음` 상태 응답 코드를 반환하고 다음과 같은 시나리오 오류를 발생시킵니다:
 
 - 노드가 [해체된 상태](remove-nodes.html) 또는 [중단된 상태](stop-a-node.html)의 과정에 있으므로 SQL 연결과 쿼리를 실행하는 것이 불가능할 수 있습니다. 이 기능은 특히 로드 밸런서가 존재는 하지만 "ready" 상태가 아닌 노드로 직접 전송하지 않는데에 유용할 수 있습니다. 이 기능은 [롤링 업그레이드](upgrade-cockroach-version.html) 동안에 편리한 확인입니다.
-    {{site.data.alerts.callout_success}}만약 로드 밸런서의 상태 체크에서 노드가 종료되기 전의 노드 상태를 준비되지 않은 것으로 인식하지 않는 것을 발견했다면, <code>server.shutdown.drain_wait</code> <a href="cluster-settings.html">클러스터 세팅</a> 을 늘릴 수 있습니다. 이것은 심지어 셧다운을 하기 이전에 노드가 <code>503 Service Unavailable</code>를 반환하게 합니다.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_success}}만약 로드 밸런서의 상태 체크에서 노드가 종료되기 전의 노드 상태를 준비되지 않은 것으로 인식하지 않는 것을 발견했다면, <code>server.shutdown.drain_wait</code> <a href="cluster-settings.html">클러스터 세팅</a> 을 늘릴 수 있습니다. 이것은 셧다운을 하기 이전의 노드가 <code>503 Service Unavailable</code>를 반환하게 합니다.{{site.data.alerts.end}}
 - 노드는 클러스터에 있는 다른 주요한 노드와 의사소통이 불가능할 수 있는데, 그것은 노드가 너무 많아 클러스터를 사용할 수 없기 때문입니다.
 
 {% include copy-clipboard.html %}
@@ -137,7 +137,7 @@ $ curl http://localhost:8080/health?ready=1
 
 활성 모니터링은 문제를 조기에 발견하는데 도움이 되지만, 조사 또는 개입이 필요한 이벤트가 있을 때 알림을 즉시 전송하는 알림 규칙을 생성하는 것에도 중요한 역할을 합니다. 이 섹션에서는 이벤트를 탐지하는 데에 [Prometheus Endpoint](#prometheus-endpoint) 메트릭스를 사용하여 알림 규칙을 생성하는 가장 중요한 이벤트를 식별합니다.
 
-{{site.data.alerts.callout_success}}만약 모니러팅을 위해 Prometheus을 사용한다면, <a href="https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml">alerting rules</a> 또한 사용할 수 있습니다. 가이드로 <a href="monitor-cockroachdb-with-prometheus.html">Monitor CockroachDB with Prometheus</a>를 보십시오.{{site.data.alerts.end}}
+{{site.data.alerts.callout_success}}만약 모니러링을 위해 Prometheus을 사용한다면, <a href="https://github.com/cockroachdb/cockroach/blob/master/monitoring/rules/alerts.rules.yml">alerting rules</a> 또한 사용할 수 있습니다. 가이드로 <a href="monitor-cockroachdb-with-prometheus.html">Monitor CockroachDB with Prometheus</a>를 보십시오.{{site.data.alerts.end}}
 
 ### 노드가 중단됨
 
