@@ -4,34 +4,35 @@ summary: Learn how to create a simple file server for use with CockroachDB IMPOR
 toc: true
 ---
 
-If you need a location to store files for the [`IMPORT`](import.html) process or [CockroachDB enterprise backups](backup.html), but do not have access to (or simply cannot use) cloud storage providers, you can run a local file server. You can then use this file server by leveraging support for our [HTTP Export Storage API](#http-export-storage-api).
+[`IMPORT`](import.html) 프로세스 또는 [CockroachDB 엔터프라이즈 백업](backup.html)을 위한 파일을 저장할 위치가 필요하지만, 클라우드 스토리지 제공자에 대한 액세스 권한이 없는 경우(또는 단순히 사용할 수 없는 경우) 로컬 파일 서버를 실행할 수 있습니다. 이 파일 서버는 [HTTP 내보내기 스토리지 API](#http-export-storage-api)에 대한 지원을 활용하여 사용할 수 있습니다.
 
-This is especially useful for:
+이는 특히 다음 경우에 유용합니다:
 
-- Implementing a compatibility layer in front of custom or proprietary storage providers for which CockroachDB does not yet have native support
-- Using on-premises storage
+- CockroachDB가 아직 기본 지원을 받지 못하는 맞춤형 또는 독점 스토리지 공급자에 대한 호환성 계층 구현
+- 사내 스토리지 사용
 
-## HTTP export storage API
+## HTTP 내보내기 스토리지 API
 
-CockroachDB tasks that require reading or writing external files (such as [`IMPORT`](import.html) and [`BACKUP`](backup.html)) can use the HTTP Export Storage API by prefacing the address with `http`, e.g., `http://fileserver/mnt/cockroach-exports`.
+외부 파일을 읽거나 써야 하는 CockroachDB 작업([`IMPORT`](import.html) 와 [`BACKUP`](backup.html) 등)은 주소 앞에 `http://fileserver/mnt/cockroach-exports`와 같이 `http`를 붙여서 HTTP 내보내기 스토리지 API를 사용할 수 있습니다.
 
-This API uses the `GET`, `PUT` and `DELETE` methods. This behaves like you would expect typical HTTP requests to work. After a `PUT` request to some path, a subsequent `GET` request should return the content sent in the `PUT` request body, at least until a `DELETE` request is received for that path.
+이 API는 `GET`, `PUT`, `DELETE` 메소드를 사용합니다. 이것은 전형적인 HTTP 요청처럼 작동합니다. 일부 경로에 대한 `PUT` 요청 후 후속 `GET` 요청은 `DELETE` 요청이 수신될 때까지 `PUT` 요청 바디에 보내진 내용을 반환해야 합니다.
 
-## Examples
+## 예제
 
-You can use any file server software that supports `GET`, `PUT` and `DELETE` methods, but we've included code samples for common ones:
+`GET`, `PUT`, `DELETE` 등의 방식을 지원하는 파일 서버 소프트웨어는 모두 사용할 수 있습니다. 
+일반적인 코드 샘플은 다음과 같습니다:
 
-- [Using PHP with `IMPORT`](#using-php-with-import)
-- [Using Python with `IMPORT`](#using-python-with-import)
-- [Using Ruby with `IMPORT`](#using-ruby-with-import)
-- [Using Caddy as a file server](#using-caddy-as-a-file-server)
-- [Using nginx as a file server](#using-nginx-as-a-file-server)
+- [PHP를 `IMPORT`와 함께 사용](#using-php-with-import)
+- [Python을 `IMPORT`와 함께 사용](#using-python-with-import)
+- [Ruby를 `IMPORT`와 함께 사용](#using-ruby-with-import)
+- [Caddy를 파일 서버로 사용](#using-caddy-as-a-file-server)
+- [nginx를 파일 서버로 사용](#using-nginx-as-a-file-server)
 
-{{site.data.alerts.callout_info}}We do not recommend using any machines running <code>cockroach</code> as file servers. Using machines that are running cockroach as file servers could negatively impact performance if I/O operations exceed capacity.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}<code>cockroach </code>를 실행하는 컴퓨터는 파일 서버로 사용하지 않는 것을 권장합니다. cockroach를 실행하는 컴퓨터를 파일 서버로 사용하면 I/O 작업이 용량을 초과할 경우 성능에 부정적인 영향을 미칠 수 있습니다.{{site.data.alerts.end}}
 
-### Using PHP with `IMPORT`
+### PHP를 `IMPORT`와 함께 사용
 
-The PHP language has an HTTP server built in.  You can serve local files using the commands below.  For more information about how to import these locally served files, see the documentation for the [`IMPORT`][import] statement.
+PHP 언어는 HTTP 서버를 내장하고 있으며, 아래 명령을 사용하여 로컬 파일을 제공할 수 있습니다. 로컬로 제공된 파일을 가져오는 방법에 대한 자세한 내용은 [`IMPORT`][import]문의 설명서를 참조하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -39,9 +40,9 @@ $ cd /path/to/data
 $ php -S 127.0.0.1:3000 # files available at e.g., 'http://localhost:3000/data.sql'
 ~~~
 
-### Using Python with `IMPORT`
+### Python을 `IMPORT`와 함께 사용
 
-The Python language has an HTTP server included in the standard library.  You can serve local files using the commands below.  For more information about how to import these locally served files, see the documentation for the [`IMPORT`][import] statement.
+Python 언어는 HTTP 서버를 내장하고 있으며, 아래 명령을 사용하여 로컬 파일을 제공할 수 있습니다. 로컬로 제공된 파일을 가져오는 방법에 대한 자세한 내용은 [`IMPORT`][import]문의 설명서를 참조하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -57,9 +58,9 @@ $ cd /path/to/data
 $ python -m http.server 3000
 ~~~
 
-### Using Ruby with `IMPORT`
+### Ruby를 `IMPORT`와 함께 사용
 
-The Ruby language has an HTTP server included in the standard library.  You can serve local files using the commands below.  For more information about how to import these locally served files, see the documentation for the [`IMPORT`][import] statement.
+Ruby 언어는 HTTP 서버를 내장하고 있으며, 아래 명령을 사용하여 로컬 파일을 제공할 수 있습니다. 로컬로 제공된 파일을 가져오는 방법에 대한 자세한 내용은 [`IMPORT`][import]문의 설명서를 참조하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -67,13 +68,14 @@ $ cd /path/to/data
 $ ruby -run -ehttpd . -p3000 # files available at e.g., 'http://localhost:3000/data.sql'
 ~~~
 
-### Using Caddy as a file server
+### Caddy를 파일 서버로 사용
 
-1. [Download the Caddy web server](https://caddyserver.com/download).  Before downloading, in the **Customize your build** step, open the list of **Plugins** and make sure to check the `http.upload` option.
+1. [Caddy 웹 서버 다운로드](https://caddyserver.com/download):
+다운로드 전 **Customize your build** 단계에서, **Plugins** 을 열고 `http.upload` 옵션이 체크되어 있는지 확인하십시오.
 
-2. Copy the `caddy` binary to the directory containing the files you want to serve, and run it [with an upload directive](https://caddyserver.com/docs/http.upload), either in the command line or via [Caddyfile](https://caddyserver.com/docs/caddyfile).
+2. 제공하려는 파일이 들어 있는 디렉터리에 `caddy` 바이너리를 복사한 후 커맨드 라인 또는 [캐디 파일](https://caddyserver.com/docs/caddyfile)을 통해 이를 [업로드 지시문](https://caddyserver.com/docs/http.upload)과 함께 실행하십시오.
 
-- Command line example (with no TLS):
+- 커맨드라인 예시 (TLS 없이):
     {% include copy-clipboard.html %}
     ~~~ shell
     $ caddy -root /mnt/cockroach-exports "upload / {" 'to "/mnt/cockroach-exports"' 'yes_without_tls' "}"
@@ -88,13 +90,13 @@ $ ruby -run -ehttpd . -p3000 # files available at e.g., 'http://localhost:3000/d
     }
     ~~~
 
-For more information about Caddy, see [its documentation](https://caddyserver.com/docs).
+Caddy에 대해 더 자세한 설명이 알고 싶다면, [관련 문서](https://caddyserver.com/docs)를 참조하십시오.
 
-### Using nginx as a file server
+### nginx를 파일 서버로 사용
 
-1. Install `nginx` with the `webdav` module (often included in `-full` or similarly named packages in various distributions).
+1. `webdav` 모듈과 함께 (`-full`또는 이와 유사한 이름의 패키지에 포함되는 경우가 많다) `nginx` 설치 
 
-2. In the `nginx.conf` file, add a `dav_methods PUT DELETE` directive. For example:
+2. `nginx.conf` 파일에서 `dav_methods PUT DELETE` 지시문을 추가한다. 예시:
 
     {% include copy-clipboard.html %}
     ~~~ nginx
@@ -114,7 +116,7 @@ For more information about Caddy, see [its documentation](https://caddyserver.co
     }
     ~~~
 
-## See also
+## 더 알아보기
 
 - [`IMPORT`][import]
 - [`BACKUP`](backup.html) (*Enterprise only*)
