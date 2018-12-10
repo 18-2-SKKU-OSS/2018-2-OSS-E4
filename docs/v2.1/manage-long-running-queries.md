@@ -4,14 +4,15 @@ summary: Learn how to identify and cancel long-running queries.
 toc: true
 ---
 
-This page shows you how to identify and, if necessary, cancel SQL queries that are taking longer than expected to process.
+이 페이지는 처리하는 데 예상보다 오래 걸리는 SQL 쿼리를 식별하고, 필요한 경우 취소하는 방법을 보여줍니다.
 
-{{site.data.alerts.callout_success}} Schema changes are treated differently than other SQL queries. You can use <a href="show-jobs.html"><code>SHOW JOBS</code></a> to monitor the progress of schema changes, and as of v2.1, use <a href="cancel-job.html"><code>CANCEL JOB</code></a> to cancel schema changes that are taking longer than expected. {{site.data.alerts.end}}
+{{site.data.alerts.callout_success}} 스키마 변경은 다른 SQL 쿼리와 다르게 처리됩니다. <a href="show-jobs.html"><code>SHOW JOBS</code></a>을 사용하여 스키마 변경 진행 상황을 모니터링 할 수 있으며, 버전 2.1에서는 <a href="cancel-job.html"><code>CANCEL JOB</code></a>를 클릭하면 예상보다 오래 걸리는 스키마 변경 사항을 취소할 수 있습니다. {{site.data.alerts.end}}
 
 
-## Identify long-running queries
 
-Use the [`SHOW QUERIES`](show-queries.html) statement to list details about currently active SQL queries, including each query's `start` timestamp:
+## 장기-실행 쿼리 식별
+
+[`SHOW QUERIES`](show-queries.html) 명령문을 사용하여 각 쿼리의 `start` 타임스탬프를 포함하여 현재 활성화된 SQL 쿼리에 대한 세부 정보를 나열하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -35,7 +36,7 @@ Use the [`SHOW QUERIES`](show-queries.html) statement to list details about curr
 (9 rows)
 ~~~
 
-You can also filter for queries that have been running for a certain amount of time. For example, to find queries that have been running for more than 3 hours, you would run the following:
+특정 시간 동안 실행된 쿼리를 필터링할 수도 있습니다. 예를 들어, 3시간 이상 실행 된 쿼리를 찾으려면, 다음을 실행합니다:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -43,29 +44,29 @@ You can also filter for queries that have been running for a certain amount of t
       WHERE start < (now() - INTERVAL '3 hours');
 ~~~
 
-## Cancel long-running queries
+## 장기-실행 쿼리 취소
 
-Once you've identified a long-running query via [`SHOW QUERIES`](show-queries.html), note the `query_id` and use it with the [`CANCEL QUERY`](cancel-query.html) statement:
+[`SHOW QUERIES`](show-queries.html)를 통해 장시간-실행되는 쿼리를 식별했으면, `query_id`를 기록하고 [`CANCEL QUERY`](cancel-query.html) 명령문과 함께 사용하십시오 :
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > CANCEL QUERY '14dacc1f9a781e3d0000000000000001';
 ~~~
 
-When a query is successfully cancelled, CockroachDB sends a `query execution canceled` error to the client that issued the query.
+쿼리가 성공적으로 취소되면, CockroachDB는 쿼리를 실행한 클라이언트에게 `쿼리 실행 취소됨` 오류를 보냅니다.
 
-- If the canceled query was a single, stand-alone statement, no further action is required by the client.
-- If the canceled query was part of a larger, multi-statement [transaction](transactions.html), the client should then issue a [`ROLLBACK`](rollback-transaction.html) statement.
+- 취소된 쿼리가 단일 독립 실행형 명령문인 경우, 클라이언트에서 추가 작업이 필요하지 않습니다.
+- 취소된 쿼리가 더 큰 다중-명령문 [트랜잭션]의 일부인 경우, 클라이언트는 [`ROLLBACK`] 명령문을 실행해야 합니다.
 
-## Improve query performance
+## 쿼리 성능 향상
 
-After cancelling a long-running query, use the [`EXPLAIN`](explain.html) statement to examine it. It's possible that the query was slow because it performs a full-table scan. In these cases, you can likely improve the query's performance by [adding an index](create-index.html).
+장기-실행 쿼리를 취소한 후, [`EXPLAIN`](explain.html) 명령문을 사용하여 검사합니다. 전체-테이블 스캔을 수행하므로 쿼리가 느려질 수 있습니다. 이러한 경우, [인덱스 추가](create-index.html)를 통해 쿼리 성능을 향상시킬 수 있습니다.
 
-*(More guidance around query performance optimization forthcoming.)*
+*(쿼리 성능 최적화에 대한 자세한 지침이 곧 제공됩니다.)*
 
-## See also
+## 더 보기
 
 - [`SHOW QUERIES`](show-queries.html)
 - [`CANCEL QUERY`](cancel-query.html)
 - [`EXPLAIN`](explain.html)
-- [Query Behavior Troubleshooting](query-behavior-troubleshooting.html)
+- [쿼리 동작 문제 해결](query-behavior-troubleshooting.html) 
