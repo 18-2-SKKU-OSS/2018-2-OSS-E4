@@ -9,9 +9,9 @@ toc: true
   <a href="orchestrate-cockroachdb-with-docker-swarm-insecure.html"><button class="filter-button">Insecure</button></a>
 </div>
 
-이 페이지에서는 안전하지 않은 세 노드 CockroachDB 클러스터의 배포, 관리를 [도커 엔진 스웜](https://docs.docker.com/engine/swarm/)로 바꾸는 것을 보여줍니다.
+이 페이지에서는 안전하지 않은 세 노드 CockroachDB 클러스터의 배포, 관리를 [도커 엔진 스웜](https://docs.docker.com/engine/swarm/)으로 바꾸는 것을 보여줍니다.
 
-만약 오직 CockroachDB을 테스트하고만 싶은 경우, 또는 TLS 암호화를 통한 네트워크 통신 보호와 관련이 없는 경우, 대신 보안 클러스터를 사용하는 것을 추천합니다. 설명서를 보러면 위의 **Secure** 을 선택하십시오.
+만약 오직 CockroachDB을 테스트하고만 싶은 경우, 또는 TLS 암호화를 통한 네트워크 통신 보호와 관련이 없는 경우, 대신 보안 클러스터를 사용하는 것을 추천합니다. 설명서를 보려면 위의 **Secure** 을 선택하십시오.
 
 
 ## 시작하기 전에
@@ -23,7 +23,7 @@ toc: true
 인스턴스 | 실제 또는 가상의 머신. 이 튜토리얼에서는, CockroachDB노드 당 3개씩을 사용하십시오.
 [도커 엔진](https://docs.docker.com/engine/) | 이것은 컨테이너를 생성하고 실행하는 핵심 Docker 어플리케이션입니다. 이 튜토리얼에서는, 세 개의 예시 각각에 도커 엔진을 설치하고 시작하십시오.
 [스웜](https://docs.docker.com/engine/swarm/key-concepts/#/swarm) | 스웜은 단일, 가상의 호스트로 된 도커 엔진 그룹입니다.
-[스웜 노드](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/) | 스웜의 각 멤버는 하나의 노드로 구성됩니다. 이 튜토리얼에서 각 인스턴스는 스웜 노드가 되며, 하나는 마스터 노드, 다른 두 개는 워커 노드 역할을 한다. 작업노드로 작업을 전달하는 마스터 노드에 서비스를 제출하십시오.
+[스웜 노드](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/) | 스웜의 각 멤버는 하나의 노드로 구성됩니다. 이 튜토리얼에서 각 인스턴스는 스웜 노드가 되며, 하나는 마스터 노드, 다른 두 개는 워커 노드 역할을 합니다. 작업노드로 작업을 전달하는 마스터 노드에 서비스를 제출하십시오.
 [서비스](https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/) | 서비스는 스웜 노드에서 실행할 테스크의 정의입니다. 이 튜토리얼에서, 컨테이너 안에서 CockrochDB 노드를 시작하고 단일 클러스터에 결합하는 각각의 세 가지 서비스를 정의하십시오. 각 서비스는 확인 가능한 DNS 이름을 통해 재시작 시 안정적인 네트워크 ID를 보장합니다.
 [시크릿](https://docs.docker.com/engine/swarm/secrets/) | 시크릿은 컨테이너가 런타임에 필요로 하는 민감한 데이터를 관리하기 위한 도커의 메커니즘입니다다. CockroachDB는 TLS 인증서를 사용하여 노드 간 및 클라이언트/노드 간 통신을 인증하고 암호화하므로, 인증서별로 암호를 생성하고 서비스에 암호를 사용하십시오.
 [오버레이 네트워크](https://docs.docker.com/engine/userguide/networking/#/an-overlay-network-with-docker-engine-swarm-mode) | 오버레이 네트워크는 스웜 노드들 간의 통신을 가능하게 합니다. 이 튜토리얼에서, 오버레이 네트워크를 만들어 각 서비스에서 사용하십시오. 
@@ -44,7 +44,7 @@ toc: true
 
 각각의 인스턴스에서:
 
-1. [도커 엔진 설치하고 시작](https://docs.docker.com/engine/installation/).
+1. [도커 엔진을 설치하고 시작합니다](https://docs.docker.com/engine/installation/).
 
 2. 도커 데몬이 백그라운드에서 실행 중인지 확인:
 
@@ -113,7 +113,7 @@ $ sudo docker network create --driver overlay --attachable cockroachdb
 
 ## 단계 5. 보안 리소스 생성
 
-A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and client/node authentication and communication. In this step, you'll install CockroachDB on the instance running your manager node, use the [`cockroach cert`](create-security-certificates.html) command to generate certificate authority (CA), node, and client certificate and key pairs, and use the [`docker secret create`](https://docs.docker.com/engine/reference/commandline/secret_create/) command to assign these files to Docker [secrets](https://docs.docker.com/engine/swarm/secrets/) for use by your Docker services.
+안전한 CockroachDB 클러스터는 암호화 된 노드 간 및 클라이언트 / 노드 인증 및 통신에 TLS 인증서를 사용합니다. 이 단계에서는, 관리자 노드를 실행하는 인스턴스에 CockroachDB를 설치하고 [`cockroach cert`](create-security-certificates.html) 명령을 사용하여 인증 기관 (CA), 노드 및 클라이언트 인증서와 키를 생성합니다. 이 파일을 Docker [secrets](https://docs.docker.com/engine/swarm/secrets/) 에 할당하려면 [`docker secret create`](https://docs.docker.com/engine/reference/commandline/secret_create/) 명령을 사용하십시오. 
 
 1. 관리자 노드를 실행하는 인스턴스에서 최신 이진 파일을 사용하여 CockroachDB를 설치하십시오:
 
@@ -168,7 +168,7 @@ A secure CockroachDB cluster uses TLS certificates for encrypted inter-node and 
 
 4. [`docker secret create`](https://docs.docker.com/engine/reference/commandline/secret_create/) 명령을 사용하여 `ca.crt`를 위한 도커 시크릿을 생성합니다:
 
-    {{site.data.alerts.callout_danger}} <code>ca.key</code> 파일을 어딘가에 안전하게 저장해두고 백업해둡니다; 손실된 경우 새 노드나 클라이언트를 클러스터에 추가할 수 없습니다.{{site.data.alerts.end}}
+    {{site.data.alerts.callout_danger}} <code>ca.key</code> 파일을 어딘가에 안전하게 저장해두고 백업해 둡니다. 손실된 경우 새 노드나 클라이언트를 클러스터에 추가할 수 없습니다.{{site.data.alerts.end}}
 
     {% include copy-clipboard.html %}
     ~~~ shell
