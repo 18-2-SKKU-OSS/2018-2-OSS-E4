@@ -408,7 +408,7 @@ SQL 성능을 측정할 때는 주어진 명령문을 여러 번 실행하고 �
     && chmod +x tuning.py
     ~~~
 
-    As you'll see below, this client lets you pass command-line flags:
+    아래 그림에서 볼 수 있듯이 이 클라이언트는 커맨드라인 플래그를 통과하도록 합니다.
 
     Flag | Description
     -----|------------
@@ -860,7 +860,7 @@ Median time (milliseconds):
 61.5649223328
 ~~~
 
-To understand why performance improved, again use [`EXPLAIN`](explain.html) to see the new query plan:
+성능이 향상된 이유를 이해하려면 [`EXPLAIN`](explain.html)을 사용하여 새 쿼리 계획을 확인하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -893,9 +893,9 @@ WHERE start_time BETWEEN '2018-07-20 00:00:00' AND '2018-07-21 00:00:00';"
 (13 rows)
 ~~~
 
-Notice that CockroachDB now starts by using `rides@rides_start_time_idx` secondary index to retrieve the relevant rides without needing to scan the full `rides` table.
+CockroachDB가 `rides@rides_start_time_idx` 보조 인덱스를 사용하여 전체 `rides` 테이블을 스캔할 필요 없이 관련 ride를 검색함으로써 시작된다는 점에 주목하십시오.
 
-Let's check the ranges for the new index:
+새 인덱스의 범위를 확인하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -914,7 +914,7 @@ $ cockroach sql \
 (2 rows)
 ~~~
 
-This tells us that the index is stored in 2 ranges, with the leaseholders for both of them on node 2. Based on the output of `SHOW EXPERIMENTAL_RANGES FROM TABLE users` that we saw earlier, we already know that the leaseholder for the `users` table is on node 2.
+이는 두 사람의 임대자가 노드 2에 있는 두 가지 범위로 인덱스를 저장한다는 것을 말해줍니다. `SHOW EXPERIMENTAL_RANGES FROM TABLE users`의 산출물을 근거로하여 우리는 이미 `users` 테이블의 임대자가 노드 2에 있다는 것을 알고 있습니다.
 
 #### 서브쿼리와 함께 `IN (list)` 사용
 
@@ -1109,7 +1109,7 @@ Cumulative time (milliseconds):
 910.985708237
 ~~~
 
-00개의 삽입 작업은 910.98ms가 걸렸고, 이것은 그렇게 나쁜 결과는 아닙니다. 하지만, 다음과 같이 쉼표로 구분된 100개의 `VALUES` 조항과 함께 하나의 `INSERT` 문을 사용하면 훨씬 더 빨라집니다.
+100개의 삽입 작업은 910.98ms가 걸렸고, 이것은 그렇게 나쁜 결과는 아닙니다. 하지만, 다음과 같이 쉼표로 구분된 100개의 `VALUES` 조항과 함께 하나의 `INSERT` 문을 사용하면 훨씬 더 빨라집니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -2157,6 +2157,6 @@ Node IDs | Zone
 
 ## 더 알아보기
 
-- [SQL Performance Best Practices](performance-best-practices-overview.html)
-- [Performance Benchmarking](performance-benchmarking-with-tpc-c.html)
-- [Production Checklist](recommended-production-settings.html)
+- [SQL 성능 모범 사례](performance-best-practices-overview.html)
+- [성능 벤치마킹](performance-benchmarking-with-tpc-c.html)
+- [생산 ](recommended-production-settings.html)
