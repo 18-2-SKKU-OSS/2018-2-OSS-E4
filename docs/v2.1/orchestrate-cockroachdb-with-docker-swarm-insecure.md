@@ -23,7 +23,7 @@ toc: true
 인스턴스 | 실제 또는 가상의 머신. 이 튜토리얼에서는, CockroachDB노드 당 3개씩을 사용하십시오.
 [도커 엔진](https://docs.docker.com/engine/) | 이것은 컨테이너를 생성하고 실행하는 핵심 Docker 어플리케이션입니다. 이 튜토리얼에서는, 세 개의 예시 각각에 도커 엔진을 설치하고 시작하십시오.
 [스웜](https://docs.docker.com/engine/swarm/key-concepts/#/swarm) | 스웜은 단일, 가상의 호스트로 된 도커 엔진 그룹입니다.
-[스웜 노드](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/) | 스웜의 각 멤버는 하나의 노드로 구성됩니다. 이 튜토리얼에서 각 인스턴스는 스웜 노드가 되며, 하나는 마스터 노드, 다른 두 개는 워커 노드 역할을 한다. 작업노드로 작업을 전달하는 마스터 노드에 서비스를 제출하십시오.
+[스웜 노드](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/) | 스웜의 각 멤버는 하나의 노드로 구성됩니다. 이 튜토리얼에서 각 인스턴스는 스웜 노드가 되며, 하나는 마스터 노드, 다른 두 개는 워커 노드 역할을 합니다. 작업노드로 작업을 전달하는 마스터 노드에 서비스를 제출하십시오.
 [서비스](https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/) | 서비스는 스웜 노드에서 실행할 테스크의 정의입니다. 이 튜토리얼에서, 컨테이너 안에서 CockrochDB 노드를 시작하고 단일 클러스터에 결합하는 각각의 세 가지 서비스를 정의하십시오. 각 서비스는 확인 가능한 DNS 이름을 통해 재시작 시 안정적인 네트워크 ID를 보장합니다.
 [오버레이 네트워크](https://docs.docker.com/engine/userguide/networking/#/an-overlay-network-with-docker-engine-swarm-mode) | 오버레이 네트워크는 스웜 노드들 간의 통신을 가능하게 합니다. 이 튜토리얼에서, 오버레이 네트워크를 만들어 각 서비스에서 사용하십시오. 
 
@@ -43,9 +43,9 @@ toc: true
 
 각각의 인스턴스에서:
 
-1. [도커 엔진 설치하고 시작](https://docs.docker.com/engine/installation/).
+1. [도커 엔진을 설치하고 시작](https://docs.docker.com/engine/installation/) 합니다.
 
-2. 도커 데몬이 백그라운드에서 실행 중인지 확인:
+2. 도커 데몬이 백그라운드에서 실행 중인지 확인합니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -230,7 +230,7 @@ $ sudo docker network create --driver overlay --attachable cockroachdb
 
 클러스터의 관리자 UI를 보기위해, 브라우저 `http://<any node's external IP address>:8080` 로 접속합니다.
 
-{{site.data.alerts.callout_info}}It's possible to access the Admin UI from outside of the swarm because you published port <code>8080</code> externally in the first node's service definition.{{site.data.alerts.end}}
+{{site.data.alerts.callout_info}}첫 번째 노드의 서비스 정의에 <code>8080</code> 포트를 설정했기 때문에 웜 외부에서 관리 UI로 액세스 할 수 있습니다.{{site.data.alerts.end}}
 
 이 페이지에서, 클러스터가 예상대로 실행되고 있는지 확인하십시오.:
 
@@ -286,7 +286,7 @@ CockroachDB 클러스터에서 노드 수를 늘리려면 다음과 같이 하�
 
 ## 단계 10. 클러스터 중단
 
-CockroachDB 클러스터를 중단하려면,관리자 노드를 실행하는 인스턴스에서 서비스를 제거하십시오:
+CockroachDB 클러스터를 중단하려면, 관리자 노드를 실행하는 인스턴스에서 서비스를 제거하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ shell
