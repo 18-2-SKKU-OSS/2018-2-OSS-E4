@@ -5,25 +5,26 @@ toc: true
 toc_not_nested: true
 ---
 
-Because of CockroachDB's [multi-active availability](multi-active-availability.html) design, you can perform a "rolling upgrade" of your CockroachDB cluster. This means that you can upgrade nodes one at a time without interrupting the cluster's overall health and operations.
+CockroachDB의 [다중-활성 가용성](multi-active-availability.html) 설계로 인해 CockroachDB 클러스터의 "롤링 업그레이드"를 수행할 수 있습니다. 
+즉, 클러스터의 전반적인 상태 및 작업을 방해하지 않고 한 번에 하나씩 노드를 업그레이드 할 수 있습니다.
 
 {{site.data.alerts.callout_info}}
 This page shows you how to upgrade to the latest v2.1 release ({{page.release_info.version}}) from v2.0.x, or from any patch release in the v2.1.x series. To upgrade within the v2.0.x series, see [the v2.0 version of this page](https://www.cockroachlabs.com/docs/v2.0/upgrade-cockroach-version.html).
 {{site.data.alerts.end}}
 
-## Step 1. Verify that you can upgrade
+## 1단계. 업그레이드 할 수 있는지 확인. 
 
-When upgrading, you can skip patch releases, **but you cannot skip full releases**. Therefore, if you are upgrading from v1.1.x to v2.1:
+업그레이드 할 때, 패치 릴리스를 건너 뛸 수는 있지만, **전체 릴리스를 건너 뛸 수는 없습니다**. 따라서, v1.1.x에서 v2.1로 업그레이드하는 경우:
 
-1. First [upgrade to v2.0](../v2.0/upgrade-cockroach-version.html). Be sure to complete all the steps, include the [finalization step](../v2.0/upgrade-cockroach-version.html#finalize-the-upgrade).
+1. 처음으로, [v2.0으로 업그레이드](../v2.0/upgrade-cockroach-version.html)하십시오. Be sure to complete all the steps, include the [finalization step](../v2.0/upgrade-cockroach-version.html#finalize-the-upgrade). 모든 단계를 완료하고, [완료 단계]를 포함하십시오. 
 
-2. Then return to this page and perform a second rolling upgrade to v2.1.
+2. 그런 다음 이 페이지로 돌아가서 v2.1로 두 번째 롤링 업그레이드를 수행하십시오.
 
-If you are upgrading from v2.0.x or from any v2.1.x patch release, you do not have to go through intermediate releases; continue to step 2.
+v2.0.x 또는 v2.1.x 패치 릴리스에서 업그레이드하는 경우, 중간 릴리스를 거칠 필요가 없습니다; 2단계를 계속하십시오.
 
-## Step 2. Prepare to upgrade
+## 2단계. 업그레이드 준비
 
-Before starting the upgrade, complete the following steps.
+업그레이드를 시작하기 전에, 다음 단계를 완료하십시오.
 
 1. Make sure your cluster is behind a [load balancer](recommended-production-settings.html#load-balancing), or your clients are configured to talk to multiple nodes. If your application communicates with a single node, stopping that node to upgrade its CockroachDB binary will cause your application to fail.
 
@@ -36,9 +37,9 @@ Before starting the upgrade, complete the following steps.
 
 3. Capture the cluster's current state by running the [`cockroach debug zip`](debug-zip.html) command against any node in the cluster. If the upgrade does not go according to plan, the captured details will help you and Cockroach Labs troubleshoot issues.
 
-4. [Back up the cluster](backup-and-restore.html). If the upgrade does not go according to plan, you can use the data to restore your cluster to its previous state.
+4. [클러스터 백업](backup-and-restore.html)하십시오. 업그레이드가 계획대로 진행되지 않으면, 데이터를 사용하여 클러스터를 이전 상태로 복원할 수 있습니다.
 
-## Step 3. Decide how the upgrade will be finalized
+## 3단계. 업그레이드가 어떻게 완료될지 결정. 
 
 {{site.data.alerts.callout_info}}
 This step is relevant only when upgrading from v2.0.x to v2.1. For upgrades within the v2.1.x series, skip this step.
@@ -61,7 +62,7 @@ We recommend disabling auto-finalization so you can monitor the stability and pe
 
     It is only possible to set this setting to the current cluster version.
 
-## Step 4. Perform the rolling upgrade
+## 4단계. 롤링 업그레이드 수행
 
 For each node in your cluster, complete the following steps.
 
@@ -73,34 +74,34 @@ We recommend creating scripts to perform these steps instead of performing them 
 Upgrade only one node at a time, and wait at least one minute after a node rejoins the cluster to upgrade the next node. Simultaneously upgrading more than one node increases the risk that ranges will lose a majority of their replicas and cause cluster unavailability.
 {{site.data.alerts.end}}
 
-1. Connect to the node.
+1. 노드에 연결하십시오.
 
-2. Stop the `cockroach` process.
+2. `cockroach` 프로세스를 중단하십시오.
 
-    Without a process manager like `systemd`, use this command:
+    `systemd`와 같은 프로세스 관리자가 없다면, 다음 명령을 사용하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ pkill cockroach
     ~~~
-
-    If you are using `systemd` as the process manager, use this command to stop a node without `systemd` restarting it:
+    
+    프로세스 관리자로 `systemd`를 사용하고 있다면, 이 명령을 사용하여 `systemd`를 재시작하지 않고 노드를 정지시키십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ systemctl stop <systemd config filename>
     ~~~
 
-    Then verify that the process has stopped:
+    그런 다음 프로세스가 중지되었는지 확인하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ ps aux | grep cockroach
     ~~~
+    
+    다른 방법으로, `server drained and shutdown completed` 메시지에 대한 노드 로그를 검사할 수 있습니다.
 
-    Alternately, you can check the node's logs for the message `server drained and shutdown completed`.
-
-3. Download and install the CockroachDB binary you want to use:
+3. 사용할 CockroachDB 바이너리를 다운로드하여 설치하십시오:
 
     <div class="filters clearfix">
       <button style="width: 15%" class="filter-button" data-scope="mac">Mac</button>
@@ -136,7 +137,7 @@ Upgrade only one node at a time, and wait at least one minute after a node rejoi
     ~~~
     </div>
 
-4. If you use `cockroach` in your `$PATH`, rename the outdated `cockroach` binary, and then move the new one into its place:
+4. `$PATH`에서 `cockroach`를 사용하면, 오래된 `cockroach` 바이너리의 이름을 바꾼 다음, 새 파일을 그 자리로 옮깁니다:
 
     <div class="filters clearfix">
       <button style="width: 15%" class="filter-button" data-scope="mac">Mac</button>
@@ -168,9 +169,9 @@ Upgrade only one node at a time, and wait at least one minute after a node rejoi
     ~~~
     </div>
 
-5. Start the node to have it rejoin the cluster.
+5. 노드를 시작하여 클러스터에 다시 가입시키십시오.
 
-    Without a process manager like `systemd`, re-run the [`cockroach start`](start-a-node.html) command that you used to start the node initially, for example:
+    `systemd`와 같은 프로세스 관리자가 없다면, 처음에 노드를 시작하는 데 사용했던 [`cockroach start`](start-a-node.html) 명령을 다시 실행하십시오, 예를 들어:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -179,40 +180,40 @@ Upgrade only one node at a time, and wait at least one minute after a node rejoi
     --advertise-addr=<node address> \
     --join=<node1 address>,<node2 address>,<node3 address>
     ~~~
-
-    If you are using `systemd` as the process manager, run this command to start the node:
+    
+    프로세스 관리자로 `systemd`를 사용한다면, 이 명령을 실행하여 노드를 실행하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ systemctl start <systemd config filename>
     ~~~
 
-6. Verify the node has rejoined the cluster through its output to `stdout` or through the [Admin UI](admin-ui-access-and-navigate.html).
+6. 노드가 출력을 통해 `stdout`으로 또는 [Admin UI](admin-ui-access-and-navigate.html)를 통해 클러스터에 다시 참여했는지 확인하십시오.
 
     {{site.data.alerts.callout_info}}
     To access the Admin UI for a secure cluster, [create a user with a password](create-user.html#create-a-user-with-a-password). Then open a browser and go to `https://<any node's external IP address>:8080`. On accessing the Admin UI, you will see a Login screen, where you will need to enter your username and password.
     {{site.data.alerts.end}}
 
-7. If you use `cockroach` in your `$PATH`, you can remove the old binary:
+7. `$PATH`에서 `cockroach`를 사용하면, 오래된 바이너리를 제거할 수 있습니다:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ rm /usr/local/bin/cockroach_old
     ~~~
+    
+    버전이 지정된 바이너리를 서버에 남겨두면, 아무것도 할 필요가 없습니다.
 
-    If you leave versioned binaries on your servers, you do not need to do anything.
+8. 노드가 클러스터에 다시 가입한 후 1 분 이상 기다린 후, 다음 노드에 대해 이 단계를 반복하십시오.
 
-8. Wait at least one minute after the node has rejoined the cluster, and then repeat these steps for the next node.
-
-## Step 5. Finish the upgrade
+## 5단계. 업그레이드 완료
 
 {{site.data.alerts.callout_info}}
-This step is relevant only when upgrading from v2.0.x to v2.1. For upgrades within the v2.1.x series, skip this step.
+이 단계는 v2.0.x에서 v2.1로 업그레이드할 때만 관련이 있습니다. v2.1.x 시리즈에서 업그레이드하려면, 이 단계를 건너 뜁니다.
 {{site.data.alerts.end}}
 
 If you disabled auto-finalization in step 3 above, monitor the stability and performance of your cluster for as long as you require to feel comfortable with the upgrade (generally at least a day). If during this time you decide to roll back the upgrade, repeat the rolling restart procedure with the old binary.
 
-Once you are satisfied with the new version, re-enable auto-finalization:
+새 버전에 만족하면, 자동-완성을 다시-사용하십시오:
 
 1. Start the [`cockroach sql`](use-the-built-in-sql-client.html) shell against any node in the cluster.
 2. Re-enable auto-finalization:
@@ -222,18 +223,18 @@ Once you are satisfied with the new version, re-enable auto-finalization:
     > RESET CLUSTER SETTING cluster.preserve_downgrade_option;
     ~~~
 
-## Step 6. Troubleshooting
+## 6단계. 문제 해결
 
-After the upgrade has finalized (whether manually or automatically), it is no longer possible to downgrade to the previous release. If you are experiencing problems, we therefore recommend that you:
+업그레이드가 완료되면 (수동 또는 자동으로), 이전 릴리스로 다운그레이드 할 수 없습니다. 문제가 발생하면, 다음과 같이 하는 것이 좋습니다:
 
-1. Run the [`cockroach debug zip`](debug-zip.html) command against any node in the cluster to capture your cluster's state.
+1. 클러스터의 모든 노드에 대해 [`cockroach debug zip`] 명령을 실행하여 클러스터의 상태를 캡처하십시오.
 2. [Reach out for support](support-resources.html) from Cockroach Labs, sharing your debug zip.
 
-In the event of catastrophic failure or corruption, the only option will be to start a new cluster using the old binary and then restore from one of the backups created prior to performing the upgrade.
+치명적인 오류나 손상이 발생할 경우, 이전 바이너리를 사용하여 새 클러스터를 시작한 다음, 업그레이드를 수행하기 전에 생성된 백업 중 하나에서 복원하는 것이 유일한 옵션입니다.
 
-## See also
+## 더 보기
 
-- [View Node Details](view-node-details.html)
-- [Collect Debug Information](debug-zip.html)
-- [View Version Details](view-version-details.html)
-- [Release notes for our latest version](../releases/{{page.release_info.version}}.html)
+- [노드 세부사항 보기](view-node-details.html)
+- [디버그 정보 수집](debug-zip.html)
+- [버전 세부사항 보기](view-version-details.html)
+- [최신 버전의 출시 정보](../releases/{{page.release_info.version}}.html)
