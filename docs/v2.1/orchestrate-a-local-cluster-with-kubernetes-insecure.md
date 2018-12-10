@@ -18,14 +18,14 @@ toc: true
 특징 | 설명
 --------|------------
 [minikube](http://kubernetes.io/docs/getting-started-guides/minikube/) | 로컬 워크스테이션의 VM 내에서 Kubernetes 클러스터를 실행하는 데 사용할 도구
-[pod](http://kubernetes.io/docs/user-guide/pods/) | 더커(Docker) 컨테이너 중 하나의 그룹. 이 튜토리얼에서는 모든 포드가 로컬 워크스테이션에서 실행되며, 각 포드는 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 포드는 3 포드로 시작하여 4포드로 늘어납니다.
+[포드](http://kubernetes.io/docs/user-guide/pods/) | 더커(Docker) 컨테이너 중 하나의 그룹. 이 튜토리얼에서는 모든 포드가 로컬 워크스테이션에서 실행되며, 각 포드는 단일 CockroachDB 노드를 실행하는 Docker 컨테이너 하나를 포함합니다. 포드는 3 포드로 시작하여 4포드로 늘어납니다.
 [StatefulSet](http://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/) | StatefulSet은 상태 저장 장치로 취급되는 포드의 그룹이며, 각 포드는 구별할 수 있는 네트워크 ID를 가지며, 재시작 시 항상 동일한 영구 스토리지에 다시 바인딩됩니다. StatefulSets는 버전 1.5에서 베타 버전에 도달한 후 Kubernets 버전 1.9에서는 안정적인 것으로 간주됩니다.
-[persistent volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) | persistent volume 은 포드에 장착된 로컬 스토리지의 한 부분입니다. persistent volume의 수명은 해당 볼륨을 사용하는 포드의 수명과 분리되어 각 CockroachDB 노드가 재시작 시 동일한 스토리지에 다시 바인딩되도록 보장한다.<br><br>'minikube'를 사용할 때 persistent volume은 외부 임시 디렉토리로, 수동으로 삭제하거나 전체 쿠베르네 클러스터를 삭제할 때까지 지속됩니다.
-[persistent volume claim](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) | 포드 (CockroachDB 노드 당 하나씩)가 생성되면 각 포드는 해당 노드의 내구성 스토리지를 "claim(청구)"하기 위해 persistent volume claim을 요청합니다.
+[영구 볼륨](http://kubernetes.io/docs/user-guide/persistent-volumes/) | persistent volume 은 포드에 장착된 로컬 스토리지의 한 부분입니다. persistent volume의 수명은 해당 볼륨을 사용하는 포드의 수명과 분리되어 각 CockroachDB 노드가 재시작 시 동일한 스토리지에 다시 바인딩되도록 보장한다.<br><br>'minikube'를 사용할 때 영구 볼륨은 외부 임시 디렉토리로, 수동으로 삭제하거나 전체 쿠베르네 클러스터를 삭제할 때까지 지속됩니다.
+[영구 볼륨 요청](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims) | 포드 (CockroachDB 노드 당 하나씩)가 생성되면 각 포드는 해당 노드의 내구성 스토리지를 "청구"하기 위해 영구 볼륨 요청을 수행합니다.
 
-## Step 1. Kubernetes 시작하기
+## 1단계. Kubernetes 시작하기
 
-1. Kubernetes의 [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/)에 따라 Kubernetes를 로컬에서 실행하는 데 사용되는 도구 인 minikube를 OS에 설치하십시오. 여기에는 로컬 워크 스테이션에서 Kubernetes를 관리하는 데 사용되는 command-line 도구인 hypervisor 및 'kubectl' 설치가 포함됩니다. 
+1. Kubernetes의 [문서](https://kubernetes.io/docs/tasks/tools/install-minikube/)에 따라 Kubernetes를 로컬에서 실행하는 데 사용되는 도구 인 minikube를 OS에 설치하십시오. 여기에는 로컬 워크 스테이션에서 Kubernetes를 관리하는 데 사용되는 커맨드라인 도구인 hypervisor 및 'kubectl' 설치가 포함됩니다. 
 
     {{site.data.alerts.callout_info}}<code>minikube</code> 버전 0.21.0 이상을 설치해야합니다. 이전 버전에는 CockroachDB StatefulSet 구성에 사용 된 <code>maxUnavailability</code> 필드 및 <code>PodDisruptionBudget</code> 리소스 유형을 지원하는 Kubernetes 서버가 포함되어 있지 않습니다.{{site.data.alerts.end}}
 
@@ -36,18 +36,18 @@ toc: true
     $ minikube start
     ~~~
 
-## Step 2. CockroachDB 노드 시작하기
+## 2단계. CockroachDB 노드 시작하기
 
 클러스터를 수동으로 시작할 때는 노드당 한 번씩 <code>cockroach start</code> 명령을 여러 번 실행하십시오. 이 단계에서는 Kubernetes StatefulSet 구성을 대신 사용하여 단일 명령으로 노드 3개를 시작하는 데 필요한 작업보다 간단하게 작업을 수행할 수 있습니다.
 {% include {{ page.version.version }}/orchestration/start-cluster.md %}
 
-## Step 3. 클러스터 초기화하기
+## 3단계. 클러스터 초기화하기
 
 {% include {{ page.version.version }}/orchestration/initialize-cluster-insecure.md %}
 
 ## Step 4. 클러스터 테스트하기
 
-클러스터를 테스트하려면, 기본 제공 SQL 클라이언트를 사용하기위한 임시 포드를 실행 한 다음 배포 구성(deployment configuration) 파일을 사용하여 다른 포드의 클러스터에 대해 high-traffic load generator를 실행하십시오.
+클러스터를 테스트하려면, 기본 제공 SQL 클라이언트를 사용하기위한 임시 포드를 실행 한 다음 배포 구성(deployment configuration) 파일을 사용하여 다른 포드의 클러스터에 대해 하이트래픽 로드 생성기를 실행하십시오.
 
 {% include {{ page.version.version }}/orchestration/test-cluster-insecure.md %}
 
@@ -75,9 +75,9 @@ toc: true
     example-545f866f5-2gsrs   1/1       Running   0          25m
     ~~~
 
-## Step 5. 클러스터 모니터링 하기
+## 5단계. 클러스터 모니터링 하기
 
-관리UI ([Admin UI](admin-ui-overview.html)) 에 엑세스하여 클러스터의 상태 및 로드 생성기의 작업을 모니터링 하려면:
+[관리UI](admin-ui-overview.html) 에 엑세스하여 클러스터의 상태 및 로드 생성기의 작업을 모니터링 하려면:
 
 1. 로컬 컴퓨터에서 포드 중 하나로 포트 포워딩 합니다:
 
@@ -98,11 +98,11 @@ toc: true
 
 4. 왼쪽의 **Databases** 탭을 클릭하여 수동으로 생성한 `bank` 데이터베이스와 로드 생성기에 의해 생성된 `kv` 데이터베이스가 나열되어 있는지 확인하십시오.
 
-## Step 6. 노드 장애 시뮬레이션 하기
+## 6단계. 노드 장애 시뮬레이션 하기
 
 {% include {{ page.version.version }}/orchestration/kubernetes-simulate-failure.md %}
 
-## Step 7. 클러스터 확장하기
+## 7단계. 클러스터 확장하기
 
 1. 다른 CockroachDB 노드에 대한 포드를 추가하려면 `kubectl scale` 명령어를 사용하십시오.
 
@@ -131,7 +131,7 @@ toc: true
     example-545f866f5-2gsrs   1/1       Running   0          25m
     ~~~
 
-## Step 8. 클러스터 중지시키기
+## 8단계. 클러스터 중지시키기
 
 - **클러스터를 다시 실행할 예정인 경우**, `minikube stop` 명령어를 사용하십시오. 이 경우 minikube 가상 머신은 종료되지만 생성된 모든 리소스는 보존됩니다.
     {% include copy-clipboard.html %}
@@ -146,7 +146,7 @@ toc: true
 
     You can restore the cluster to its previous state with `minikube start`.
 
-- **클러스터를 다시 실행할 예정이 없는 경우**, `minikube delete` 명령어를 사용하십시오. 이경우 minikube 가상 머신과 persistant volume을 포함한 생성한 모든 리소스가 종료되고 삭제됩니다.
+- **클러스터를 다시 실행할 예정이 없는 경우**, `minikube delete` 명령어를 사용하십시오. 이경우 minikube 가상 머신과 영구 볼륨을 포함한 생성한 모든 리소스가 종료되고 삭제됩니다.
     {% include copy-clipboard.html %}
     ~~~ shell
     $ minikube delete
