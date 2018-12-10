@@ -18,7 +18,7 @@ Postgres의 데이터를 CockroachDB로 가져 오기 위한 몇 가지 방법�
 - [Dump the entire database](#dump-the-entire-database)
 - [Dump one table at a time](#dump-one-table-at-a-time)
 
-덤프 파일에 함수 또는 유형 정의가 있으면 임포트를 실패합니다.  아래와 같이 [`pg_dump`][pgdump] 를 호출하는 것 외에도 함수와 데이터 유형을 제거하기 위해 덤프 파일을 편집해야 할 수도 있습니다ㅏ.
+덤프 파일에 함수 또는 유형 정의가 있으면 임포트를 실패합니다.  아래와 같이 [`pg_dump`][pgdump] 를 호출하는 것 외에도 함수와 데이터 유형을 제거하기 위해 덤프 파일을 편집해야 할 수도 있습니다.
 
 또한 CockroachDB 의 [`IMPORT`][import] 는 Postgres의 비공개 [schemas][pgschema] 에서 자동으로 데이터를 가져 오는 것을 지원하지 않습니다.  이 문제를 해결하기 위해 덤프 파일을 편집하여 `CREATE TABLE` 문에서 테이블과 스키마 이름을 변경할 수 있습니다.
 
@@ -52,7 +52,7 @@ $ pg_dump -t employees  employees > /tmp/employees.sql
 
 이 데이터 세트의 경우, Postgres 덤프 파일은 아래 예제에서 사용 된 파일에서 이미 수행 된 다음 편집을 필요로 합니다.
 
-- The type of the `employees.gender` column in the `CREATE TABLE` statement had to be changed from `employees.employees_gender` to [`STRING`](string.html) since Postgres represented the employee's gender using a [`CREATE TYPE`](https://www.postgresql.org/docs/10/static/sql-createtype.html) statement that is not supported by CockroachDB.
+- `CREATE TABLE` 문의 `employees.gender` 컬럼의 타입은 `employees.employees_gender` 에서 [`STRING`](string.html)로 변경되어야합니다. 왜냐하면 Postgres는 [`CREATE TYPE`](https://www.postgresql.org/docs/10/static/sql-createtype.html) 문을 사용하기 때문에 CockroachDB에서 지원하지 않습니다.
 
 ## 단계 2. 클러스터가 액세스 할 수있는 파일 호스트
 
@@ -70,7 +70,7 @@ CockroachDB 클러스터의 각 노드는 가져 오는 파일에 액세스 할 
 - [전체 데이터베이스 덤프에서 테이블 가져 오기](#import-a-table-from-a-full-database-dump)
 - [테이블 덤프에서 테이블 가져 오기](#import-a-table-from-a-table-dump)
 
-이 섹션의 [`IMPORT`][import] 구문은 [Amazon S3](https://aws.amazon.com/s3/) 에서 실제 데이터를 가져 와서 [`SHOW JOBS`](show-jobs.html) 와 함께 모니터 할 수있는 백그라운드 가져 오기 작업을 시작합니다ㅏ.
+이 섹션의 [`IMPORT`][import] 구문은 [Amazon S3](https://aws.amazon.com/s3/) 에서 실제 데이터를 가져 와서 [`SHOW JOBS`](show-jobs.html) 와 함께 모니터 할 수있는 백그라운드 가져 오기 작업을 시작합니다.
 
 ### 전체 데이터베이스 덤프 가져 오기
 
@@ -175,7 +175,7 @@ CockroachDB 클러스터의 각 노드는 가져 오는 파일에 액세스 할 
 
 기본적으로, [`IMPORT ... PGDUMP`][import] 는 외래 키를 지원합니다.  **Default: false**.  덤프 파일의 DDL에서 외래 키 제약 조건을 무시하여 데이터 가져 오기 속도를 높이려면 `skip_foreign_keys` 옵션을 추가하십시오.  또한 다른 테이블에 대한 종속성으로 인해 실패할 개별 테이블을 가져올 수도 있습니다.
 
-사용 예씨:
+사용 예시:
 
 {% include copy-clipboard.html %}
 ~~~ sql
