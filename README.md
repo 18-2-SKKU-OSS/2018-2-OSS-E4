@@ -23,6 +23,10 @@
 > Cockroach Labs은 “자가 복제로 살아남는 데이터베이스”라고 할 수 있는 오픈소스 데이터베이스 서비스다. CockroachDB의 핵심은 다운타임을 줄이기 위해 최적화됐다고 할 수 있다. 웹사이트를 방문하거나 은행 계좌를 체크할 때, 혹은 선호하는 SNS 앱에 접속할 때마다 필요로 하는 정보를 데이터베이스를 기반으로 얻을 수 있는 것이다. <br> <br>
 앞서 잠깐 언급했듯 CockroachDB는 말 그대로 바퀴벌레처럼 스스로를 복제하고 정보를 확산한다. 따라서 홀로 표적이 되거나 죽는 법이 없다. Cockroach Labs 측은 바퀴벌레의 이 같은 특징을 다중 활성 능력(Multi-Active Availability)이라고 부른다. <br> <br>
 출처: http://www.venturesquare.net/748833
+CockroachDB는 각 데이터베이스 트랜잭션에 대해 ACID를 준수하는 [트랜잭셔널 데이터베이스](https://en.wikipedia.org/wiki/Transactional_database)로, 강력한 일관성을 가진 키-값 데이터베이스를 기반으로 구축된 분산 SQL 데이터베이스 입니다. CockroahDB는 수평적으로 확장되며, Disk, 시스템, 랙 및 데이터 센터 장애에도 수동 개입 없이 지연 시간을 최소로 하며 살아남습니다. 또한 CockroahDB는 강력한 일관성을 가진 ACID(https://ko.wikipedia.org/wiki/ACID) 트랜잭션을 지원하며, 구조화, 조작 및 쿼리에 대해 친숙한 SQL API를 제공합니다. <br> <br>
+더 자세한 정보를 알고 싶다면 [FAQ](https://www.cockroachlabs.com/docs/stable/frequently-asked-questions.html) 또는 [아키텍처 문서](https://www.cockroachlabs.com/docs/stable/architecture/overview.html)를 참조하십시오.
+출처: https://github.com/cockroachdb/cockroach
+
 
 CockroachDB is a cloud-native SQL database for building global, scalable cloud services that survive disasters. <br>
 
