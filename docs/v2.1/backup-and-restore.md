@@ -7,17 +7,17 @@ redirect_from:
 - restore-data.html
 ---
 
-Because CockroachDB is designed with high fault tolerance, backups are primarily needed for disaster recovery (i.e., if your cluster loses a majority of its nodes). Isolated issues (such as small-scale node outages) do not require any intervention. However, as an operational best practice, we recommend taking regular backups of your data.
+CockroachDB는 장애에 대한 내성이 강하게 설계되었기 때문에 백업은 주로 재해 시 복구에만(즉, 클러스터가 대부분의 노드를 손실하는 경우) 필요하고, 격리된 문제(예: 소규모 노드 운영 중단)에는 개입이 필요하지 않습니다. 그러나 운영 모범 사례로서는, 데이터를 정기적으로 백업하는 것을 권장합니다.
 
-Based on your [license type](https://www.cockroachlabs.com/pricing/), CockroachDB offers two methods to back up and restore your cluster's data: Enterprise and Core.
+[라이선스 유형](https://www.cockroachlabs.com/pricing/)에 따라, CockroachDB는 클러스터의 데이터를 백업 및 복원하는 두 가지 방법을 제안합니다: 엔터프라이즈와 코어
 
-## Perform Enterprise backup and restore
+## 엔터프라이즈 백업 및 복원
 
-If you have an [Enterprise license](enterprise-licensing.html), you can use the [`BACKUP`](backup.html) statement to efficiently back up your cluster's schemas and data to popular cloud services such as AWS S3, Google Cloud Storage, or NFS, and the [`RESTORE`](restore.html) statement to efficiently restore schema and data as necessary.
+[엔터프라이즈 라이선스](enterprise-licensing.html)가 있는 경우, [`BACKUP`](backup.html) 문을 사용하여 클러스터의 스키마와 데이터를 AWS S3, Google 클라우드 스토리지 또는 NFS와 같은 인기 클라우드 서비스에 효율적으로 백업하고,  [`RESTORE`](restore.html) 문을 사용하여 스키마를 효율적으로 복원할 수 있습니다.
 
-### Manual full backups
+### 수동 전체 백업
 
-In most cases, it's recommended to use the [`BACKUP`](backup.html) command to take full nightly backups of each database in your cluster:
+대부분의 경우 클러스터에 있는 각 데이터베이스를 전체 야간 백업하려면 [`BACKUP`](backup.html) 명령을 사용하는 것을 권장합니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -31,18 +31,18 @@ If it's ever necessary, you can then use the [`RESTORE`](restore.html) command t
 > RESTORE DATABASE <database_name> FROM '<full_backup_location>';
 ~~~
 
-### Manual full and incremental backups
+### 수동 전체 백업 및 증분 백업
 
-If a database increases to a size where it is no longer feasible to take nightly full backups, you might want to consider taking periodic full backups (e.g., weekly) with nightly incremental backups. Incremental backups are storage efficient and faster than full backups for larger databases.
+데이터베이스가 야간 전체 백업을 수행할 수 없는 크기로 증가하면, 야간 증분 백업과 함께 정기적인 전체 백업(예: 매주)을 수행하는 것을 고려해 보십시오. 증분 백업은 대용량 데이터베이스의 전체 백업보다 빠르고 스토리지 효율적입니다.
 
-Periodically run the [`BACKUP`](backup.html) command to take a full backup of your database:
+[`BACKUP`](backup.html)명령을 주기적으로 실행하여 데이터베이스 전체 백업:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > BACKUP DATABASE <database_name> TO '<full_backup_location>';
 ~~~
 
-Then create nightly incremental backups based off of the full backups you've already created.
+그런 다음 이미 생성한 전체 백업을 기반으로 야간 증분 백업을 생성하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -50,22 +50,22 @@ Then create nightly incremental backups based off of the full backups you've alr
 INCREMENTAL FROM '<full_backup_location>', '<list_of_previous_incremental_backup_location>';
 ~~~
 
-If it's ever necessary, you can then use the [`RESTORE`](restore.html) command to restore a database:
+필요할 경우 [`RESTORE`](restore.html) 명령을 사용하여 데이터베이스를 복원하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > RESTORE <database_name> FROM '<full_backup_location>', '<list_of_previous_incremental_backup_locations>';
 ~~~
 
-### Automated full and incremental backups
+### 자동 전체 백업 및 증분 백업
 
-You can automate your backups using scripts and your preferred method of automation, such as cron jobs.
+스크립트를 사용하거나 cron job 등 원하는 자동화 방법을 사용하여 백업을 자동화할 수 있습니다.
 
-For your reference, we have created this [sample backup script](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/prod-deployment/backup.sh) that you can customize to automate your backups.
+백업을 자동화하도록 사용자 정의할 수 있도록 작성한 [샘플 백업 스크립트](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/prod-deployment/backup.sh)를 참조하십시오.
 
-In the sample script, configure the day of the week for which you want to create full backups. Running the script daily will create a full backup on the configured day, and on other days, it'll create incremental backups. The script tracks the recently created backups in a separate file titled `backup.txt` and uses this file as a base for the subsequent incremental backups.
+샘플 스크립트에서 전체 백업을 생성할 요일을 지정하십시오. 매일 스크립트를 실행하면 지정된 날짜에 전체 백업이 생성되며, 다른 날에는 증분 백업이 생성됩니다. 이 스크립트는 최근 생성된 백업을 `backup.txt`라는 별도의 파일에서 추적하며 이 파일을 후속 증분 백업의 기반으로 사용합니다.
 
-1. Download the [sample backup script](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/prod-deployment/backup.sh):
+1. [샘플 백업 스크립트](https://raw.githubusercontent.com/cockroachdb/docs/master/_includes/{{ page.version.version }}/prod-deployment/backup.sh) 다운로드:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -114,26 +114,26 @@ In the sample script, configure the day of the week for which you want to create
     echo "backed up to ${destination}"
     ~~~
 
-2. In the sample backup script, customize the values for the following variables:
+2. 샘플 백업 스크립트에서 다음 변수에 대한 값을 사용자 정의하십시오:
 
     Variable | Description
     -----|------------
-    `full_day` | The day of the week on which you want to take a full backup.
-    `what` | The name of the database you want to back up (i.e., create backups of all tables and views in the database).
-    `base` | The URL where you want to store the backup.<br/><br/>URL format: `[scheme]://[host]/[path]` <br/><br/>For information about the components of the URL, see [Backup File URLs](backup.html#backup-file-urls).
-    `extra`| The parameters required for the storage.<br/><br/>Parameters format: `?[parameters]` <br/><br/>For information about the storage parameters, see [Backup File URLs](backup.html#backup-file-urls).
-    `backup_parameters` | Additional [backup parameters](backup.html#parameters) you might want to specify.
+    `full_day` | 전체 백업을 하고 싶은 요일.
+    `what` | 백업할 데이터베이스의 이름(즉, 데이터베이스에 모든 테이블과 보기의 백업 생성).
+    `base` | 백업을 저장할 URL.<br/><br/>URL 포맷: `[scheme]://[host]/[path]` <br/><br/> URL의 구성 요소에 대한 자세한 내용은 [백업 파일 URL](backup.html#backup-file-urls)을 참조하십시오.
+    `extra`| 스토리지에 필요한 매개 변수.<br/><br/>매개 변수 형식: `?[parameters]` <br/><br/> 스토리지 매개 변수에 대한 자세한 내용은 [백업 파일 URL](backup.html#backup-file-urls을 참조하십시오.
+    `backup_parameters` | 추가로 지정하고자 하는 [백업 매개 변수](backup.html#parameters).
 
-    Also customize the `cockroach sql` command with `--host`, `--certs-dir` or `--insecure`, and [additional flags](use-the-built-in-sql-client.html#flags) as required.
+    또한 `--host`, `--certs-dir` 또는 `--insecure`, 그리고 필요에 따라 [추가 플래그](use-the-built-in-sql-client.html#flags)를 사용하여 `cockroach sql` 명령을 사용자 정의하십시오.
 
-3. Change the file permissions to make the script executable:
+3. 스크립트를 실행할 수 있도록 파일 권한 변경:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ chmod +x backup.sh
     ~~~
 
-4. Run the backup script:
+4. 백업 스크립트 실행:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -141,19 +141,19 @@ In the sample script, configure the day of the week for which you want to create
     ~~~
 
 {{site.data.alerts.callout_info}}
-If you miss an incremental backup, delete the `recent_backups.txt` file and run the script. It'll take a full backup for that day and incremental backups for subsequent days.
+증분 백업이 누락된 경우  `recent_backups.txt` 파일을 삭제하고 스크립트를 실행하십시오. 이는 그날 전체 백업 및 이후 날짜의 증분 백업을 가져옵니다.
 {{site.data.alerts.end}}
 
-## Perform Core backup and restore
+## 코어 백업 및 복구
 
-In case you do not have an Enterprise license, you can perform a Core backup. Run the [`cockroach dump`](sql-dump.html) command to dump all the tables in the database to a new file (`backup.sql` in the following example):
+엔터프라이즈 라이선스가 없는 경우 코어 백업을 수행할 수 있습니다. [`cockroach dump`](sql-dump.html) 명령을 실행하여 데이터베이스의 모든 테이블을 새 파일(다음 예의 `backup.sql`)로 덤프하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach dump <database_name> <flags> > backup.sql
 ~~~
 
-To restore a database from a Core backup, [use the `cockroach sql` command to execute the statements in the backup file](sql-dump.html#restore-a-table-from-a-backup-file):
+코어 백업에서 데이터베이스를 복원하려면 [`cockroach sql` 명령을 사용하여 백업 파일에서 명령 실행](sql-dump.html#restore-a-table-from-a-backup-file)을 참조하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -161,14 +161,14 @@ $ cockroach sql --database=[database name] < backup.sql
 ~~~
 
 {{site.data.alerts.callout_success}}
-If you created a backup from another database and want to import it into CockroachDB, see [Import data](import-data.html).
+다른 데이터베이스에서 백업을 만들어 CockroachDB로 가져오려면 [데이터 가져오기](import-data.html)를 참조하십시오.
 {{site.data.alerts.end}}
 
-## See also
+## 더 알아보기
 
 - [`BACKUP`](backup.html)
 - [`RESTORE`](restore.html)
 - [`SQL DUMP`](sql-dump.html)
 - [`IMPORT`](import-data.html)
-- [Use the Built-in SQL Client](use-the-built-in-sql-client.html)
-- [Other Cockroach Commands](cockroach-commands.html)
+- [빌트인 SQL 클라이언트 사용](use-the-built-in-sql-client.html)
+- [다른 Cockroach 명령어](cockroach-commands.html)
