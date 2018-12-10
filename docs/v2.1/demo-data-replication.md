@@ -7,9 +7,9 @@ toc: true
 이 페이지에서는 CockroachDB가 데이터를 복제하고 배포하는 방법에 대해 간단히 설명합니다. 먼저 단일노드 로컬 클러스터를 시작하고, 데이터를 작성하고, 2개의 노드를 추가하고, 데이터를 자동으로 복제할 수 있습니다. 그 후 데이터를 5개로 복제하도록 클러스터를 업데이트하고, 노드를 2개 더 추가한 다음, 기존의 모든 복제본을 신규 노드에 다시 복제합니다.
 ## 시작하기 전에
 
-CockroachDB를 이미 설치했는지 확인하십시오. [installed CockroachDB](install-cockroachdb.html)
+CockroachDB를 이미 설치했는지 확인하십시오. [CockroachDB 설치](install-cockroachdb.html)
 
-## Step 1. 단일노드 클러스터 시작하기
+## 1단계. 단일노드 클러스터 시작하기
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -20,7 +20,7 @@ $ cockroach start \
 --http-addr=localhost:8080
 ~~~
 
-## Step 2. 데이터 작성하기
+## 2단계. 데이터 작성하기
 
 새 터미널에서 [`cockroach gen`](generate-cockroachdb-resources.html) 명령어를 사용하여 `intro` 데이터베이스를 생성합니다.
 
@@ -29,7 +29,7 @@ $ cockroach start \
 $ cockroach gen example-data intro | cockroach sql --insecure --host=localhost:26257
 ~~~
 
-같은 터미널에서 [built-in SQL shell](use-the-built-in-sql-client.html) 를 열고 `intro` 데이터베이스가  `mytable` 과 함께 추가되었는지 확인합니다.
+같은 터미널에서 [built-in SQL 쉘](use-the-built-in-sql-client.html) 를 열고 `intro` 데이터베이스가  `mytable` 과 함께 추가되었는지 확인합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -102,7 +102,7 @@ SQL 셸을 종료합니다.
 > \q
 ~~~
 
-## Step 3. 노드 2개 추가하기
+## 3단계. 노드 2개 추가하기
 
 새 터미널에서 node 2를 추가하기:
 
@@ -128,22 +128,22 @@ $ cockroach start \
 --join=localhost:26257
 ~~~
 
-## Step 4. 신규 노드로 데이터 복제하기
+## 4단계. 신규 노드로 데이터 복제하기
 
-Open the Admin UI at <a href="http://localhost:8080" data-proofer-ignore>http://localhost:8080</a> to see that all three nodes are listed. <a href="http://localhost:8080" data-proofer-ignore>http://localhost:8080</a 에서 관리(Admin) UI를 열어 세 개의 노드가 모두 나열되어 있는지 확인합니다. 처음에는 노드 2 와 노드 3의 복제본 수가 더 적습니다. 그러다 곧 복제본 수가 3개의 노드에서 모두 동일해집니다. 즉, 클러스터의 모든 데이터가 동일하게 3회 복제되었음을 나타냅니다. 각각의 노드에는 전체 데이터의 복사본이 있습니다.
+<a href="http://localhost:8080" data-proofer-ignore>http://localhost:8080</a 에서 관리 UI를 열어 세 개의 노드가 모두 나열되어 있는지 확인합니다. 처음에는 노드 2 와 노드 3의 복제본 수가 더 적습니다. 그러다 곧 복제본 수가 3개의 노드에서 모두 동일해집니다. 즉, 클러스터의 모든 데이터가 동일하게 3회 복제되었음을 나타냅니다. 각각의 노드에는 전체 데이터의 복사본이 있습니다.
 
 <img src="{{ 'images/v2.1/replication1.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 5. 복제 인자 증가시키기
+## 5단계. 복제 인자 증가시키기
 
-앞서 확인한 것처럼, CockroachDB는 기본적으로 데이터를 3번 복제합니다. built-in SQL 셸을 열었던 터미널 또는 새 터미널에서 [`ALTER RANGE ... CONFIGURE ZONE`](configure-zone.html) 문을 사용하여 클러스터의 '.default' 복제 팩터를 7로 변경합니다.
+앞서 확인한 것처럼, CockroachDB는 기본적으로 데이터를 3번 복제합니다. built-in SQL 셸을 열었던 터미널 또는 새 터미널에서 [`ALTER RANGE ... CONFIGURE ZONE`](configure-zone.html) 문을 사용하여 클러스터의 '.default' 복제 인자를 5로 변경합니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
 $ cockroach sql --execute="ALTER RANGE default CONFIGURE ZONE USING num_replicas=7;" --insecure --host=localhost:26257
 ~~~
 
-CockroachDB는 데이터베이스 및 테이블 데이터에 대한 '.default' 복제 영역 외에도 [important internal data(중요 내부 데이터)](configure-replication-zons.html#a-re-re-replication])에 대해 미리 구성된 복제 영역을 제공합니다. 미리 구성된 영역을 보려면 [SHOW ZONE CONE CONNGENTS](Show-Zone-configurations.html) 하위 명령을 사용하십시오.
+CockroachDB는 데이터베이스 및 테이블 데이터에 대한 '.default' 복제 영역 외에도 [중요 내부 데이터](configure-replication-zons.html#a-re-re-replication])에 대해 미리 구성된 복제 영역을 제공합니다. 미리 구성된 영역을 보려면 [SHOW ZONE CONE CONNGENTS](Show-Zone-configurations.html) 하위 명령을 사용하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -215,7 +215,7 @@ $ cockroach sql --execute="ALTER RANGE meta CONFIGURE ZONE USING num_replicas=7;
 $ cockroach sql --execute="ALTER RANGE system CONFIGURE ZONE USING num_replicas=7;" --insecure
 ~~~
 
-## Step 6. 노드 2개 추가하기
+## 6단계. 노드 2개 추가하기
 
 새 터미널에서 노드 4를 추가하기:
 
@@ -241,13 +241,13 @@ $ cockroach start \
 --join=localhost:26257
 ~~~
 
-## Step 7. 신규 노드로 데이터 복제하기
+## 7단계. 신규 노드로 데이터 복제하기
 
-관리(Admin) UI로 돌아가면 5개의 노드가 나열되어 있는 것을 볼 수 있습니다. 처음에는 노드 4와 5의 복제본 수가 더 적습니다. 그러다 곧 복제 수가 모든 5개 노드에서 동일해지며, 앞에서 기본 복제 팩터를 바로 5로 변경했기 때문에 클러스터의 모든 데이터가 5번 복제되는 것을 확인할 수 있습니다.
+관리(Admin) UI로 돌아가면 5개의 노드가 나열되어 있는 것을 볼 수 있습니다. 처음에는 노드 4와 5의 복제본 수가 더 적습니다. 그러다 곧 복제 수가 모든 5개 노드에서 동일해지며, 앞에서 기본 복제 인자를 바로 5로 변경했기 때문에 클러스터의 모든 데이터가 5번 복제되는 것을 확인할 수 있습니다.
 
 <img src="{{ 'images/v2.1/replication2.png' | relative_url }}" alt="CockroachDB Admin UI" style="border:1px solid #eee;max-width:100%" />
 
-## Step 8. 클러스터 정지시키기
+## 8단계. 클러스터 정지시키기
 
 테스트 클러스터를 완료한 후 클러스터를 정지시켜야 합니다. 각 노드에 대하여 해당 터미널로 전환하고 **CTRL-C**를 눌러 노드를 중지합니다.
 
