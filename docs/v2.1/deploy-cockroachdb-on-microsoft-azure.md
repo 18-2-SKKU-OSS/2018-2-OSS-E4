@@ -67,7 +67,7 @@ Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트
 
 ## 단계 2. VMs 이 인증서 생성
 
-[Linux VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) for each node you plan to have in your cluster. If you plan to run a sample workload against the cluster, create a separate VM for that workload.
+클러스터에 포함 할 각 노드에 대해 [Linux VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) 을 참조하십시오. 클러스터에 대해 샘플 워크로드를 실행하려면 해당 워크로드에 대해 별도의 VM을 작성하십시오.
 
 - 적어도 3개의 노드를 실행하여 [생존성을 보장](recommended-production-settings.html#cluster-topology)하십시오.
 
