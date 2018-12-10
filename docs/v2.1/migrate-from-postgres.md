@@ -35,7 +35,7 @@ $ pg_dump employees > /tmp/employees-full.sql
 
 이 데이터 세트의 경우 Postgres 덤프 파일에는 아래 예제에서 사용 된 파일에 대해 이미 수행 된 편집이 필요합니다:
 
-- The type of the `employees.gender` column in the `CREATE TABLE` statement had to be changed from `employees.employees_gender` to [`STRING`](string.html) since Postgres represented the employee's gender using a [`CREATE TYPE`](https://www.postgresql.org/docs/10/static/sql-createtype.html) statement that is not supported by CockroachDB.
+- `CREATE TABLE` 문의 `employees.gender` 컬럼의 타입은 `employees.employees_gender` 에서 [`STRING`](string.html) 로 변경되어야합니다. 왜냐하면 Postgres는 [`CREATE TYPE`](https://www.postgresql.org/docs/10/static/sql-createtype.html) 문을 사용하기 때문에 CockroachDB에서 지원하지 않습니다.
 
 - `CREATE TYPE employee ...` 명령은 삭제되어야 합니다.
 
