@@ -35,7 +35,7 @@ Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트
 
 1. [리소스 그룹 생성](https://azure.microsoft.com/en-us/updates/create-empty-resource-groups/).
 
-2. [가상 네트워크 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-vnet-arm-pportal) **리소스 그룹**.을 사용 합니다.
+2. [가상 네트워크 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-vnet-arm-pportal) **리소스 그룹** 을 사용 합니다.
 
 3. [네트워크 보안 그룹 생성](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-pportal) **리소스 그룹**을 사용하고, **인바운드** 규칙을 추가합니다:
     - **관리 UI 지원**:
@@ -70,7 +70,7 @@ Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트
 
 ## 2 단계. VMs를 만드십시오.
 
-[리눅스 VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) 클러스터에 포함될 각 노드에 대한 설명을 위해서 합니다. 클러스터 대신 샘플 워크로드를 실행할 계횓인 경우, 그 워크로드에 대한 분리된 VM을 생성하십시오.
+[리눅스 VMs 생성](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-quick-create-portal) 클러스터에 포함될 각 노드에 대한 설명을 위해서 합니다. 클러스터 대신 샘플 워크로드를 실행할 계획인 경우, 그 워크로드에 대한 분리된 VM을 생성하십시오.
 
 - 최소한 3개의 노드를 실행하여 [생존성을 보장](recommended-production-settings.html#cluster-topology)하십시오.
 
@@ -90,7 +90,7 @@ Azure에서 이것을 가능하게 하기 위해 리소스 그룹, 가상 네트
 
 ## 4 단계. 로드밸런싱을 설정하십시오.
 
-각각의 CockroachDB 노드는 모든 클러스터에 동일하게 적절한 SQL 게이트웨이이지만, 고객에게 성능과 신뢰성을 보장하기 위해, 로드 밸런싱을 사용하는 것은 중요합니다:
+각각의 CockroachDB 노드는 모든 클러스터에 동일하게 적절한 SQL 게이트웨이 이지만, 고객에게 성능과 신뢰성을 보장하기 위해, 로드 밸런싱을 사용하는 것은 중요합니다:
 
 - **성능:** 노드 밸런서가 노드 전체에 클라이언트 트래픽을 분산합니다. 따라서 한 개의 노드가 리퀘스트에 의해 압도되지 않고 전체 클러스터 성능이 향상됩니다 (초당 쿼리).
 
@@ -135,7 +135,7 @@ Microsoft Azure는 인스턴스 간에 트래픽을 분산하기 위해 완전�
 이제 배포가 되는 중이므로, 다음을 수행할 수 있습니다:
 
 1. [데이터 모델 실행](sql-statements.html).
-2. [사용자 만들기](create-and-manage-users.html)과 [grant them privileges](grant.html).
+2. [사용자 만들기](create-and-manage-users.html)와 [grant them privileges](grant.html).
 3. [응용 프로그램 연결](install-client-drivers.html). 응용프로그램을 CockroachDB 노드가 아니라 Azure 로드 밸런서에 연결해야 합니다.
 
 ## 또 다른 참고문헌들
