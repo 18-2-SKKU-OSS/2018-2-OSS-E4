@@ -9,7 +9,7 @@ CockroachDB의 [다중-활성 가용성](multi-active-availability.html) 설계�
 즉, 클러스터의 전반적인 상태 및 작업을 방해하지 않고 한 번에 하나씩 노드를 업그레이드 할 수 있습니다.
 
 {{site.data.alerts.callout_info}}
-This page shows you how to upgrade to the latest v2.1 release ({{page.release_info.version}}) from v2.0.x, or from any patch release in the v2.1.x series. To upgrade within the v2.0.x series, see [the v2.0 version of this page](https://www.cockroachlabs.com/docs/v2.0/upgrade-cockroach-version.html).
+이 페이지에서는 v2.0.x 또는 v2.1.x 시리즈의 모든 패치 릴리스에서 최신 v2.1 릴리스 ({{page.release_info.version}})로 업그레이드하는 방법을 보여줍니다. v2.0.x 시리즈에서 업그레이드하려면, [이 페이지의 v2.0 버전](https://www.cockroachlabs.com/docs/v2.0/upgrade-cockroach-version.html)을 참조하십시오.
 {{site.data.alerts.end}}
 
 ## 1단계. 업그레이드 할 수 있는지 확인. 
@@ -26,52 +26,52 @@ v2.0.x 또는 v2.1.x 패치 릴리스에서 업그레이드하는 경우, 중간
 
 업그레이드를 시작하기 전에, 다음 단계를 완료하십시오.
 
-1. Make sure your cluster is behind a [load balancer](recommended-production-settings.html#load-balancing), or your clients are configured to talk to multiple nodes. If your application communicates with a single node, stopping that node to upgrade its CockroachDB binary will cause your application to fail.
+1. 클러스터가 [로드 밸런서](recommended-production-settings.html#load-balancing) 뒤에 있는지 확인하거나, 클라이언트가 여러 노드와 통신하도록 구성하십시오. 어플리케이션이 단일 노드와 통신하는 경우, 해당 노드를 중지하여 CockroachDB 바이너리를 업그레이드하면 어플리케이션이 실패하게됩니다.
 
-2. Verify the overall health of your cluster using the [Admin UI](admin-ui-access-and-navigate.html). On the **Cluster Overview**:
-    - Under **Node Status**, make sure all nodes that should be live are listed as such. If any nodes are unexpectedly listed as suspect or dead, identify why the nodes are offline and either restart them or [decommission](remove-nodes.html) them before beginning your upgrade. If there are dead and non-decommissioned nodes in your cluster, it will not be possible to finalize the upgrade (either automatically or manually).
-    - Under **Replication Status**, make sure there are 0 under-replicated and unavailable ranges. Otherwise, performing a rolling upgrade increases the risk that ranges will lose a majority of their replicas and cause cluster unavailability. Therefore, it's important to identify and resolve the cause of range under-replication and/or unavailability before beginning your upgrade.
-    - In the **Node List**:
-        - Make sure all nodes are on the same version. If any nodes are behind, upgrade them to the cluster's current version first, and then start this process over.
-        - Make sure capacity and memory usage are reasonable for each node. Nodes must be able to tolerate some increase in case the new version uses more resources for your workload. Also go to **Metrics > Dashboard: Hardware** and make sure CPU percent is reasonable across the cluster. If there's not enough headroom on any of these metrics, consider [adding nodes](start-a-node.html) to your cluster before beginning your upgrade.
+2. [Admin UI](admin-ui-access-and-navigate.html)를 사용하여 클러스터의 전반적인 상태를 확인하십시오. **클러스터 개요**에서:
+    - **노드 상태**에서, 활성상태여야 하는 모든 노드가 표시되어야 합니다. 노드가 예기치 않게 의심 또는 비활성 상태로 나열되는 경우, 노드가 오프라인 상태인 이유를 확인하고 업그레이드를 시작하기 전에 노드를 다시 시작하거나 [해제](remove-nodes.html)하십시오. 클러스터에 사용 불능 노드와 폐기되지 않은 노드가 있는 경우, 자동 또는 수동으로 업그레이드를 완료 할 수 없습니다.
+    - **복제 상태**에서, 복제-부족 및 사용 불가능 범위가 0인지 확인하십시오. 그렇지 않으면, 롤링 업그레이드를 수행하면 범위에서 복제본의 대부분이 손실되고 클러스터를 사용할 수 없게 될 위험이 커집니다. 따라서, 업그레이드를 시작하기 전에 복제 그리고/또는 사용할 수 없는 범위의 원인을 확인하고 해결하는 것이 중요합니다.
+    - **노드 리스트**에서:
+        - 모든 노드가 동일한 버전인지 확인하십시오. 노드가 뒤에 있는 경우, 클러스터의 현재 버전으로 먼저 업그레이드 한 다음, 이 프로세스를 다시 시작하십시오.
+        - 용량과 메모리 사용이 각 노드에 대해 합리적인지 확인하십시오. 새 버전이 워크로드에 더 많은 리소스를 사용하는 경우 노드는 약간의 증가를 허용할 수 있어야 합니다. 또한 **Metrics > Dashboard: Hardware**로 이동하여 클러스터에서 CPU 비율이 적절한지 확인하십시오. 이러한 메트릭 중 여유 공간이 충분하지 않은 경우, 업그레이드를 시작하기 전에 클러스터에 [노드 추가](start-a-node.html)를 고려하십시오.
 
-3. Capture the cluster's current state by running the [`cockroach debug zip`](debug-zip.html) command against any node in the cluster. If the upgrade does not go according to plan, the captured details will help you and Cockroach Labs troubleshoot issues.
+3. 클러스터의 노드에 대해 [`cockroach debug zip`](debug-zip.html) 명령을 실행하여 클러스터의 현재 상태를 캡처하십시오. 업그레이드가 계획대로 진행되지 않으면, 캡쳐된 세부 정보가 도움이 되며 Cockroach Labs가 문제를 해결하는 데 도움이 됩니다.
 
 4. [클러스터 백업](backup-and-restore.html)하십시오. 업그레이드가 계획대로 진행되지 않으면, 데이터를 사용하여 클러스터를 이전 상태로 복원할 수 있습니다.
 
 ## 3단계. 업그레이드가 어떻게 완료될지 결정. 
 
 {{site.data.alerts.callout_info}}
-This step is relevant only when upgrading from v2.0.x to v2.1. For upgrades within the v2.1.x series, skip this step.
+이 단계는 v2.0.x에서 v2.1로 업그레이드할 때만 관련이 있습니다. v2.1.x 시리즈에서 업그레이드하려면, 이 단계를 건너 뜁니다.
 {{site.data.alerts.end}}
 
-By default, after all nodes are running the new version, the upgrade process will be **auto-finalized**. This will enable certain performance improvements and bug fixes introduced in v2.1. After finalization, however, it will no longer be possible to perform a downgrade to v2.0. In the event of a catastrophic failure or corruption, the only option will be to start a new cluster using the old binary and then restore from one of the backups created prior to performing the upgrade.
+기본적으로, 모든 노드에서 새 버전을 실행하면, 업그레이드 프로세스가 **자동-종료**됩니다. 이를 통해 v2.1에서 소개된 특정 성능 향상 및 버그 수정이 가능합니다. 그러나, 종료 후, 더 이상 v2.0으로 다운 그레이드 할 수 없습니다. 치명적인 오류나 손상이 발생할 경우, 이전 바이너리를 사용하여 새 클러스터를 시작한 다음, 업그레이드를 수행하기 전에 생성 된 백업 중 하나에서 복원하는 것이 유일한 옵션입니다.
 
-We recommend disabling auto-finalization so you can monitor the stability and performance of the upgraded cluster before finalizing the upgrade, but note that you will need to follow all of the subsequent directions, including the manual finalization in step 5:
+업그레이드를 완료하기 전에 업그레이드된 클러스터의 안정성과 성능을 모니터링 할 수 있도록 자동-종료를 비활성화하는 것이 좋지만, 5단계의 수동 완료를 포함하여 이후의 모든 지침을 따라야 합니다:
 
-1. [Upgrade to v2.0](../v2.0/upgrade-cockroach-version.html), if you haven't already. The `cluster.preserve_downgrade_option` setting mentioned below is available only as of v2.0.3.
+1. 아직 업그레이드하지 않았다면, [v2.0으로 업그레이드](../v2.0/upgrade-cockroach-version.html)하십시오. 아래에 언급된 `cluster.preserve_downgrade_option` 설정은 v2.0.3부터 사용 가능합니다.
 
-2. Start the [`cockroach sql`](use-the-built-in-sql-client.html) shell against any node in the cluster.
+2. 클러스터의 노드에 대해 [`cockroach sql`](use-the-built-in-sql-client.html) 쉘을 시작하십시오.
 
-3. Set the `cluster.preserve_downgrade_option` [cluster setting](cluster-settings.html):
+3. `cluster.preserve_downgrade_option` [클러스터 세팅](cluster-settings.html)을 설정하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > SET CLUSTER SETTING cluster.preserve_downgrade_option = '2.0';
     ~~~
-
-    It is only possible to set this setting to the current cluster version.
+    
+    이 설정은 현재 클러스터 버전으로만 설정할 수 있습니다.
 
 ## 4단계. 롤링 업그레이드 수행
 
-For each node in your cluster, complete the following steps.
+클러스터의 각 노드에 대해, 다음 단계를 완료하십시오.
 
 {{site.data.alerts.callout_success}}
-We recommend creating scripts to perform these steps instead of performing them manually.
+이러한 단계를 수동으로 수행하는 대신 수행하는 스크립트를 만드는 것이 좋습니다.
 {{site.data.alerts.end}}
 
 {{site.data.alerts.callout_danger}}
-Upgrade only one node at a time, and wait at least one minute after a node rejoins the cluster to upgrade the next node. Simultaneously upgrading more than one node increases the risk that ranges will lose a majority of their replicas and cause cluster unavailability.
+한 번에 하나의 노드만 업그레이드하고, 노드가 다음 노드를 업그레이드하기 위해 클러스터에 다시 참여한 후 최소 1분을 기다리십시오. 둘 이상의 노드를 동시에 업그레이드하면, 범위에서 복제본의 대부분이 손실되어 클러스터를 사용할 수 없게 될 위험이 커집니다.
 {{site.data.alerts.end}}
 
 1. 노드에 연결하십시오.
@@ -191,7 +191,7 @@ Upgrade only one node at a time, and wait at least one minute after a node rejoi
 6. 노드가 출력을 통해 `stdout`으로 또는 [Admin UI](admin-ui-access-and-navigate.html)를 통해 클러스터에 다시 참여했는지 확인하십시오.
 
     {{site.data.alerts.callout_info}}
-    To access the Admin UI for a secure cluster, [create a user with a password](create-user.html#create-a-user-with-a-password). Then open a browser and go to `https://<any node's external IP address>:8080`. On accessing the Admin UI, you will see a Login screen, where you will need to enter your username and password.
+    보안 클러스터의 Admin UI에 접근하려면, [비밀번호가 있는 사용자를 생성](create-user.html#create-a-user-with-a-password)하십시오. 그런 다음 브라우저를 열고 `https://<any node's external IP address>:8080`으로 가십시오. Admin UI에 접근하면, 사용자 이름과 비밀번호를 입력해야 하는 로그인 화면이 표시됩니다.
     {{site.data.alerts.end}}
 
 7. `$PATH`에서 `cockroach`를 사용하면, 오래된 바이너리를 제거할 수 있습니다:
@@ -211,12 +211,12 @@ Upgrade only one node at a time, and wait at least one minute after a node rejoi
 이 단계는 v2.0.x에서 v2.1로 업그레이드할 때만 관련이 있습니다. v2.1.x 시리즈에서 업그레이드하려면, 이 단계를 건너 뜁니다.
 {{site.data.alerts.end}}
 
-If you disabled auto-finalization in step 3 above, monitor the stability and performance of your cluster for as long as you require to feel comfortable with the upgrade (generally at least a day). If during this time you decide to roll back the upgrade, repeat the rolling restart procedure with the old binary.
+위의 3단계에서 자동-완성 기능을 사용하지 않도록 설정한 경우, 업그레이드에 익숙해질 필요가 있는 한 (일반적으로 하루 이상) 클러스터의 안정성 및 성능을 모니터링하십시오. 이 시간 동안 업그레이드를 롤백하기로 결정한 경우, 이전 바이너리로 롤링 재시작 절차를 반복하십시오.
 
 새 버전에 만족하면, 자동-완성을 다시-사용하십시오:
 
-1. Start the [`cockroach sql`](use-the-built-in-sql-client.html) shell against any node in the cluster.
-2. Re-enable auto-finalization:
+1. 클러스터의 노드에 대해 [`cockroach sql`](use-the-built-in-sql-client.html) 쉘을 시작하십시오.
+2. 자동-종료 기능 다시-사용:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -228,7 +228,7 @@ If you disabled auto-finalization in step 3 above, monitor the stability and per
 업그레이드가 완료되면 (수동 또는 자동으로), 이전 릴리스로 다운그레이드 할 수 없습니다. 문제가 발생하면, 다음과 같이 하는 것이 좋습니다:
 
 1. 클러스터의 모든 노드에 대해 [`cockroach debug zip`] 명령을 실행하여 클러스터의 상태를 캡처하십시오.
-2. [Reach out for support](support-resources.html) from Cockroach Labs, sharing your debug zip.
+2. [Cockroach Labs의 지원](support-resources.html)을 받아, 디버그 zip을 공유하십시오.
 
 치명적인 오류나 손상이 발생할 경우, 이전 바이너리를 사용하여 새 클러스터를 시작한 다음, 업그레이드를 수행하기 전에 생성된 백업 중 하나에서 복원하는 것이 유일한 옵션입니다.
 
