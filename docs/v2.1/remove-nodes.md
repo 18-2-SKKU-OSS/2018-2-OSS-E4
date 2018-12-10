@@ -357,7 +357,7 @@ $ cockroach start --insecure --advertise-addr=<address of node to restart> --joi
 
 **Nodes List** 페이지의 **Live Nodes**에 나열된 재활성 노드를 확인할 수 있으며, 몇 분 후 복제본이 해당 노드로 재조정되는 것을 볼 수 있습니다.
 
-## 재활성화 노드의 상태 확인
+##  노드의 상태 확인
 
 해제되는 노드의 진행 상황을 확인하려면, `--decommission` 플래그를 사용하여 `cockroach node status` 명령을 실행하십시오.
 
