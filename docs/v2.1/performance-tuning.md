@@ -954,7 +954,7 @@ Median time (milliseconds):
 2489.85958099
 ~~~
 
-However, as you can see, this query is slow because, currently, when the `WHERE` condition of a query comes from the result of a subquery, CockroachDB scans the entire table, even if there is an available index. Use `EXPLAIN` to see this in more detail:
+그러나 보시다시피 쿼리의 `WHERE` 조건이 서브쿼리의 결과로 인해 발생하는 경우, CockroachDB는 사용 가능한 인덱스가 있더라도 전체 테이블을 스캔하기 때문에 이 쿼리의 성능은 느리게 됩니다. 자세한 내용을 보려면 `EXPLAIN`을 사용하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1000,11 +1000,11 @@ GROUP BY vehicle_id;"
 (20 rows)
 ~~~
 
-This is a complex query plan, but the important thing to note is the full table scan of `rides@primary` above the `subquery`. This shows you that, after the subquery returns the IDs of the top 5 vehicles, CockroachDB scans the entire primary index to find the rows with `max(end_time)` for each `vehicle_id`, although you might expect CockroachDB to more efficiently use the secondary index on `vehicle_id` (CockroachDB is working to remove this limitation in a future version).
+이는 복잡한 쿼리 계획이지만, 주요하게 주목해야할 것은  `subquery` 위의 `rides@primary`의 전체 테이블 스캔입니다. 이는 서브쿼리가 상위 5개 차량의 ID를 반환하면 CockroachDB가 `vehicle_id`의 보조 인덱스를 보다 효율적으로 사용하여 검색할 것으로 예상되지만 실제 CockroachDB는 전체 기본 인덱스를 검색해 각 `vehicle_id`에 대해 `max(end_time)` 행을 찾아낸다는 것을 볼 수 있습니다.(CockroachDB는 향후 버전에서 이러한 제한을 제거하기 위해 노력 중입니다)
 
-#### Using `IN (list)` with explicit values
+#### 명시적 값과 함께 `IN (list)` 사용
 
-Because CockroachDB won't use an available secondary index when using `IN (list)` with a subquery, it's much more performant to have your application first select the top 5 vehicles:
+CockroachDB는 서브쿼리와 함께 `IN (list)`을 사용할 때 보조 인덱스를 사용하지 않기 때문에, 응용 프로그램이 먼저 상위 5개 차량을 선택하도록 하는 것이 성능 면에서 훨씬 더 효과적입니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1035,7 +1035,7 @@ Median time (milliseconds):
 1039.01910782
 ~~~
 
-And then put the results into the `IN` list to get the most recent rides of the vehicles:
+그리고, 가장 최근의 차량 ride를 얻기 위해 결과를 `IN` 목록에 올립니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1071,20 +1071,21 @@ Median time (milliseconds):
 1163.69903088
 ~~~
 
-This approach reduced the query time from 2489.85ms (query with subquery) to 2202.70ms (2 distinct queries).
+이런 접근법은 쿼리의 시간을 2489.85ms(서브쿼리를 포함하는 쿼리)에서 2202.70ms(2개의 고유 쿼리)로 줄였습니다.
 
-### Step 7. Test/tune write performance
+### 7단계. 쓰기 성능 테스트/조정
 
-- [Bulk inserting into an existing table](#bulk-inserting-into-an-existing-table)
-- [Minimizing unused indexes](#minimizing-unused-indexes)
-- [Retrieving the ID of a newly inserted row](#retrieving-the-id-of-a-newly-inserted-row)
+- [기존 테이블로 대량 삽입](#bulk-inserting-into-an-existing-table)
+- [사용하지 않는 인덱스 최소화](#minimizing-unused-indexes)
+- [새로 삽입한 행의 ID 반환](#retrieving-the-id-of-a-newly-inserted-row)
 
-#### Bulk inserting into an existing table
+#### 기존 테이블로 대량 삽입
 
-Moving on to writes, let's imagine that you have a batch of 100 new users to insert into the `users` table. The most obvious approach is to insert each row using 100 separate [`INSERT`](insert.html) statements:  
+쓰기로 넘어가서, 100명의 새로운 사용자를 `users`테이블에 넣는다고 가정해 봅시다. 가장 분명한 접근법은 100개의 [`INSERT`](insert.html) 문을 별도로 사용하여 각 행을 삽입하는 것입니다. 
+
 
 {{site.data.alerts.callout_info}}
-For the purpose of demonstration, the command below inserts the same user 100 times, each time with a different unique ID. Note also that you're now adding the `--cumulative` flag to print the total time across all 100 inserts.
+시연을 위해 아래 명령은 각각 다른 고유 ID를 가진 동일한 사용자를 100회 삽입합니다. 총 시간을 출력하기 위해서는 `--cumulative` 플래그를 추가하면 됩니다.
 {{site.data.alerts.end}}
 
 {% include copy-clipboard.html %}
@@ -1108,7 +1109,7 @@ Cumulative time (milliseconds):
 910.985708237
 ~~~
 
-The 100 inserts took 910.98ms to complete, which isn't bad. However, it's significantly faster to use a single `INSERT` statement with 100 comma-separated `VALUES` clauses:
+00개의 삽입 작업은 910.98ms가 걸렸고, 이것은 그렇게 나쁜 결과는 아닙니다. 하지만, 다음과 같이 쉼표로 구분된 100개의 `VALUES` 조항과 함께 하나의 `INSERT` 문을 사용하면 훨씬 더 빨라집니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1137,13 +1138,13 @@ Cumulative time (milliseconds):
 15.4001712799
 ~~~
 
-As you can see, this multi-row `INSERT` technique reduced the total time for 100 inserts from 910.98ms to 15.40ms. It's useful to note that this technique is equally effective for [`UPSERT`](upsert.html) and [`DELETE`](delete.html) statements as well.
+보시다시피 다중 행 `INSERT`  기법은 100개의 삽입 시간을 910.98ms에서 15.40ms로 단축시켰습니다. 이 기법은 [`UPSERT`](upsert.html)와 [`DELETE`](delete.html)문에도 동일하게 효과적이라는 점을 기억해 두시면 좋습니다.
 
-#### Minimizing unused indexes
+#### 사용되지 않는 인덱스 최소화
 
-Earlier, we saw how important secondary indexes are for read performance. For writes, however, it's important to recognized the overhead that they create.
+앞에서 우리는 보조 인덱스가 읽기 성능에 얼마나 중요한지 보았습니다. 그러나 쓰기의 경우 보조 인덱스가 생성하는 오버헤드를 인식하는 것이 중요합니다.
 
-Let's consider the `users` table:
+`users` 테이블에서 이를 살펴봅시다:
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1166,9 +1167,9 @@ $ cockroach sql \
 (6 rows)
 ~~~
 
-This table has the primary index (the full table) and a secondary index on `name` that is also storing `credit_card`. This means that whenever a row is inserted, or whenever `name`, `credit_card`, `city`, or `id` are modified in existing rows, both indexes are updated.
+이 테이블은 기본 인덱스(전체 테이블)와 `credit_card` 또한 저장하고 있는 `name`에 대한 보조 인덱스를 가지고 있습니다. 이는 기존 행에 행이 삽입되거나 `name`, `credit_card`, `city`,가 수정될 때마다 두 인덱스가 모두 업데이트됨을 의미합니다.
 
-To make this more concrete, let's count how many rows have a name that starts with `C` and then update those rows to all have the same name:
+더 구체적으로 보기 위해, 이름이 `C`로 시작하는 행의 수를 세어보고 그 행들을 모두 같은 이름으로 업데이트해봅시다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1203,9 +1204,9 @@ Median time (milliseconds):
 52.2060394287
 ~~~
 
-Because `name` is in both the `primary` and `users_name_idx` indexes, for each of the 168 rows, 2 keys were updated.
+`name`(이름)은 `primary`(기본) 와 `users_name_idx` 인덱스에 모두 포함돼 있어 168행 각각에 대해 2개의 키가 업데이트됩니다.
 
-Now, assuming that the `users_name_idx` index is no longer needed, lets drop the index and execute an equivalent query:
+이제 `users_name_idx` 인덱스가 더 이상 필요하지 않다고 가정하고, 인덱스를 삭제한 후 동일한 쿼리를 실행하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1231,11 +1232,11 @@ Median time (milliseconds):
 22.7289199829
 ~~~
 
-Before, when both the primary and secondary indexes needed to be updated, the updates took 52.20ms. Now, after dropping the secondary index, an equivalent update took only 22.72ms.
+기본 인덱스 및 보조 인덱스를 모두 업데이트해야 할 때 업데이트에 52.20ms가 소요되었으나, 보조 인덱스를 삭제한 후에는 동일한 업데이트가 22.72ms 밖에 걸리지 않았음을 확인할 수 있습니다.
 
-#### Retrieving the ID of a newly inserted row
+#### 새로 삽입한 행의 ID 반환
 
-Now let's focus on the common case of inserting a row into a table and then retrieving the ID of the new row to do some follow-up work. One approach is to execute two statements, an `INSERT` to insert the row and then a `SELECT` to get the new ID:
+이제 표에 행을 삽입한 다음 새 행의 ID를 반환하여 후속 작업을 수행하는 일반적인 사례에 초점을 맞춰봅시다. 이를 위한 한 가지 방법은 행을 삽입하는 `INSERT`와 새 ID를 얻기 위한 `SELECT` 라는 두 개의 문을 실행하는 것입니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1267,7 +1268,7 @@ Median time (milliseconds):
 5.53798675537
 ~~~
 
-Combined, these statements are relatively fast, at 15.96ms, but an even more performant approach is to append `RETURNING id` to the end of the `INSERT`:
+이 두 문구는 합쳐서 15.96ms로 비교적 빠르게 실행되지만, 훨씬 더 효과적인 접근법은 `INSERT` 끝에 `RETURNING id`를 추가하는 것입니다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1287,7 +1288,7 @@ Median time (milliseconds):
 9.48596000671
 ~~~
 
-At just 9.48ms, this approach is faster due to the write and read executing in one instead of two client-server roundtrips. Note also that, as discussed earlier, if the leaseholder for the table happens to be on a different node than the query is running against, that introduces additional network hops and latency.
+단 9.48ms로 실행되는 이 접근법은 두 번의 클라이언트-서버 라운드트립을 하지 않고 한 번에 쓰기 및 읽기를 실행할 수 있어 더 빠릅니다. 하지만 앞에서 논의한 바와 같이 테이블에 대한 임대자가 쿼리가 실행되는 노드와 다른 노드에 있는 경우에는 추가 네트워크 홉과 대기 시간이 추가된다는 점에 유의하십시오.
 
 <!-- - upsert instead of insert/update
 - update using case expressions (instead of 2 separate updates)
@@ -1295,7 +1296,7 @@ At just 9.48ms, this approach is faster due to the write and read executing in o
 - insert with returning (auto gen ID) instead of select to get auto gen ID
 - Maybe interleaved tables -->
 
-## Multi-region deployment
+## 다중 영역 배포
 
 <!-- roachprod instructions for multi-region deployment
 You created all instanced up front, so no need to add more now.
@@ -1321,25 +1322,26 @@ You created all instanced up front, so no need to add more now.
    - Run the SQL commands in Step 15 below. You'll need to SSH to instance 8 or 12 as suggested.
 -->
 
-Given that Movr is active on both US coasts, you'll now scale the cluster into two new regions, `us-west1-a` and `us-west2-a`, each with 3 nodes and an extra instance for simulating regional client traffic.
+Movr가 두 미국 연안에서 모두 사용되려면, 클러스터는 각각 3개의 노드로 구성되고 지역 클라이언트 트래픽을 시뮬레이션하는 추가 인스턴스가 있는 두 개의 새로운 지역인 `us-west1-a` and `us-west2-a`로 확장되어야 합니다.
 
-### Step 8. Create more instances
+### 8단계. 인스턴스 추가 생성
 
-1. [Create 6 more instances](https://cloud.google.com/compute/docs/instances/create-start-instance), 3 in the `us-west1-a` zone (Oregon), and 3 in the `us-west2-a` zone (Los Angeles). While creating each instance:
-    - Use the `n1-standard-4` machine type (4 vCPUs, 15 GB memory).
-    - Use the Ubuntu 16.04 OS image.
-    - [Create and mount a local SSD](https://cloud.google.com/compute/docs/disks/local-ssd#create_local_ssd).
-    - To apply the Web UI firewall rule you created earlier, click **Management, disk, networking, SSH keys**, select the **Networking** tab, and then enter `cockroachdb` in the **Network tags** field.
+1. [6개 인스턴스 추가 생성](https://cloud.google.com/compute/docs/instances/create-start-instance), `us-west1-a`영역(오리건)에 3개,`us-west2-a` 영역(로스앤젤레스)에 3개. 
+각 인스턴스에 대하여:
+    - `n1-standard-4`(4 vCPUs, 15 GB 메모리) 컴퓨터 타입 사용
+    - Ubuntu 16.04 OS 이미지 사용
+    - [로컬 SSD 생성 및 마운트](https://cloud.google.com/compute/docs/disks/local-ssd#create_local_ssd).
+    - 앞서 생성한 웹 UI 방화벽 규칙을 적용하려면 **Management, disk, networking, SSH keys** 를 클릭하고, **Networking** 탭을 선택한 다음 **Network tags** 필드에 `cockroachdb` 를 입력하십시오.
 
-2. Note the internal IP address of each `n1-standard-4` instance. You'll need these addresses when starting the CockroachDB nodes.
+2.각 `n1-standard-4` 인스턴스의 내부 IP 주소를 기록해 두십시오. 이 주소는 CockroachDB 노드를 시작할 때 필요합니다.
 
-3. Create an additional instance in the `us-west1-a` and `us-west2-a` zones. These can be smaller, such as `n1-standard-1`.
+3. us-west1-a` 와 `us-west2-a` 영역에서 추가 인스턴스를 만드십시오. 이 인스턴스는 `n1-standard-1`처럼 더 작아도 됩니다.
 
-### Step 9. Scale the cluster
+### 9단계. 클러스터 확장
 
-1. SSH to one of the `n1-standard-4` instances in the `us-west1-a` zone.
+1. `us-west1-a` 영역의 `n1-standard-4` 인스턴스 중 하나에 대해 SSH
 
-2. Download the [CockroachDB archive](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz) for Linux, extract the binary, and copy it into the `PATH`:
+2. [CockroachDB 아카이브](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz)를 리눅스용으로 다운로드하고, 바이너리를 추출하여 `PATH`에 복사:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1352,7 +1354,7 @@ Given that Movr is active on both US coasts, you'll now scale the cluster into t
     $ sudo cp -i cockroach-{{ page.release_info.version }}.linux-amd64/cockroach /usr/local/bin
     ~~~
 
-3. Run the [`cockroach start`](start-a-node.html) command:
+3. [`cockroach start`](start-a-node.html) 명령어 실행:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1366,11 +1368,11 @@ Given that Movr is active on both US coasts, you'll now scale the cluster into t
     --background
     ~~~
 
-4. Repeat steps 1 - 3 for the other two `n1-standard-4` instances in the `us-west1-a` zone.
+4. `us-west1-a` zone.`us-west1-a` 영역의 다른 두 `n1-standard-4` 인스턴스에 대해 1 - 3번을 반복
 
-5. SSH to one of the `n1-standard-4` instances in the `us-west2-a` zone.
+5. `us-west2-a` 지역의 `n1-standard-4` 인스턴스 중 하나에 대해 SSH.
 
-6. Download the [CockroachDB archive](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz) for Linux, extract the binary, and copy it into the `PATH`:
+6. [CockroachDB 아카이브](https://binaries.cockroachdb.com/cockroach-{{ page.release_info.version }}.linux-amd64.tgz)를 리눅스용으로 다운로드하고, 바이너리를 추출하여 `PATH`에 복사:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1383,7 +1385,7 @@ Given that Movr is active on both US coasts, you'll now scale the cluster into t
     $ sudo cp -i cockroach-{{ page.release_info.version }}.linux-amd64/cockroach /usr/local/bin
     ~~~
 
-7. Run the [`cockroach start`](start-a-node.html) command:
+7. [`cockroach start`](start-a-node.html) 명령어 실행:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1397,21 +1399,21 @@ Given that Movr is active on both US coasts, you'll now scale the cluster into t
     --background
     ~~~
 
-8. Repeat steps 5 - 7 for the other two `n1-standard-4` instances in the `us-west2-a` zone.
+8. `us-west2-a` 영역의 다른 두 `n1-standard-4` 인스턴스에 대해 5 - 7번을 반복
+ 
+### 10단계. Python 클라이언트 설치
 
-### Step 10. Install the Python client
+각 새 영역에서 CockroachDB 노드를 실행하지 않는 인스턴스에 SSH 하고 위의 [5단계](#step-5-install-the-python-client)에 설명된 대로 Python 클라이언트를 설치하십시오.
 
-In each of the new zones, SSH to the instance not running a CockroachDB node, and install the Python client as described in [step 5](#step-5-install-the-python-client) above.
+### 11단계. 재조정 확인
 
-### Step 11. Check rebalancing
+각 노드를 GCE 영역에 설정된  `--locality`플래그로 시작했으므로 다음 몇 분 동안 CockroachDB는 데이터를 전체 영역에 걸쳐 균등하게 재조정할 것입니다.
 
-Since you started each node with the `--locality` flag set to its GCE zone, over the next minutes, CockroachDB will rebalance data evenly across the zones.
-
-To check this, access the Web UI on any node at `<node address>:8080` and look at the **Node List**. You'll see that the range count is more or less even across all nodes:
+이를 확인하려면 `<node address>:8080`의 임의의 노드에 있는 웹 UI에 액세스하여 **Node List**를 참조하십시오. 모든 노드의 범위 카운트가 어느 정도인지 볼 수 있습니다.
 
 <img src="{{ 'images/v2.1/perf_tuning_multi_region_rebalancing.png' | relative_url }}" alt="Perf tuning rebalancing" style="border:1px solid #eee;max-width:100%" />
 
-For reference, here's how the nodes map to zones:
+참고: 영역과 노드
 
 Node IDs | Zone
 ---------|-----
@@ -1419,7 +1421,7 @@ Node IDs | Zone
 4-6 | `us-west1-a` (Oregon)
 7-9 | `us-west2-a` (Los Angeles)
 
-To verify even balancing at range level, SSH to one of the instances not running CockroachDB and run the `SHOW EXPERIMENTAL_RANGES` statement:
+범위 수준에서 균등한 균형을 확인하려면 CockroachDB를 실행하지 않는 인스턴스 중 하나에 SSH를 실행하고 `SHOW EXPERIMENTAL_RANGES`문을 실행하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1437,19 +1439,19 @@ $ cockroach sql \
 (1 row)
 ~~~
 
-In this case, we can see that, for the single range containing `vehicles` data, one replica is in each zone, and the leaseholder is in the `us-west2-a` zone.
+이때 `vehicles` 데이터를 포함하는 단일 범위의 경우 각 영역마다 복제본 1개가 있고, 임대자는 `us-west2-a` 영역에 있는 것을 볼 수 있습니다.
 
-### Step 12. Test performance
+### Step 12. 성능 테스트
 
-In general, all of the tuning techniques featured in the single-region scenario above still apply in a multi-region deployment. However, the fact that data and leaseholders are spread across the US means greater latencies in many cases.
+일반적으로 위의 단일 영역 시나리오에 포함된 모든 튜닝 기법은 다중 영역에도 적용됩니다. 그러나, 다중 영역에서 많은 경우 데이터와 임대자가 미국 전역에 분산되기 때문에 이는 더 긴 지연시간의 원인이 됩니다.
 
-#### Reads
+#### 읽기
 
-For example, imagine we are a Movr administrator in New York, and we want to get the IDs and descriptions of all New York-based bikes that are currently in use:
+예를 들어, 우리가 뉴욕의 Movr 관리자라고 가정하고, 현재 사용 중인 모든 뉴욕 기반 자전거의 ID 및 정보를 얻고 싶다고 가정해 보십시오.
 
-1. SSH to the instance in `us-east1-b` with the Python client.
+1. Python 클라이언트가 있는 `us-east1-b`에서 해당 인스턴스에 대한 SSH.
 
-2. Query for the data:
+2. 데이터에 대한 쿼리:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1481,13 +1483,13 @@ For example, imagine we are a Movr administrator in New York, and we want to get
     72.0270872116
     ~~~
 
-As we saw earlier, the leaseholder for the `vehicles` table is in `us-west2-a` (Los Angeles), so our query had to go from the gateway node in `us-east1-b` all the way to the west coast and then back again before returning data to the client.
+앞에서 본 대로, `vehicles` 표에 대한 임대주는 `us-west2-a` (로스앤젤레스),에 있으므로 우리의 쿼리는 `us-east1-b`에 있는 게이트웨이 노드에서 출발해 서해안까지 갔다가 다시 돌아와야 클라이언트에게 데이터를 반환할 수 있습니다.
 
-For contrast, imagine we are now a Movr administrator in Los Angeles, and we want to get the IDs and descriptions of all Los Angeles-based bikes that are currently in use:
+반대로, 우리가 현재 로스엔젤레스의 Movr 관리자로서, 현재 사용되고 있는 모든 로스엔젤레스 기반 자전거의 ID 및 정보를 얻고 싶다고 가정해 보십시오.
 
-1. SSH to the instance in `us-west2-a` with the Python client.
+1. Python 클라이언트가 있는 `us-west2-a`에서 해당 인스턴스에 대한 SSH.
 
-2. Query for the data:
+2. 데이터에 대한 쿼리:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1517,15 +1519,15 @@ For contrast, imagine we are now a Movr administrator in Los Angeles, and we wan
     7.6071023941
     ~~~
 
-Because the leaseholder for `vehicles` is in the same zone as the client request, this query took just 7.60ms compared to the similar query in New York that took 72.02ms.  
+`vehicles` 에 대한 임대자가 클라이언트의 요청과 동일한 영역에 있기 때문에 72.02ms가 걸린 뉴욕의 쿼리에 비해 7.60ms밖에 걸리지 않습니다.
 
 #### 쓰기
 
 데이터의 지리적 분포는 쓰기 성능에도 영향을 미칩니다. 예를 들어, 시애틀에 있는 100명의 사람들과 뉴욕에 있는 100명의 사람들이 새로운 Movr 계정을 만들고 싶다고 가정해 보십시오.
 
-1. SSH to the instance in `us-west1-a` with the Python client.
+1. Python 클라이언트가 있는 `us-west1-a` 에서 해당 인스턴스에 대한 SSH.
 
-2. Create 100 Seattle-based users:
+2. 시애틀 기반 사용자 100명 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1544,9 +1546,9 @@ Because the leaseholder for `vehicles` is in the same zone as the client request
     48.4025478363
     ~~~
 
-3. SSH to the instance in `us-east1-b` with the Python client.
+3. 클라이언트가 있는 `us-east1-b`에서 해당 인스턴스에 대한 SSH.
 
-4. Create 100 new NY-based users:
+4. 뉴욕 기반 사용자 100명 생성:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1565,7 +1567,7 @@ Because the leaseholder for `vehicles` is in the same zone as the client request
     116.868495941
     ~~~
 
-It took 48.40ms to create a user in Seattle and 116.86ms to create a user in New York. To better understand this discrepancy, let's look at the distribution of data for the `users` table:
+시애틀에서 사용자를 만드는 데 48.40ms, 뉴욕에서 사용자를 만드는 데 116.86ms가 소요되었습니다. 이러한 차이를 더 잘 이해하기 위해 `users` 테이블에 대한 데이터 분포를 살펴봅시다.
 
 {% include copy-clipboard.html %}
 ~~~ shell
@@ -1586,16 +1588,18 @@ $ cockroach sql \
 데이터를 포함하는 단일 범위의 경우, `us-west1-a` 영역에 있는 임대자와 함께 각 영역에 복제본 1개가 있습니다. 
 이는 다음을 의미합니다:
 
-- 시애틀에서 사용자를 생성할 때, 해당 요청은 임대자에게 도달하기 위해 영역을 벗어날 필요가 없습니다. 그러나 쓰기는 복제본 그룹의 합의를 필요로 하기 때문에, 쓰기는 `us-west1-b` (로스 앤젤레스) 또는 `us-east1-b` (뉴욕)의 복제본으로부터의 확인을 기다렸다가 커밋한 후 클라이언트에게 확인을 반환해야 합니다.
-- 뉴욕에서 유저 생성시 네트워크 홉이 많아져 대기시간이 늘어납니다. 우선 그 요청은 대륙을 건너서 임대주가 있는 `us-west1-a`로 가야 합니다. 그리고 커밋하기 전에 `us-west1-b` (Los Angeles) 또는 `us-east1-b` (New York) 의 복제본으로부터 확인을 기다렸다가 다시 동쪽에 있는 클라이언트에게 확인을 반환해야 합니다.
+- 시애틀에서 사용자를 생성할 때, 해당 요청은 임대자에게 도달하기 위해 영역을 벗어날 필요가 없습니다. 그러나 쓰기는 복제본 그룹의 합의를 필요로 하기 때문에, 쓰기는 `us-west1-b` (로스앤젤레스) 또는 `us-east1-b` (뉴욕)의 복제본으로부터의 확인을 기다렸다가 커밋한 후 클라이언트에게 확인을 반환해야 합니다.
+- 뉴욕에서 유저 생성시 네트워크 홉이 많아져 대기시간이 늘어납니다. 우선 그 요청은 대륙을 건너서 임대주가 있는 `us-west1-a`로 가야 합니다. 그리고 커밋하기 전에 `us-west1-b` (로스앤젤레스) 또는 `us-east1-b` (뉴욕)의 복제본으로부터 확인을 기다렸다가 다시 동쪽에 있는 클라이언트에게 확인을 반환해야 합니다.
 
 ### 13단계. 도시별 데이터 분할
 
  이 서비스의 경우, 읽기 및 쓰기 대기 시간을 개선하는 가장 효과적인 기법은 도시별 데이터를 [geo-partition(지리적 분할)](partitioning.html)하는 것입니다. 본질적으로, 이것은 데이터가 범위에 매핑되는 방법을 바꾸는 것을 의미합니다. 특정 범위 또는 범위 집합에 매핑되는 전체 테이블과 그 색인 대신, 표의 모든 행과 인덱스의 모든 행은 범위 또는 범위 세트에 매핑됩니다. 범위를 정의한 후에는 [복제 영역](configure-replication-zones.html) 기능을 사용하여 파티션을 특정 위치에 고정함으로써 특정 도시의 사용자의 읽기 및 쓰기 요청이 해당 지역을 떠나지 않도록 할 수 있습니다.
 
-1. Partitioning is an enterprise feature, so start off by [registering for a 30-day trial license](https://www.cockroachlabs.com/get-cockroachdb/).
+1. 파티셔닝은 엔터프라이즈 기능이므로 [30일 평가판 license에 등록](https://www.cockroachlabs.com/get-cockroachdb/)부터 시작하십시오.
 
-2. Once you've received the trial license, SSH to any node in your cluster and [apply the license](enterprise-licensing.html#set-the-trial-or-enterprise-license-key):
+
+2. 평가판 라이센스를 받으면 클러스터의 임의의 노드에 SSH 하고 [라이센스 적용](enterprise-licensing.html#set-the-trial-or-enterprise-license-key)을 수행하십시오.
+
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1613,9 +1617,9 @@ $ cockroach sql \
     --execute="SET CLUSTER SETTING enterprise.license = '<your license>';"
     ~~~
 
-3. Define partitions for all tables and their secondary indexes.
+3. 모든 테이블에 대한 파티션 및 그에 대한 보조인덱스를 정의하십시오.
 
-    Start with the `users` table:
+    `users` 테이블 부터 시작:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1634,7 +1638,7 @@ $ cockroach sql \
     );"
     ~~~
 
-    Now define partitions for the `vehicles` table and its secondary indexes:
+    이제 `vehicles` 테이블에 대한 파티션과 그에 대한 보조 인덱스를 정의하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -1670,7 +1674,7 @@ $ cockroach sql \
     );"
     ~~~
 
-    Next, define partitions for the `rides` table and its secondary indexes:
+    다음으로 `rides` 테이블에 대한 파티션과 그에 대한 보조 인덱스를 정의하십시오.
 
     {% include copy-clipboard.html %}
     ~~~ shell
