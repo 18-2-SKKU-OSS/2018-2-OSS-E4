@@ -59,3 +59,6 @@ CockroachDB is a cloud-native SQL database for building global, scalable cloud s
 [Docs List](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki/Docs-List) : List of docs in order of documents on website <br>
 
 [Meeting Log](https://github.com/18-2-SKKU-OSS/2018-2-OSS-E4/wiki/Meeting-Log) : Face-to-face meeting every Tuesday on OSS class <br>
+
+[Static Page](https://melrose98.wordpress.com) : Team static page (Meeting Log, Daily Activity Records, Issues & Resolutions)
+
