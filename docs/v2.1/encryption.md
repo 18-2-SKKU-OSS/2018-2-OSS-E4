@@ -8,16 +8,16 @@ toc: true
 Rest에서의 암호화는 로컬 디스크에 있는 노드의 데이터를 투명하게 암호화한다.
 
 {{site.data.alerts.callout_danger}}
-**이는 실험적인 기능입니다.**  버그 또는 사용자 오류의 경우, 암호화된 노드 스토어의 모든 데이터는 사용할 수 없게 될 수 있다. 실험 상태를 벗어날 때까지 프로덕션 데이터에 대한 Rest에서의 암호화를 사용하지 마십시오.  그때까지, 이 기능은 테스트 환경에서만 사용해야 합니다.
+**이는 실험적인 기능입니다.**  버그 또는 사용자 오류의 경우, 암호화된 노드 스토어의 모든 데이터는 사용할 수 없게 될 수 있습니다. 실험 상태를 벗어날 때까지 프로덕션 데이터에 대한 Rest에서의 암호화를 사용하지 마십시오.  그때까지, 이 기능은 테스트 환경에서만 사용해야 합니다.
 <br />
 <br />
-버그가 발생하면, [문제 제기](file-an-issue.html)하십시오. 
+버그가 발생하면, [Github 이슈](file-an-issue.html)를 보내주십시오.
 {{site.data.alerts.end}}
 
 ## 개요
 
 
-Rest에서의 암호화는 모든 키 크기가 허용되는 [카운터 모드](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Counter_(CTR))의 [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)를 사용하여 디스크에 있는 모든 파일을 암호화할 수 있다.
+Rest에서의 암호화는 모든 키 크기가 허용되는 [카운터 모드](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Counter_(CTR))의 [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)를 사용하여 디스크에 있는 모든 파일을 암호화할 수 있습니다.
 
 암호화는 [저장소 계층](architecture/storage-layer.html)에서 수행되고 저장소별로 구성됩니다.
 내용에 관계없이 상점에서 사용하는 모든 파일은 원하는 알고리즘으로 암호화됩니다.
