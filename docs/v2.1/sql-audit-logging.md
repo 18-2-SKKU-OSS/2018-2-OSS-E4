@@ -4,27 +4,27 @@ summary: Use the EXPERIMENTAL_AUDIT setting to turn SQL audit logging on or off 
 toc: true
 ---
 
-SQL audit logging gives you detailed information about queries being executed against your system. This feature is especially useful when you want to log all queries that are run against a table containing personally identifiable information (PII).
+SQL 감사 기록은 시스템에 대해 실행 중인 쿼리에 대한 자세한 정보를 제공합니다. 이 기능은 개인 식별 가능 정보(PII)를 포함하는 테이블에 대해 실행되는 모든 쿼리를 기록하려는 경우에 특히 유용하게 사용될 수 있습니다.
 
-This page has an example showing:
+이 페이지에서는 다음과 같은 예제를 보여줍니다:
 
-- How to turn audit logging on and off.
-- Where the audit log files live.
-- What the audit log files look like.
+- 감사 로깅을 활성/비활성 하는 방법
+- 감사 로그 파일이 있는 위치
+- 감사 로그 파일 형식
 
-For reference material, including a detailed description of the audit log file format, see [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html).
+감사 로그 파일 형식에 대한 자세한 설명은 [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html)를 참조하십시오.
 
 {% include {{ page.version.version }}/misc/experimental-warning.md %}
 
 
-## Step 1. Create sample tables
+## 1단계. 샘플 테이블 생성
 
-Use the statements below to create:
+아래와 같이 테이블을 생성합니다:
 
-- A `customers` table which contains PII such as name, address, etc.
-- An `orders` table with a foreign key into `customers`, which does not expose any PII
+- 이름, 주소 등의 PII가 포함된 `customers` 테이블
+- `customers`에 대해 PII를 포함하지 않는 외부 키를 갖는 `orders` 테이블
 
-Later, we'll show how to turn on audit logs for the `customers` table.
+나중에, `customers` 테이블에 대한 감사 로그를 어떻게 활성화하는지 볼 것 입니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -48,9 +48,9 @@ Later, we'll show how to turn on audit logs for the `customers` table.
 );
 ~~~
 
-## Step 2. Turn on auditing for the `customers` table
+## 2단계. `customers` 테이블에 대한 감사 활성화
 
-We turn on auditing for a table using the [`EXPERIMENTAL_AUDIT`](experimental-audit.html) subcommand of [`ALTER TABLE`](alter-table.html).
+[`ALTER TABLE`](alter-table.html)의 하위 명령인 [`EXPERIMENTAL_AUDIT`](experimental-audit.html)를 사용하여 감사를 활성화합니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -58,12 +58,12 @@ We turn on auditing for a table using the [`EXPERIMENTAL_AUDIT`](experimental-au
 ~~~
 
 {{site.data.alerts.callout_info}}
-To turn on auditing for more than one table, issue a separate `ALTER` statement for each table.
+두 개 이상의 테이블에 대한 감사를 설정하려면 각 테이블에 대해 별도의 `ALTER` 문을 실행하십시오.
 {{site.data.alerts.end}}
 
-## Step 3. Populate the `customers` table
+## 3단계. `customers` 테이블에 데이터 덧붙이기
 
-Now that we have auditing turned on, let's add some customer data:
+이제 감사 기능이 활성화되어 있으므로 고객 데이터를 몇 가지 추가해 봅시다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -87,7 +87,7 @@ Now that we have auditing turned on, let's add some customer data:
 );
 ~~~
 
-Now let's verify that our customers were added successfully:
+고객이 성공적으로 추가되었는지 확인하십시오:
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -104,11 +104,11 @@ Now let's verify that our customers were added successfully:
 (2 rows)
 ~~~
 
-## Step 4. Check the audit log
+## 4단계. 감사 로그 확인
 
-By default, the active audit log file is named `cockroach-sql-audit.log` and is stored in CockroachDB's standard log directory.  To store the audit log files in a specific directory, pass the `--sql-audit-dir` flag to [`cockroach start`](start-a-node.html).  Like the other log files, it's rotated according to the `--log-file-max-size` setting.
+기본적으로 활성 감사 로그 파일의 이름은 `cockroach-sql-audit.log`이며, CockroachDB의 표준 로그 디렉터리에 저장됩니다. 감사 로그 파일을 특정 디렉터리에 저장하려면  `--sql-audit-dir` 플래그를 [`cockroach start`](start-a-node.html)로 전달하십시오. 감사 로그 파일은 다른 로그 파일과 마찬가지로 `--log-file-max-size` 설정에 따라 교대됩니다.
 
-When we look at the audit log for this example, we see the following lines showing every command we've run so far, as expected.
+이 예제의 감사 로그를 보면, 우리가 지금까지 실행한 모든 명령을 보여주는 다음과 같은 내용이 보입니다.
 
 ~~~
 I180321 20:54:21.381565 351 sql/exec_log.go:163  [n1,client=127.0.0.1:60754,user=root] 2 exec "psql" {"customers"[76]:READWRITE} "ALTER TABLE customers EXPERIMENTAL_AUDIT SET READ WRITE" {} 4.811 0 OK
@@ -118,21 +118,22 @@ I180321 20:54:39.377395 351 sql/exec_log.go:163  [n1,client=127.0.0.1:60754,user
 ~~~
 
 {{site.data.alerts.callout_info}}
-For reference documentation of the audit log file format, see [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html).
+감사 로그 파일 형식에 대한 자세한 설명은 [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html)를 참조하십시오.
 {{site.data.alerts.end}}
 
-## Step 5. Populate the `orders` table
+## 5단계. `orders` 테이블에 데이터 덧붙이기
 
-Unlike the `customers` table, `orders` doesn't have any PII, just a Product ID and a delivery status. (Note the use of the [`CHECK` constraint](check.html) as a workaround for the as-yet-unimplemented `ENUM` - see [SQL feature support](sql-feature-support.html) for more information.)
+`customers` 테이블과 다르게 `orders` 테이블은 PII를 포함하지 않고 제품 ID와 배송 상태 등만 저장합니다. (사용하지 않는 `ENUM`에 대한 해결 방법으로 [`CHECK` 제약 조건](check.html)을 사용합니다. 자세한 내용은 [SQL 기능 지원](sql-feature-support.html)을 참조하십시오.)
 
-Let's populate the `orders` table with some dummy data using [`CREATE SEQUENCE`](create-sequence.html):
+[`CREATE SEQUENCE`](create-sequence.html)를 사용하여 `orders` 테이블에 몇 개의 더미 데이터를 덧붙입니다.
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > CREATE SEQUENCE product_ids_asc START 1 INCREMENT 1;
 ~~~
 
-Evaluate the below a few times to generate data; note that this would error if [`SELECT`](select-clause.html) returned multiple results, but it doesn't in this case.
+데이터를 생성하기 위해 아래 사항을 몇 번 평가하십시오.
+[`SELECT`](select-clause.html)가 여러 결과를 반환할 경우 오류가 발생하지만 이 경우에는 그렇지 않다는 점에 주목하십시오.
 
 {% include copy-clipboard.html %}
 ~~~ sql
@@ -163,9 +164,9 @@ Let's verify that our orders were added successfully:
 (5 rows)
 ~~~
 
-## Step 6. Check the audit log again
+##  6단계. 감사 로그 다시 확인하기
 
-Because we used a `SELECT` against the `customers` table to generate the dummy data for `orders`, those queries will also show up in the audit log as follows:
+`orders` 테이블을 위한 더미 데이터를 생성하기 위해 `customers` 테이블에 대해 `SELECT`를 사용했기 때문에 감사 로그에도 다음과 같이 쿼리가 나타납니다.
 
 ~~~
 I180321 21:01:59.677273 351 sql/exec_log.go:163  [n1,client=127.0.0.1:60754,user=root] 7 exec "psql" {"customers"[76]:READ, "customers"[76]:READ} "INSERT INTO orders(product_id, delivery_status, customer_id) VALUES (nextval('product_ids_asc'), 'processing', (SELECT id FROM customers WHERE \"name\" ~ 'Cleve'))" {} 5.183 1 OK
@@ -174,13 +175,13 @@ I180321 21:04:08.730379 351 sql/exec_log.go:163  [n1,client=127.0.0.1:60754,user
 ~~~
 
 {{site.data.alerts.callout_info}}
-For reference documentation of the audit log file format, see [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html).
+감사 로그 파일 형식에 대한 자세한 설명은 [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html)를 참조하십시오.
 {{site.data.alerts.end}}
 
-## See also
+## 더 알아보기
 
 - [`ALTER TABLE ... EXPERIMENTAL_AUDIT`](experimental-audit.html)
-- [`cockroach start` logging flags](start-a-node.html#logging)
-- [SQL FAQ - generating unique row IDs](sql-faqs.html#how-do-i-auto-generate-unique-row-ids-in-cockroachdb)
+- [`cockroach start` 로깅 플래그](start-a-node.html#logging)
+- [SQL FAQ - 고유한 행 ID 생성](sql-faqs.html#how-do-i-auto-generate-unique-row-ids-in-cockroachdb)
 - [`CREATE SEQUENCE`](create-sequence.html)
-- [SQL Feature Support](sql-feature-support.html)
+- [SQL 기능 지원](sql-feature-support.html)
