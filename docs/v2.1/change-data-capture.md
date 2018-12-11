@@ -4,29 +4,29 @@ summary: Change data capture (CDC) provides efficient, distributed, row-level ch
 toc: true
 ---
 
-<span class="version-tag">New in v2.1:</span> Change data capture (CDC) provides efficient, distributed, row-level change feeds into Apache Kafka for downstream processing such as reporting, caching, or full-text indexing.
+<span class="version-tag">v2.1의 새로운 기능:</span> Change data capture (CDC)는 리포트, 캐싱 또는 전문 인덱스(full-texted index)와 같은 다운스트림 프로세싱(후처리)을 위해 효율적이고 분산된 행-수준 변경 피드를 Apache Kafka에 제공합니다.
 
 {{site.data.alerts.callout_danger}}
-**This feature is under active development** and only works for a targeted use case. Please [file a Github issue](file-an-issue.html) if you have feedback on the roadmap.
+**이 기능은 현재 개발 중이며** 목표로 하는 사용 사례에서만 작동합니다. 로드맵에 대한 피드백이 있는 경우 [Github 이슈](file-an-issue.html)를 보내주십시오.
 {{site.data.alerts.end}}
 
 {{site.data.alerts.callout_info}}
-CDC is an [enterprise-only](enterprise-licensing.html). There will be a core version in a future release.
+CDC는 [기업(enterprise) 전용](enterprise-licensing.html)입니다. 향후 출시에서는 핵심 버전이 제공될 예정입니다.
 {{site.data.alerts.end}}
 
-## What is change data capture?
+## Change data capture(CDC)란?
 
-While CockroachDB is an excellent system of record, it also needs to coexist with other systems. For example, you might want to keep your data mirrored in full-text indexes, analytics engines, or big data pipelines.
+CockroachDB는 뛰어난 기록 시스템이지만 다른 시스템과도 공존해야 합니다. 예를 들어, 전문 인덱스(full-texted index), 분석 엔진 또는 빅데이터 파이프라인에 데이터를 미러링 해야 하는 경우의 필요성이 있습니다.
 
-The core feature of CDC is the [changefeed](create-changefeed.html). Changefeeds target a whitelist of tables, called the "watched rows". Every change to a watched row is emitted as a record in a configurable format (JSON or Avro) to a configurable sink ([Kafka](https://kafka.apache.org/)).
+CDC의 핵심 기능은 [변경 피드(changefeed)](create-changefeed.html)입니다. 변경 피드는 "관찰 대상 행(watched rows)"라고 부르는 표의 화이트리스트를 대상으로 합니다. 관찰 대상 행에 대한 모든 변경 사항은 구성 가능한 형식(JSON 또는 Avro)의 기록으로 구성 가능한 싱크([Kafka](https://kafka.apache.org/))로 방출됩니다.
 
-## Ordering guarantees
+## 순서 보장
 
-- In most cases, each version of a row will be emitted once. However, some infrequent conditions (e.g., node failures, network partitions) will cause them to be repeated. This gives our changefeeds an **at-least-once delivery guarantee**.
+- 대부분의 경우 행의 각 버전은 한 번만 방출됩니다. 그러나, 간혹 발생하는 일부 조건(예: 노드 오류, 네트워크 파티션)으로 인해 반복될 수 있습니다. 이것은 변경 에게 적어도 한번의 전달 보증을 제공합니다.
 
-- Once a row has been emitted with some timestamp, no previously unseen versions of that row will be emitted with a lower timestamp. That is, you will never see a _new_ change for that row at an earlier timestamp.
+- 일부 타임스탬프를 사용하여 행을 방출하면 이전에 볼 수 없었던 해당 행의 버전은 더 낮은 타임스탬프를 사용하여 방출되지 않습니다. 즉, 이전 타임스탬프에서는 해당 행에 대해 _new_ 변경 사항을 볼 수 없습니다.
 
-    For example, if you ran the following:
+    예를 들어, 다음을 실행한 경우:
 
     ~~~ sql
     > CREATE TABLE foo (id INT PRIMARY KEY DEFAULT unique_rowid(), name STRING);
@@ -35,14 +35,14 @@ The core feature of CDC is the [changefeed](create-changefeed.html). Changefeeds
     > UPDATE foo SET name = 'Petee' WHERE id = 1;
     ~~~
 
-    You'd expect the changefeed to emit:
+    변경 피드가 다음을 방출할 것으로 예상할 것입니다:
 
     ~~~ shell
     [1]	{"__crdb__": {"updated": <timestamp 1>}, "id": 1, "name": "Carl"}
     [1]	{"__crdb__": {"updated": <timestamp 2>}, "id": 1, "name": "Petee"}
     ~~~
 
-    It is also possible that the changefeed emits an out of order duplicate of an earlier value that you already saw:
+    또한 변경 피드가 이미 보았던 이전 값과 중복되는 오더를 생성할 수도 있다고 예상할 것입니다:
 
     ~~~ shell
     [1]	{"__crdb__": {"updated": <timestamp 1>}, "id": 1, "name": "Carl"}
@@ -50,20 +50,20 @@ The core feature of CDC is the [changefeed](create-changefeed.html). Changefeeds
     [1]	{"__crdb__": {"updated": <timestamp 1>}, "id": 1, "name": "Carl"}
     ~~~
 
-    However, you will **never** see an output like the following (i.e., an out of order row that you've never seen before):
+    그러나 다음과 같은 결과는 **절대로** 볼 수 없습니다(예: 이전에 보지 못했던 순서가 잘못된 행):
 
     ~~~ shell
     [1]	{"__crdb__": {"updated": <timestamp 2>}, "id": 1, "name": "Petee"}
     [1]	{"__crdb__": {"updated": <timestamp 1>}, "id": 1, "name": "Carl"}
     ~~~
 
-- If a row is modified more than once in the same transaction, only the last change will be emitted.
+- 동일한 처리에서 행이 두 번 이상 수정되면 마지막 변경사항만 방출됩니다.
 
-- Rows are sharded between Kafka partitions by the row’s [primary key](primary-key.html).
+- 행은 [기본 키](primary-key.html)에 의해 Kafka 파티션 사이에 분할됩니다.
 
-- The `UPDATED` option adds an "updated" timestamp to each emitted row. You can also use the `RESOLVED` option to emit periodic "resolved" timestamp messages to each Kafka partition. A **resolved timestamp** is a guarantee that no (previously unseen) rows with a lower update timestamp will be emitted on that partition.
+- `UPDATED` 옵션은 방출된 각 행에 "업데이트된" 타임스탬프를 추가합니다. 또한 `RESOLVED` 옵션을 사용하여 각 Kafka 파티션에 주기적으로 "해결된" 타임스탬프 메시지를 내보낼 수도 있습니다. **해결된 타임스탬프**는 낮은 업데이트 타임스탬프의 (이전에 보이지 않았던) 행이 해당 파티션에서 방출되지 않는다는 것을 보장합니다.
 
-    For example:
+    예를 들어:
 
     ~~~ shell
     {"__crdb__": {"updated": "1532377312562986715.0000000000"}, "id": 1, "name": "Petee H"}
@@ -77,15 +77,15 @@ The core feature of CDC is the [changefeed](create-changefeed.html). Changefeeds
     {"__crdb__": {"updated": "1532379923319195777.0000000000"}, "id": 4, "name": "Lucky"}
     ~~~
 
-- With duplicates removed, an individual row is emitted in the same order as the transactions that updated it. However, this is not true for updates to two different rows, even two rows in the same table. Resolved timestamp notifications on every Kafka partition can be used to provide strong ordering and global consistency guarantees by buffering records in between timestamp closures.
+- 중복을 제거하면 각각의 행이 업데이트된 처리과정과 동일한 순서로 방출됩니다. 그러나 이는 두 개의 다른 행, 특히 동일한 테이블의 두 행에 대한 업데이트에는 해당되지 않습니다. 모든 Kafka 파티션에서 해결된 타임스탬프 알림을 사용하여 타임스탬프 클로저 사이의 기록을 버퍼링하여 강력한 순서 지정 및 전역 일관성 보장을 제공할 수 있습니다.
 
-    Because CockroachDB supports transactions that can affect any part of the cluster, it is not possible to horizontally divide the transaction log into independent changefeeds.
+    CockroachDB는 클러스터의 모든 부분에 영향을 줄 수 있는 처리를 지원하기 때문에, 처리 로그를 독립적인 변경 피드로 수평적으로 분할할 수 없습니다.
 
-## Schema changes with column backfill
+## 열(column) 다시 채우기로 스키마 변경
 
-When schema changes with column backfill (e.g., adding a column with a default, adding a computed column, adding a `NOT NULL` column, dropping a column) are made to watched rows, the changefeed will emit some duplicates during the backfill. When it finishes, CockroachDB outputs all watched rows using the new schema.
+열 다시 채우기(예: 기본값이 있는 열 추가, 계산된 열 추가, `NOT NULL` 열 추가, 열 삭제)를 사용한 스키마 변경사항이 관찰 대상 행에 적용되면 다시 채우기 과정 중에 일부 중복을 방출합니다. 완료되면, CockroachDB는 새로운 스키마를 사용하여 모든 관찰 대상 행들을 출력합니다.
 
-For example, start with the changefeed created in the [example below](#create-a-changefeed-connected-to-kafka):
+예를 들어, [아래의 예제]에서 생성된 변경 피드로 시작하십시오:
 
 ~~~ shell
 [1]	{"id": 1, "name": "Petee H"}
@@ -93,14 +93,14 @@ For example, start with the changefeed created in the [example below](#create-a-
 [3]	{"id": 3, "name": "Ernie"}
 ~~~
 
-Add a column to the watched table:
+관찰 대상 테이블에 열을 추가합니다:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > ALTER TABLE office_dogs ADD COLUMN likes_treats BOOL DEFAULT TRUE;
 ~~~
 
-The changefeed emits duplicate records 1, 2, and 3 before outputting the records using the new schema:
+변경 피드는 새 스키마를 사용하여 레코드를 출력하기 전에 중복 레코드 1, 2 및 3을 방출합니다:
 
 ~~~ shell
 [1]	{"id": 1, "name": "Petee H"}
@@ -114,58 +114,58 @@ The changefeed emits duplicate records 1, 2, and 3 before outputting the records
 [3]	{"id": 3, "likes_treats": true, "name": "Ernie"}
 ~~~
 
-## Configure a changefeed
+## 변경 피드 구성
 
-### Create
+### 생성
 
-To create a changefeed:
+변경 피드를 생성하려면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > CREATE CHANGEFEED FOR TABLE name INTO 'kafka://host:port';
 ~~~
 
-For more information, see [`CREATE CHANGEFEED`](create-changefeed.html).
+자세한 내용은 [`CREATE CHANGEFEED`](create-changefeed.html)를 참조하십시오.
 
-### Pause
+### 중지
 
-To pause a changefeed:
+변경 피드를 중지하려면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > PAUSE JOB job_id;
 ~~~
 
-For more information, see [`PAUSE JOB`](pause-job.html).
+자세한 내용은 [`PAUSE JOB`](pause-job.html)를 참조하십시오.
 
-### Resume
+### 재개
 
-To resume a paused changefeed:
+중지된 변경 피드를 재개하려면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > RESUME JOB job_id;
 ~~~
 
-For more information, see [`RESUME JOB`](resume-job.html).
+자세한 내용은 [`RESUME JOB`](resume-job.html)를 참조하십시오.
 
-### Cancel
+### 취소
 
-To cancel a changefeed:
+변경 피드를 취소하려면:
 
 {% include copy-clipboard.html %}
 ~~~ sql
 > CANCEL JOB job_id;
 ~~~
 
-For more information, see [`CANCEL JOB`](cancel-job.html).
+자세한 내용은 [`CANCEL JOB`](cancel-job.html)를 참조하십시오.
 
-## Monitor a changefeed
+## 변경 피드 모니터링
 
-Changefeed progress is exposed as a high-water timestamp that advances as the changefeed progresses. This is a guarantee that all changes before or at the timestamp have been emitted. You can monitor a changefeed:
+변경 피드 진행 상황은 변경 피드가 진행됨에 따라 개선되는 최고 수준의 타임스탬프로 표시됩니다. 이는 타임스탬프 이전 또는 타임스탬프에서의 모든 변경 사항이 방출되었음을 보장하는 것입니다. 변경 피드를 모니터링 할 수 있습니다:
 
-- On the [Jobs page](admin-ui-jobs-page.html) of the Admin UI. Hover over the high-water timestamp to view the [system time](as-of-system-time.html).
-- Using `crdb_internal.jobs`:
+- 관리 UI의 [작업 페이지](admin-ui-jobs-page.html)에서 최고 수준의 타임스탬프 위로 마우스를 올려 [시스템 시간](as-of-system-time.html)을 확인하십시오.
+- `crdb_internal.jobs`를 사용:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -179,36 +179,36 @@ Changefeed progress is exposed as a high-water timestamp that advances as the ch
     ~~~
 
 {{site.data.alerts.callout_info}}
-You can use the high-water timestamp to [start a new changefeed where another ended](create-changefeed.html#start-a-new-changefeed-where-another-ended).
+최고 수준의 타임스탬프를 사용하여 [다른 종료된 곳에서 새로운 변경 피드를 시작](create-changefeed.html#start-a-new-changefeed-where-another-ended)할 수 있습니다.
 {{site.data.alerts.end}}
 
-## Usage example
+## 사용 
 
-### Create a changefeed connected to Kafka
+### Kafka에 연결된 changefeed 생성
 
-In this example, you'll set up a changefeed for a single-node cluster that is connected to a Kafka sink.
+이 예시에서는 Kafka 싱크에 연결된 단일 노드 클러스터에 대한 변경 피드를 설정합니다.
 
-1. If you don't already have one, [request a trial enterprise license](enterprise-licensing.html).
+1. 아직 라이센스를 가지고 있지 않다면, [평가판 엔터프라이즈 라이센스를 요청](enterprise-licensing.html)하십시오.
 
-2. In a terminal window, start `cockroach`:
+2. 터미널 창에서 `cockroach`를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach start --insecure --listen-addr=localhost --background
     ~~~
 
-3. Download and extract the [Confluent Open Source platform](https://www.confluent.io/download/) (which includes Kafka).
+3. [Confluent Open Source 플랫폼](https://www.confluent.io/download/)(Kafka 포함)을 다운로드하고 압축을 푸십시오.
 
-4. Move into the extracted `confluent-<version>` directory and start Confluent:
+4. 압축을 푼 `confluent-<version>` 디렉토리로 이동하여 Confluent를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ ./bin/confluent start
     ~~~
 
-    Only `zookeeper` and `kafka` are needed. To troubleshoot Confluent, see [their docs](https://docs.confluent.io/current/installation/installing_cp.html#zip-and-tar-archives).
+    `zookeeper`와 `kafka`만 필요합니다. Confluent 문제를 해결하려면 [해당 문서](https://docs.confluent.io/current/installation/installing_cp.html#zip-and-tar-archives)를 참조하십시오.
 
-5. Create a Kafka topic:
+5. Kafka 항목을 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -221,17 +221,17 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     ~~~
 
     {{site.data.alerts.callout_info}}
-    You are expected to create any Kafka topics with the necessary number of replications and partitions. [Topics can be created manually](https://kafka.apache.org/documentation/#basic_ops_add_topic) or [Kafka brokers can be configured to automatically create topics](https://kafka.apache.org/documentation/#topicconfigs) with a default partition count and replication factor.
+    필요한 복제 및 파티션의 개수만큼 Kafka 항목을 생성해야 합니다. [항목을 수동으로 생성](https://kafka.apache.org/documentation/#basic_ops_add_topic)하거나 [Kafka 중개자를 구성](https://kafka.apache.org/documentation/#topicconfigs)하여 기본 파티션 개수 및 복제 요소로 항목을 자동으로 생성할 수 있습니다.
     {{site.data.alerts.end}}
 
-6. As the `root` user, open the [built-in SQL client](use-the-built-in-sql-client.html):
+6. `root` 사용자로 [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 여십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-7. Set your organization name and [enterprise license](enterprise-licensing.html) key that you received via email:
+7. 이메일을 통해 받은 단체명과 [엔터프라이즈 라이센스](enterprise-licensing.html) 키를 설정하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -243,21 +243,21 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     > SET CLUSTER SETTING enterprise.license = '<secret>';
     ~~~
 
-8. Create a database called `cdc_demo`:
+8. `cdc_demo`라는 데이터베이스를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > CREATE DATABASE cdc_demo;
     ~~~
 
-9. Set the database as the default:
+9. 8.의 데이터베이스를 기본값으로 설정하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > SET DATABASE = cdc_demo;
     ~~~
 
-10. Create a table and add data:
+10. 테이블을 생성하고 데이터를 추가하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -278,7 +278,7 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     > UPDATE office_dogs SET name = 'Petee H' WHERE id = 1;
     ~~~
 
-11. Start the changefeed:
+11. 변경 피드를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -292,9 +292,9 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     (1 row)
     ~~~
 
-    This will start up the changefeed in the background and return the `job_id`. The changefeed writes to Kafka.
+    이것은 백그라운드에서 변경 피드를 시작하고 `job_id`를 반환합니다. 변경 피드는 Kafka에 쓰여집니다.
 
-12. In a new terminal, move into the extracted `confluent-<version>` directory and start watching the Kafka topic:
+12. 새 터미널에서, 압축을 푼 `confluent-<version>` 디렉토리로 이동하여 Kafka 항목을 확인하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -310,62 +310,62 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     [2]	{"id": 2, "name": "Carl"}
     ~~~
 
-    Note that the initial scan displays the state of the table as of when the changefeed started (therefore, the initial value of `"Petee"` is omitted).
+    초기 스캔은 변경 피드가 시작된 시점부터 테이블의 상태를 표시합니다(따라서 `"Petee"`의 초기값은 생략됨).
 
-13. Back in the SQL client, insert more data:
+13. SQL 클라이언트로 돌아가서 더 많은 데이터를 삽입하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > INSERT INTO office_dogs VALUES (3, 'Ernie');
     ~~~
 
-14. Back in the terminal where you're watching the Kafka topic, the following output has appeared:
+14. Kafka 항목을 관찰하고 있는 터미널로 돌아가면 다음과 같은 결과가 나타납니다:
 
     ~~~ shell
     [3]	{"id": 3, "name": "Ernie"}
     ~~~
 
-15. When you are done, exit the SQL shell (`\q`).
+15. 완료되면 SQL 쉘을 종료하십시오(`\q`).
 
-16. To stop `cockroach`, run:
+16. `cockroach`를 멈추려면 다음을 실행하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach quit --insecure
     ~~~
 
-17. To stop Kafka, move into the extracted `confluent-<version>` directory and stop Confluent:
+17. Kafka를 멈추려면 압축을 푼 `confluent-<version>` 디렉토리로 이동하여 Confluence를 중단하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ ./bin/confluent stop
     ~~~
 
-### Create a changefeed with Avro
+### Avro로 변경 피드 생성
 
-In this example, you'll set up a changefeed for a single-node cluster that is connected to a Kafka sink and emits [Avro](https://avro.apache.org/docs/1.8.2/spec.html) records.
+이 예시에서는 Kafka 싱크에 연결되어 [Avro](https://avro.apache.org/docs/1.8.2/spec.html) 레코드를 방출하는 단일 노드 클러스터에 대한 변경 피드를 설정합니다.
 
-1. If you don't already have one, [request a trial enterprise license](enterprise-licensing.html).
+1. 아직 라이센스를 가지고 있지 않다면, [평가판 엔터프라이즈 라이센스를 요청](enterprise-licensing.html)하십시오.
 
-2. In a terminal window, start `cockroach`:
+2. 터미널 창에서 `cockroach`를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach start --insecure --listen-addr=localhost --background
     ~~~
 
-3. Download and extract the [Confluent Open Source platform](https://www.confluent.io/download/) (which includes Kafka).
+3. [Confluent Open Source 플랫폼](https://www.confluent.io/download/)(Kafka 포함)을 다운로드하고 압축을 푸십시오.
 
-4. Move into the extracted `confluent-<version>` directory and start Confluent:
+4. 압축을 푼 `confluent-<version>` 디렉토리로 이동하여 Confluent를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ ./bin/confluent start
     ~~~
 
-    Only `zookeeper`, `kafka`, and `schema-registry` are needed. To troubleshoot Confluent, see [their docs](https://docs.confluent.io/current/installation/installing_cp.html#zip-and-tar-archives).
+    `zookeeper`와 `kafka`, `schema-registry`만 필요합니다. Confluent 문제를 해결하려면 [해당 문서](https://docs.confluent.io/current/installation/installing_cp.html#zip-and-tar-archives)를 참조하십시오.
 
-5. Create a Kafka topic:
+5. Kafka 항목을 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -378,17 +378,17 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     ~~~
 
     {{site.data.alerts.callout_info}}
-    You are expected to create any Kafka topics with the necessary number of replications and partitions. [Topics can be created manually](https://kafka.apache.org/documentation/#basic_ops_add_topic) or [Kafka brokers can be configured to automatically create topics](https://kafka.apache.org/documentation/#topicconfigs) with a default partition count and replication factor.
+    필요한 복제 및 파티션의 개수만큼 Kafka 항목을 생성해야 합니다. [항목을 수동으로 생성](https://kafka.apache.org/documentation/#basic_ops_add_topic)하거나 [Kafka 중개자를 구성](https://kafka.apache.org/documentation/#topicconfigs)하여 기본 파티션 개수 및 복제 요소로 항목을 자동으로 생성할 수 있습니다.
     {{site.data.alerts.end}}
 
-6. As the `root` user, open the [built-in SQL client](use-the-built-in-sql-client.html):
+6. `root` 사용자로 [빌트인 SQL 클라이언트](use-the-built-in-sql-client.html)를 여십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach sql --insecure
     ~~~
 
-7. Set your organization name and [enterprise license](enterprise-licensing.html) key that you received via email:
+7. 이메일을 통해 받은 단체명과 [엔터프라이즈 라이센스](enterprise-licensing.html) 키를 설정하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -400,21 +400,21 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     > SET CLUSTER SETTING enterprise.license = '<secret>';
     ~~~
 
-8. Create a database called `cdc_demo`:
+8. `cdc_demo`라는 데이터베이스를 생성하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > CREATE DATABASE cdc_demo;
     ~~~
 
-9. Set the database as the default:
+9. 8.의 데이터베이스를 기본값으로 설정하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > SET DATABASE = cdc_demo;
     ~~~
 
-10. Create a table and add data:
+10. 테이블을 생성하고 데이터를 추가하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -435,7 +435,7 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     > UPDATE office_dogs SET name = 'Petee H' WHERE id = 1;
     ~~~
 
-11. Start the changefeed:
+11. 변경 피드를 시작하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
@@ -449,9 +449,9 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     (1 row)
     ~~~
 
-    This will start up the changefeed in the background and return the `job_id`. The changefeed writes to Kafka.
+    이것은 백그라운드에서 변경 피드를 시작하고 `job_id`를 반환합니다. 변경 피드는 Kafka에 쓰여집니다.
 
-12. In a new terminal, move into the extracted `confluent-<version>` directory and start watching the Kafka topic:
+12. 새 터미널에서, 압축을 푼 `confluent-<version>` 디렉토리로 이동하여 Kafka 항목을 확인하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
@@ -467,44 +467,44 @@ In this example, you'll set up a changefeed for a single-node cluster that is co
     {"id":2}    {"id":2,"name":{"string":"Carl"}}
     ~~~
 
-    Note that the initial scan displays the state of the table as of when the changefeed started (therefore, the initial value of `"Petee"` is omitted).
+    초기 스캔은 변경 피드가 시작된 시점부터 테이블의 상태를 표시합니다(따라서 `"Petee"`의 초기값은 생략됨).
 
-13. Back in the SQL client, insert more data:
+13. SQL 클라이언트로 돌아가서 더 많은 데이터를 삽입하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ sql
     > INSERT INTO office_dogs VALUES (3, 'Ernie');
     ~~~
 
-14. Back in the terminal where you're watching the Kafka topic, the following output has appeared:
+14. Kafka 항목을 관찰하고 있는 터미널로 돌아가면 다음과 같은 결과가 나타납니다:
 
     ~~~ shell
     {"id":3}    {"id":3,"name":{"string":"Ernie"}}
     ~~~
 
-15. When you are done, exit the SQL shell (`\q`).
+15. 완료되면 SQL 쉘을 종료하십시오(`\q`).
 
-16. To stop `cockroach`, run:
+16. `cockroach`를 멈추려면 다음을 실행하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ cockroach quit --insecure
     ~~~
 
-17. To stop Kafka, move into the extracted `confluent-<version>` directory and stop Confluent:
+17. Kafka를 멈추려면 압축을 푼 `confluent-<version>` 디렉토리로 이동하여 Confluence를 중단하십시오:
 
     {% include copy-clipboard.html %}
     ~~~ shell
     $ ./bin/confluent stop
     ~~~
 
-## Known limitations
+## 알려진 제한 사항
 
 {% include v2.1/known-limitations/cdc.md %}
 
-## See also
+## 더 보
 
 - [`CREATE CHANGEFEED`](create-changefeed.html)
 - [`PAUSE JOB`](pause-job.html)
 - [`CANCEL JOB`](cancel-job.html)
-- [Other SQL Statements](sql-statements.html)
+- [더 많은 SQL 명령문](sql-statements.html)
